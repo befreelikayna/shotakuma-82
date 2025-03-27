@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Instagram, Facebook, Twitter, Youtube, Mail, MapPin, Discord } from "lucide-react";
+import { Instagram, Facebook, Twitter, Youtube, Mail, MapPin, MessageSquare } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -62,7 +62,7 @@ const Footer = () => {
                 className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-300"
                 aria-label="Discord"
               >
-                <Discord className="h-5 w-5" />
+                <MessageSquare className="h-5 w-5" />
               </a>
             </div>
           </div>

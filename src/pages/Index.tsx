@@ -1,11 +1,12 @@
 
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter, Discord } from "lucide-react";
+import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter, MessageSquare } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import FestivalLink from "@/components/FestivalLink";
 import Footer from "@/components/Footer";
+import DiscordIcon from "@/components/icons/DiscordIcon";
 
 const Index = () => {
   useEffect(() => {
@@ -128,7 +129,7 @@ const Index = () => {
               title="Discord - Shotaku Talk"
               description="Rejoignez notre communauté Discord"
               url="https://discord.gg/KKGCF86z"
-              icon={<Discord className="h-5 w-5 text-indigo-600" />}
+              icon={<DiscordIcon className="h-5 w-5 text-indigo-600" />}
             />
             <FestivalLink
               title="Twitter"
