@@ -1,7 +1,8 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter, MessageSquare } from "lucide-react";
+import { toast } from "@/components/ui/toast";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import FestivalLink from "@/components/FestivalLink";
@@ -9,6 +10,8 @@ import Footer from "@/components/Footer";
 import DiscordIcon from "@/components/icons/DiscordIcon";
 
 const Index = () => {
+  const [email, setEmail] = useState("");
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -23,6 +26,32 @@ const Index = () => {
         ease: [0.22, 1, 0.36, 1],
       },
     },
+  };
+  
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez entrer une adresse email valide.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // In a real implementation, you would send this to a backend
+    // For now, we'll just show a success message
+    toast({
+      title: "Inscription réussie!",
+      description: "Merci de vous être inscrit à notre newsletter.",
+    });
+    
+    // Reset form
+    setEmail("");
+    
+    // In a real app, you would also send the email to your backend or email service
+    console.log(`Email newsletter subscription: ${email}`);
   };
 
   return (
@@ -169,11 +198,16 @@ const Index = () => {
             <p className="text-slate-300 mb-8">
               Inscrivez-vous à notre newsletter pour recevoir les dernières informations sur le festival, les invités spéciaux et les offres exclusives.
             </p>
-            <form className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+            <form 
+              className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto"
+              onSubmit={handleNewsletterSubmit}
+            >
               <input
                 type="email"
                 placeholder="Votre adresse email"
                 className="flex-grow px-4 py-3 rounded-full focus:outline-none text-festival-primary"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
               <button
