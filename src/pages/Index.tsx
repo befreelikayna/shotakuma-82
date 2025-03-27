@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube } from "lucide-react";
+import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter, Discord } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import FestivalLink from "@/components/FestivalLink";
@@ -122,6 +122,30 @@ const Index = () => {
               title="YouTube"
               description="Vidéos et diffusions en direct"
               url="https://www.youtube.com/@MarocEvents"
+              icon={<Youtube className="h-5 w-5 text-red-600" />}
+            />
+            <FestivalLink
+              title="Discord - Shotaku Talk"
+              description="Rejoignez notre communauté Discord"
+              url="https://discord.gg/KKGCF86z"
+              icon={<Discord className="h-5 w-5 text-indigo-600" />}
+            />
+            <FestivalLink
+              title="Twitter"
+              description="Suivez nos actualités"
+              url="https://x.com/shotakume"
+              icon={<Twitter className="h-5 w-5 text-blue-400" />}
+            />
+            <FestivalLink
+              title="Groupe Facebook Communautaire"
+              description="Rejoignez notre groupe de fans"
+              url="https://www.facebook.com/groups/1627285827526134"
+              icon={<Facebook className="h-5 w-5 text-blue-600" />}
+            />
+            <FestivalLink
+              title="SHOTAKU TV"
+              description="Notre chaîne dédiée à l'anime"
+              url="https://www.youtube.com/@ShotakuTv"
               icon={<Youtube className="h-5 w-5 text-red-600" />}
             />
           </div>

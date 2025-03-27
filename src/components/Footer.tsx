@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Instagram, Facebook, Twitter, Youtube, Mail, MapPin } from "lucide-react";
+import { Instagram, Facebook, Twitter, Youtube, Mail, MapPin, Discord } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -38,7 +38,7 @@ const Footer = () => {
                 <Facebook className="h-5 w-5" />
               </a>
               <a
-                href="https://twitter.com"
+                href="https://x.com/shotakume"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-300"
@@ -54,6 +54,15 @@ const Footer = () => {
                 aria-label="YouTube"
               >
                 <Youtube className="h-5 w-5" />
+              </a>
+              <a
+                href="https://discord.gg/KKGCF86z"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-300"
+                aria-label="Discord"
+              >
+                <Discord className="h-5 w-5" />
               </a>
             </div>
           </div>
@@ -119,8 +128,8 @@ const Footer = () => {
               </li>
               <li className="flex items-start">
                 <Mail className="h-5 w-5 text-festival-accent mr-2 mt-0.5" />
-                <a href="mailto:contact@shotaku.ma" className="text-slate-300 hover:text-white transition-colors duration-300">
-                  contact@shotaku.ma
+                <a href="mailto:infos@shotaku.ma" className="text-slate-300 hover:text-white transition-colors duration-300">
+                  infos@shotaku.ma
                 </a>
               </li>
             </ul>
