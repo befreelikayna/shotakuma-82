@@ -20,7 +20,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
     // Simple authentication for demo purposes
     // In a real application, you would use a secure authentication system
     setTimeout(() => {
-      if (username === "admin" && password === "shotaku2024") {
+      if (username === "nadinadi" && password === "0644782611") {
         onLogin(true);
       } else {
         toast({
