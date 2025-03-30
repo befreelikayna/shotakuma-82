@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -151,9 +152,14 @@ const ContentManager = () => {
             [field]: value,
           };
         }
-      } else if (section === "header" || section === "footer") {
-        newContent[pageId][section] = {
-          ...newContent[pageId][section],
+      } else if (section === "header") {
+        newContent[pageId].header = {
+          ...newContent[pageId].header,
+          [field]: value,
+        };
+      } else if (section === "footer") {
+        newContent[pageId].footer = {
+          ...newContent[pageId].footer,
           [field]: value,
         };
       } else if (section === "sidebar" && newContent[pageId].sidebar) {
