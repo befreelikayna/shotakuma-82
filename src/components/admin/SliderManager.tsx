@@ -1,40 +1,64 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Slider } from "@/components/ui/slider";
-import { X, Plus, Image, Link, ArrowUp, ArrowDown } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { X, Plus, Image, Link, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SliderImage {
   id: string;
-  imageUrl: string;
-  link?: string;
-  order: number;
+  image_url: string;
+  link: string | null;
+  order_number: number;
+  active: boolean;
 }
 
 const SliderManager = () => {
-  const [images, setImages] = useState<SliderImage[]>([
-    {
-      id: "1",
-      imageUrl: "https://source.unsplash.com/random/1920x1080?anime",
-      link: "https://example.com/anime",
-      order: 0,
-    },
-    {
-      id: "2",
-      imageUrl: "https://source.unsplash.com/random/1920x1080?cosplay",
-      link: "https://example.com/cosplay",
-      order: 1,
-    },
-  ]);
-
+  const [images, setImages] = useState<SliderImage[]>([]);
   const [newImageUrl, setNewImageUrl] = useState("");
   const [newImageLink, setNewImageLink] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleAddImage = () => {
+  // Fetch slider images from Supabase
+  useEffect(() => {
+    fetchImages();
+  }, []);
+
+  const fetchImages = async () => {
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('slider_images')
+        .select('*')
+        .order('order_number');
+      
+      if (error) {
+        console.error('Error fetching slider images:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les images du slider",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (data) {
+        setImages(data);
+      }
+    } catch (error) {
+      console.error('Error fetching slider images:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddImage = async () => {
     if (!newImageUrl.trim()) {
       toast({
         title: "Erreur",
@@ -44,32 +68,84 @@ const SliderManager = () => {
       return;
     }
 
-    const newImage: SliderImage = {
-      id: Date.now().toString(),
-      imageUrl: newImageUrl,
-      link: newImageLink || undefined,
-      order: images.length,
-    };
+    try {
+      setIsSaving(true);
+      
+      const newImage = {
+        image_url: newImageUrl,
+        link: newImageLink || null,
+        order_number: images.length,
+        active: true
+      };
 
-    setImages([...images, newImage]);
-    setNewImageUrl("");
-    setNewImageLink("");
-
-    toast({
-      title: "Image ajoutée",
-      description: "L'image a été ajoutée au slider avec succès",
-    });
+      const { data, error } = await supabase
+        .from('slider_images')
+        .insert([newImage])
+        .select();
+      
+      if (error) {
+        console.error('Error adding slider image:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible d'ajouter l'image au slider",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        setImages([...images, data[0]]);
+        setNewImageUrl("");
+        setNewImageLink("");
+        
+        toast({
+          title: "Image ajoutée",
+          description: "L'image a été ajoutée au slider avec succès",
+        });
+      }
+    } catch (error) {
+      console.error('Error adding slider image:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleRemoveImage = (id: string) => {
-    setImages(images.filter((image) => image.id !== id));
-    toast({
-      title: "Image supprimée",
-      description: "L'image a été supprimée du slider",
-    });
+  const handleRemoveImage = async (id: string) => {
+    try {
+      setIsSaving(true);
+      
+      const { error } = await supabase
+        .from('slider_images')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error removing slider image:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de supprimer l'image du slider",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setImages(images.filter((image) => image.id !== id));
+      
+      toast({
+        title: "Image supprimée",
+        description: "L'image a été supprimée du slider",
+      });
+      
+      // Update order numbers
+      await updateOrderNumbers();
+    } catch (error) {
+      console.error('Error removing slider image:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleMoveImage = (id: string, direction: "up" | "down") => {
+  const handleMoveImage = async (id: string, direction: "up" | "down") => {
     const imageIndex = images.findIndex((image) => image.id === id);
     if (
       (direction === "up" && imageIndex === 0) ||
@@ -78,47 +154,144 @@ const SliderManager = () => {
       return;
     }
 
-    const newImages = [...images];
-    const targetIndex = direction === "up" ? imageIndex - 1 : imageIndex + 1;
-    
-    // Swap the items
-    [newImages[imageIndex], newImages[targetIndex]] = [
-      newImages[targetIndex],
-      newImages[imageIndex],
-    ];
-    
-    // Update order values
-    const updatedImages = newImages.map((image, index) => ({
-      ...image,
-      order: index,
-    }));
-    
-    setImages(updatedImages);
+    try {
+      setIsSaving(true);
+      
+      const newImages = [...images];
+      const targetIndex = direction === "up" ? imageIndex - 1 : imageIndex + 1;
+      
+      // Swap the items
+      [newImages[imageIndex], newImages[targetIndex]] = [
+        newImages[targetIndex],
+        newImages[imageIndex],
+      ];
+      
+      // Update order values
+      const updatedImages = newImages.map((image, index) => ({
+        ...image,
+        order_number: index,
+      }));
+      
+      setImages(updatedImages);
+      
+      // Update order in database
+      await updateOrderNumbers();
+    } catch (error) {
+      console.error('Error moving slider image:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleUpdateImageUrl = (id: string, newUrl: string) => {
-    setImages(
-      images.map((image) =>
-        image.id === id ? { ...image, imageUrl: newUrl } : image
-      )
-    );
+  const updateOrderNumbers = async () => {
+    try {
+      for (const image of images) {
+        await supabase
+          .from('slider_images')
+          .update({ order_number: image.order_number })
+          .eq('id', image.id);
+      }
+    } catch (error) {
+      console.error('Error updating order numbers:', error);
+    }
   };
 
-  const handleUpdateImageLink = (id: string, newLink: string) => {
-    setImages(
-      images.map((image) =>
-        image.id === id ? { ...image, link: newLink || undefined } : image
-      )
-    );
+  const handleUpdateImageUrl = async (id: string, newUrl: string) => {
+    try {
+      const { error } = await supabase
+        .from('slider_images')
+        .update({ image_url: newUrl })
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error updating image URL:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de mettre à jour l'URL de l'image",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setImages(
+        images.map((image) =>
+          image.id === id ? { ...image, image_url: newUrl } : image
+        )
+      );
+    } catch (error) {
+      console.error('Error updating image URL:', error);
+    }
+  };
+
+  const handleUpdateImageLink = async (id: string, newLink: string) => {
+    try {
+      const { error } = await supabase
+        .from('slider_images')
+        .update({ link: newLink || null })
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error updating image link:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de mettre à jour le lien de l'image",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setImages(
+        images.map((image) =>
+          image.id === id ? { ...image, link: newLink || null } : image
+        )
+      );
+    } catch (error) {
+      console.error('Error updating image link:', error);
+    }
+  };
+
+  const handleToggleActive = async (id: string, active: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('slider_images')
+        .update({ active })
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error updating image active status:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de mettre à jour le statut de l'image",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setImages(
+        images.map((image) =>
+          image.id === id ? { ...image, active } : image
+        )
+      );
+    } catch (error) {
+      console.error('Error updating image active status:', error);
+    }
   };
 
   const handleSaveChanges = () => {
-    // In a real app, this would save to a database
     toast({
       title: "Modifications enregistrées",
       description: "Les changements du slider ont été enregistrés avec succès",
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-40">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Chargement des images...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -143,11 +316,13 @@ const SliderManager = () => {
             {images.map((image) => (
               <div
                 key={image.id}
-                className="flex flex-col md:flex-row gap-4 p-4 border rounded-lg bg-card"
+                className={`flex flex-col md:flex-row gap-4 p-4 border rounded-lg ${
+                  image.active ? "bg-card" : "bg-muted/40"
+                }`}
               >
                 <div className="w-full md:w-40 h-24 bg-muted rounded-md overflow-hidden">
                   <img
-                    src={image.imageUrl}
+                    src={image.image_url}
                     alt="Slider preview"
                     className="w-full h-full object-cover"
                   />
@@ -157,7 +332,7 @@ const SliderManager = () => {
                     <Label htmlFor={`image-url-${image.id}`}>URL de l'image</Label>
                     <Input
                       id={`image-url-${image.id}`}
-                      value={image.imageUrl}
+                      value={image.image_url}
                       onChange={(e) =>
                         handleUpdateImageUrl(image.id, e.target.value)
                       }
@@ -176,13 +351,25 @@ const SliderManager = () => {
                       placeholder="https://example.com"
                     />
                   </div>
+                  <div className="flex items-center space-x-2 pt-1">
+                    <Switch
+                      id={`image-active-${image.id}`}
+                      checked={image.active}
+                      onCheckedChange={(checked) =>
+                        handleToggleActive(image.id, checked)
+                      }
+                    />
+                    <Label htmlFor={`image-active-${image.id}`} className="text-sm">
+                      {image.active ? "Actif" : "Inactif"}
+                    </Label>
+                  </div>
                 </div>
                 <div className="flex gap-2 md:flex-col justify-end">
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={() => handleMoveImage(image.id, "up")}
-                    disabled={image.order === 0}
+                    disabled={image.order_number === 0 || isSaving}
                   >
                     <ArrowUp className="h-4 w-4" />
                   </Button>
@@ -190,7 +377,7 @@ const SliderManager = () => {
                     variant="outline"
                     size="icon"
                     onClick={() => handleMoveImage(image.id, "down")}
-                    disabled={image.order === images.length - 1}
+                    disabled={image.order_number === images.length - 1 || isSaving}
                   >
                     <ArrowDown className="h-4 w-4" />
                   </Button>
@@ -198,6 +385,7 @@ const SliderManager = () => {
                     variant="destructive"
                     size="icon"
                     onClick={() => handleRemoveImage(image.id)}
+                    disabled={isSaving}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -220,6 +408,7 @@ const SliderManager = () => {
               value={newImageUrl}
               onChange={(e) => setNewImageUrl(e.target.value)}
               placeholder="https://example.com/image.jpg"
+              disabled={isSaving}
             />
           </div>
           <div className="space-y-2">
@@ -229,16 +418,35 @@ const SliderManager = () => {
               value={newImageLink}
               onChange={(e) => setNewImageLink(e.target.value)}
               placeholder="https://example.com"
+              disabled={isSaving}
             />
           </div>
-          <Button onClick={handleAddImage} className="w-full md:w-auto">
-            <Plus className="mr-2 h-4 w-4" /> Ajouter l'image
+          <Button 
+            onClick={handleAddImage} 
+            className="w-full md:w-auto"
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                Ajout en cours...
+              </>
+            ) : (
+              <>
+                <Plus className="mr-2 h-4 w-4" /> 
+                Ajouter l'image
+              </>
+            )}
           </Button>
         </div>
       </div>
 
       <div className="pt-4">
-        <Button onClick={handleSaveChanges} className="w-full md:w-auto">
+        <Button 
+          onClick={handleSaveChanges} 
+          className="w-full md:w-auto"
+          disabled={isSaving}
+        >
           Enregistrer les modifications
         </Button>
       </div>
