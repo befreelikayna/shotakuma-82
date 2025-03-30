@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import GalleryManager from "@/components/admin/GalleryManager";
 import SocialLinksEditor from "@/components/admin/SocialLinksEditor";
 import TicketManager from "@/components/admin/TicketManager";
+import TicketPackageManager from "@/components/admin/TicketPackageManager";
 import NewsletterSubscriptions from "@/components/admin/NewsletterSubscriptions";
 import AdminLogin from "@/components/admin/AdminLogin";
 
@@ -47,9 +48,10 @@ const Admin = () => {
           </h1>
 
           <Tabs defaultValue="gallery" className="max-w-4xl mx-auto">
-            <TabsList className="grid grid-cols-4 mb-8">
+            <TabsList className="grid grid-cols-5 mb-8">
               <TabsTrigger value="gallery">Galerie</TabsTrigger>
               <TabsTrigger value="tickets">Billets</TabsTrigger>
+              <TabsTrigger value="packages">Forfaits</TabsTrigger>
               <TabsTrigger value="social">Liens Sociaux</TabsTrigger>
               <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
             </TabsList>
@@ -60,6 +62,10 @@ const Admin = () => {
 
             <TabsContent value="tickets" className="p-6 bg-white rounded-xl shadow-soft">
               <TicketManager />
+            </TabsContent>
+
+            <TabsContent value="packages" className="p-6 bg-white rounded-xl shadow-soft">
+              <TicketPackageManager />
             </TabsContent>
 
             <TabsContent value="social" className="p-6 bg-white rounded-xl shadow-soft">

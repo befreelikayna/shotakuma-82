@@ -8,9 +8,55 @@ import HeroSection from "@/components/HeroSection";
 import FestivalLink from "@/components/FestivalLink";
 import Footer from "@/components/Footer";
 import DiscordIcon from "@/components/icons/DiscordIcon";
+import TicketPackage from "@/components/TicketPackage";
 
 const Index = () => {
   const [email, setEmail] = useState("");
+  const [ticketPackages, setTicketPackages] = useState([
+    {
+      id: "1",
+      name: "Pass 1 Jour",
+      price: 150,
+      description: "Accès à tous les événements pour une journée",
+      features: [
+        "Accès à toutes les expositions",
+        "Accès aux panels et discussions",
+        "Accès aux projections",
+        "Accès à la zone marchande"
+      ],
+      isPopular: false
+    },
+    {
+      id: "2",
+      name: "Pass 3 Jours",
+      price: 350,
+      description: "Accès à tous les événements pendant les trois jours du festival",
+      features: [
+        "Accès complet aux trois jours",
+        "Accès à toutes les expositions",
+        "Accès aux panels et discussions",
+        "Accès aux projections",
+        "Accès à la zone marchande",
+        "T-shirt exclusif du festival"
+      ],
+      isPopular: true
+    },
+    {
+      id: "3",
+      name: "Pass VIP",
+      price: 500,
+      description: "Accès prioritaire, cadeaux exclusifs et rencontres avec les invités spéciaux",
+      features: [
+        "Accès complet aux trois jours",
+        "Entrée prioritaire sans file d'attente",
+        "Accès aux zones VIP",
+        "Kit souvenir exclusif",
+        "Rencontre avec les invités spéciaux",
+        "Place réservée pour les événements principaux"
+      ],
+      isPopular: false
+    }
+  ]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -58,6 +104,37 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <Navbar />
       <HeroSection />
+
+      {/* Ticket Packages Section */}
+      <section className="py-20" id="tickets">
+        <div className="festival-container">
+          <motion.div
+            className="text-center mb-12"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={sectionVariants}
+          >
+            <h2 className="section-heading inline-block">Billets</h2>
+            <p className="text-festival-secondary max-w-2xl mx-auto mt-4">
+              Choisissez le type de billet qui vous convient et préparez-vous à vivre une expérience inoubliable au festival SHOTAKU.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {ticketPackages.map((pkg) => (
+              <TicketPackage 
+                key={pkg.id}
+                name={pkg.name}
+                price={pkg.price}
+                description={pkg.description}
+                features={pkg.features}
+                isPopular={pkg.isPopular}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Features Section */}
       <section className="py-20" id="features">

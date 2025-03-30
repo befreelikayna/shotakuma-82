@@ -1,8 +1,27 @@
 
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
 
 const HeroSection = () => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  const backgroundImages = [
+    "https://source.unsplash.com/random/1920x1080?anime",
+    "https://source.unsplash.com/random/1920x1080?cosplay",
+    "https://source.unsplash.com/random/1920x1080?japan",
+    "https://source.unsplash.com/random/1920x1080?manga"
+  ];
+  
+  // Auto rotate background images
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex(prev => (prev + 1) % backgroundImages.length);
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -32,10 +51,24 @@ const HeroSection = () => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      {/* Decorative Elements */}
+      {/* Slider Background */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-20 right-20 w-64 h-64 bg-festival-accent opacity-5 rounded-full blur-3xl animate-pulse-light"></div>
-        <div className="absolute bottom-20 left-20 w-80 h-80 bg-blue-500 opacity-5 rounded-full blur-3xl"></div>
+        {backgroundImages.map((image, index) => (
+          <div 
+            key={index}
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            <div 
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${image})` }}
+            >
+              {/* Overlay to ensure text visibility */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/40"></div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="festival-container relative z-10 mt-16">
@@ -49,13 +82,13 @@ const HeroSection = () => {
             className="inline-block mb-4 px-4 py-1.5 bg-white/50 backdrop-blur-sm rounded-full shadow-soft"
             variants={itemVariants}
           >
-            <span className="text-festival-primary font-medium text-sm">
+            <span className="text-white font-medium text-sm">
               26-28 MARS 2024 • CASABLANCA, MAROC
             </span>
           </motion.div>
 
           <motion.h1
-            className="text-4xl md:text-6xl lg:text-7xl font-bold text-festival-primary mb-6 tracking-tight"
+            className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 tracking-tight"
             variants={itemVariants}
           >
             Festival Marocain 
@@ -65,7 +98,7 @@ const HeroSection = () => {
           </motion.h1>
 
           <motion.p
-            className="max-w-2xl text-lg text-festival-secondary mb-10"
+            className="max-w-2xl text-lg text-white mb-10"
             variants={itemVariants}
           >
             Le plus grand événement célébrant la culture japonaise, l'anime et le manga au Maroc. 

@@ -12,6 +12,7 @@ const Navbar = () => {
         <div className="flex items-center space-x-6">
           <Link to="/" className="nav-link">Accueil</Link>
           <Link to="/about" className="nav-link">À propos</Link>
+          <Link to="/events" className="nav-link">Événements</Link>
           <Link to="/schedule" className="nav-link">Programme</Link>
           <Link to="/gallery" className="nav-link">Galerie</Link>
           <Link
