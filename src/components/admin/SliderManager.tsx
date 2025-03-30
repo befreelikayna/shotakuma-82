@@ -23,6 +23,7 @@ const SliderManager = () => {
   const [newImageLink, setNewImageLink] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Fetch slider images from Supabase
   useEffect(() => {
@@ -173,9 +174,7 @@ const SliderManager = () => {
       }));
       
       setImages(updatedImages);
-      
-      // Update order in database
-      await updateOrderNumbers();
+      setHasUnsavedChanges(true);
     } catch (error) {
       console.error('Error moving slider image:', error);
     } finally {
@@ -185,11 +184,23 @@ const SliderManager = () => {
 
   const updateOrderNumbers = async () => {
     try {
-      for (const image of images) {
-        await supabase
-          .from('slider_images')
-          .update({ order_number: image.order_number })
-          .eq('id', image.id);
+      // Create an array of updates with each image's id and new order_number
+      const updates = images.map((image, index) => ({
+        id: image.id,
+        order_number: index
+      }));
+      
+      const { error } = await supabase
+        .from('slider_images')
+        .upsert(updates, { onConflict: 'id' });
+      
+      if (error) {
+        console.error('Error updating order numbers:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de mettre à jour l'ordre des images",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Error updating order numbers:', error);
@@ -198,26 +209,12 @@ const SliderManager = () => {
 
   const handleUpdateImageUrl = async (id: string, newUrl: string) => {
     try {
-      const { error } = await supabase
-        .from('slider_images')
-        .update({ image_url: newUrl })
-        .eq('id', id);
-      
-      if (error) {
-        console.error('Error updating image URL:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de mettre à jour l'URL de l'image",
-          variant: "destructive",
-        });
-        return;
-      }
-      
       setImages(
         images.map((image) =>
           image.id === id ? { ...image, image_url: newUrl } : image
         )
       );
+      setHasUnsavedChanges(true);
     } catch (error) {
       console.error('Error updating image URL:', error);
     }
@@ -225,26 +222,12 @@ const SliderManager = () => {
 
   const handleUpdateImageLink = async (id: string, newLink: string) => {
     try {
-      const { error } = await supabase
-        .from('slider_images')
-        .update({ link: newLink || null })
-        .eq('id', id);
-      
-      if (error) {
-        console.error('Error updating image link:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de mettre à jour le lien de l'image",
-          variant: "destructive",
-        });
-        return;
-      }
-      
       setImages(
         images.map((image) =>
           image.id === id ? { ...image, link: newLink || null } : image
         )
       );
+      setHasUnsavedChanges(true);
     } catch (error) {
       console.error('Error updating image link:', error);
     }
@@ -252,36 +235,60 @@ const SliderManager = () => {
 
   const handleToggleActive = async (id: string, active: boolean) => {
     try {
-      const { error } = await supabase
-        .from('slider_images')
-        .update({ active })
-        .eq('id', id);
-      
-      if (error) {
-        console.error('Error updating image active status:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de mettre à jour le statut de l'image",
-          variant: "destructive",
-        });
-        return;
-      }
-      
       setImages(
         images.map((image) =>
           image.id === id ? { ...image, active } : image
         )
       );
+      setHasUnsavedChanges(true);
     } catch (error) {
       console.error('Error updating image active status:', error);
     }
   };
 
-  const handleSaveChanges = () => {
-    toast({
-      title: "Modifications enregistrées",
-      description: "Les changements du slider ont été enregistrés avec succès",
-    });
+  const handleSaveChanges = async () => {
+    try {
+      setIsSaving(true);
+      
+      // Create an array of all images with their current state
+      const updates = images.map(image => ({
+        id: image.id,
+        image_url: image.image_url,
+        link: image.link,
+        order_number: image.order_number,
+        active: image.active
+      }));
+      
+      const { error } = await supabase
+        .from('slider_images')
+        .upsert(updates, { onConflict: 'id' });
+      
+      if (error) {
+        console.error('Error saving changes:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible d'enregistrer les modifications",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      toast({
+        title: "Modifications enregistrées",
+        description: "Les changements du slider ont été enregistrés avec succès",
+      });
+      
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      console.error('Error saving changes:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de l'enregistrement des modifications",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (isLoading) {
@@ -445,9 +452,16 @@ const SliderManager = () => {
         <Button 
           onClick={handleSaveChanges} 
           className="w-full md:w-auto"
-          disabled={isSaving}
+          disabled={isSaving || !hasUnsavedChanges}
         >
-          Enregistrer les modifications
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+              Enregistrement en cours...
+            </>
+          ) : (
+            "Enregistrer les modifications"
+          )}
         </Button>
       </div>
     </div>
