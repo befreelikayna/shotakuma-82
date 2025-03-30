@@ -41,7 +41,8 @@ const CustomCursor = () => {
     
     const allLinks = document.querySelectorAll('a, button, input, select, textarea');
     allLinks.forEach((el) => {
-      el.style.cursor = 'none';
+      // Fix: Type cast to HTMLElement to access style property
+      (el as HTMLElement).style.cursor = 'none';
     });
 
     return () => {
@@ -54,7 +55,8 @@ const CustomCursor = () => {
       document.body.style.cursor = 'auto';
       
       allLinks.forEach((el) => {
-        el.style.cursor = 'auto';
+        // Fix: Type cast to HTMLElement to access style property
+        (el as HTMLElement).style.cursor = 'auto';
       });
     };
   }, []);
