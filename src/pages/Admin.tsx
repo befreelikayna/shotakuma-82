@@ -9,6 +9,8 @@ import SocialLinksEditor from "@/components/admin/SocialLinksEditor";
 import TicketManager from "@/components/admin/TicketManager";
 import TicketPackageManager from "@/components/admin/TicketPackageManager";
 import NewsletterSubscriptions from "@/components/admin/NewsletterSubscriptions";
+import SliderManager from "@/components/admin/SliderManager";
+import ContentManager from "@/components/admin/ContentManager";
 import AdminLogin from "@/components/admin/AdminLogin";
 
 const Admin = () => {
@@ -48,11 +50,13 @@ const Admin = () => {
           </h1>
 
           <Tabs defaultValue="gallery" className="max-w-4xl mx-auto">
-            <TabsList className="grid grid-cols-5 mb-8">
+            <TabsList className="grid grid-cols-7 mb-8">
               <TabsTrigger value="gallery">Galerie</TabsTrigger>
               <TabsTrigger value="tickets">Billets</TabsTrigger>
               <TabsTrigger value="packages">Forfaits</TabsTrigger>
-              <TabsTrigger value="social">Liens Sociaux</TabsTrigger>
+              <TabsTrigger value="slider">Slider</TabsTrigger>
+              <TabsTrigger value="content">Contenu</TabsTrigger>
+              <TabsTrigger value="social">Liens</TabsTrigger>
               <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
             </TabsList>
 
@@ -66,6 +70,14 @@ const Admin = () => {
 
             <TabsContent value="packages" className="p-6 bg-white rounded-xl shadow-soft">
               <TicketPackageManager />
+            </TabsContent>
+
+            <TabsContent value="slider" className="p-6 bg-white rounded-xl shadow-soft">
+              <SliderManager />
+            </TabsContent>
+
+            <TabsContent value="content" className="p-6 bg-white rounded-xl shadow-soft">
+              <ContentManager />
             </TabsContent>
 
             <TabsContent value="social" className="p-6 bg-white rounded-xl shadow-soft">
