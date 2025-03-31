@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -185,11 +184,11 @@ const SliderManager = () => {
   const updateOrderNumbers = async () => {
     try {
       // Create an array of updates with all required fields for each image
-      const updates = images.map((image) => ({
+      const updates = images.map((image, index) => ({
         id: image.id,
         image_url: image.image_url,
         link: image.link,
-        order_number: image.order_number,
+        order_number: index,
         active: image.active
       }));
       
@@ -204,9 +203,13 @@ const SliderManager = () => {
           description: "Impossible de mettre à jour l'ordre des images",
           variant: "destructive",
         });
+        return false;
       }
+      
+      return true;
     } catch (error) {
       console.error('Error updating order numbers:', error);
+      return false;
     }
   };
 

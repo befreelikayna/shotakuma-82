@@ -15,6 +15,7 @@ import AdminLogin from "@/components/admin/AdminLogin";
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [activeTab, setActiveTab] = useState("gallery");
 
   const handleLogin = (success: boolean) => {
     if (success) {
@@ -25,6 +26,15 @@ const Admin = () => {
       });
     }
   };
+  
+  // Check if there's a hash in the URL to set the active tab
+  React.useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      const tab = hash.replace('#', '');
+      setActiveTab(tab);
+    }
+  }, []);
 
   if (!isAuthenticated) {
     return (
@@ -49,7 +59,7 @@ const Admin = () => {
             Panneau d'Administration
           </h1>
 
-          <Tabs defaultValue="gallery" className="max-w-4xl mx-auto">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-4xl mx-auto">
             <TabsList className="grid grid-cols-7 mb-8">
               <TabsTrigger value="gallery">Galerie</TabsTrigger>
               <TabsTrigger value="tickets">Billets</TabsTrigger>

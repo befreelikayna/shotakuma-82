@@ -41,7 +41,10 @@ const HeroSection = () => {
         }
         
         if (data && data.length > 0) {
+          console.log("Slider images loaded:", data);
           setSliderImages(data);
+        } else {
+          console.log("No active slider images found");
         }
       } catch (error) {
         console.error('Error fetching slider images:', error);
