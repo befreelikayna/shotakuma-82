@@ -54,6 +54,25 @@ const HeroSection = () => {
     };
     
     fetchSliderImages();
+    
+    // Set up a subscription to listen for changes to the slider_images table
+    const channel = supabase
+      .channel('public:slider_images')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'slider_images' 
+        }, 
+        () => {
+          console.log('Slider images changed, refreshing...');
+          fetchSliderImages();
+        })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
   
   // Auto rotate background images

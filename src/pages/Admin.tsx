@@ -28,7 +28,7 @@ const Admin = () => {
   };
   
   // Check if there's a hash in the URL to set the active tab
-  React.useEffect(() => {
+  useEffect(() => {
     const hash = window.location.hash;
     if (hash) {
       const tab = hash.replace('#', '');
@@ -37,11 +37,18 @@ const Admin = () => {
   }, []);
 
   // Update the URL hash when the active tab changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (isAuthenticated && activeTab) {
       window.location.hash = activeTab;
     }
   }, [activeTab, isAuthenticated]);
+
+  // Handle tab value change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    // Also update the URL hash
+    window.location.hash = value;
+  };
 
   if (!isAuthenticated) {
     return (
@@ -66,7 +73,7 @@ const Admin = () => {
             Panneau d'Administration
           </h1>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-4xl mx-auto">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
             <TabsList className="grid grid-cols-7 mb-8">
               <TabsTrigger value="gallery">Galerie</TabsTrigger>
               <TabsTrigger value="tickets">Billets</TabsTrigger>
