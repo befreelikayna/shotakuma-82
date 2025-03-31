@@ -184,10 +184,13 @@ const SliderManager = () => {
 
   const updateOrderNumbers = async () => {
     try {
-      // Create an array of updates with each image's id and new order_number
-      const updates = images.map((image, index) => ({
+      // Create an array of updates with all required fields for each image
+      const updates = images.map((image) => ({
         id: image.id,
-        order_number: index
+        image_url: image.image_url,
+        link: image.link,
+        order_number: image.order_number,
+        active: image.active
       }));
       
       const { error } = await supabase
