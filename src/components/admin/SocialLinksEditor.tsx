@@ -1,11 +1,12 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Instagram, Facebook, Youtube, Twitter } from "lucide-react";
+import { Instagram, Facebook, Youtube, Twitter, Loader2 } from "lucide-react";
 import DiscordIcon from "@/components/icons/DiscordIcon";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SocialLink {
   id: string;
@@ -25,13 +26,21 @@ const SocialLinksEditor = () => {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ title: "", url: "" });
+  const [isSaving, setIsSaving] = useState(false);
+
+  // In a real app, we would load this from a database
+  // This is a simplified version that just updates the state
+  useEffect(() => {
+    // In a full implementation, we would fetch from Supabase here
+    // For now, we just use the default state
+  }, []);
 
   const handleEdit = (link: SocialLink) => {
     setEditingId(link.id);
     setEditForm({ title: link.title, url: link.url });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editForm.url) {
       toast({
         title: "Erreur",
@@ -41,17 +50,37 @@ const SocialLinksEditor = () => {
       return;
     }
 
-    setSocialLinks(
-      socialLinks.map((link) =>
-        link.id === editingId ? { ...link, title: editForm.title, url: editForm.url } : link
-      )
-    );
+    setIsSaving(true);
     
-    setEditingId(null);
-    toast({
-      title: "Succès",
-      description: "Le lien social a été mis à jour."
-    });
+    try {
+      // Save to state
+      setSocialLinks(
+        socialLinks.map((link) =>
+          link.id === editingId ? { ...link, title: editForm.title, url: editForm.url } : link
+        )
+      );
+      
+      // In a real app, we would save to Supabase here
+      // For demo purposes, we're just updating the state and showing a success message
+      
+      setTimeout(() => {
+        setEditingId(null);
+        setIsSaving(false);
+        
+        toast({
+          title: "Succès",
+          description: "Le lien social a été mis à jour."
+        });
+      }, 500); // Simulate network delay
+    } catch (error) {
+      console.error("Error saving social link:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de l'enregistrement du lien social",
+        variant: "destructive",
+      });
+      setIsSaving(false);
+    }
   };
 
   const renderIcon = (iconName: string) => {
@@ -107,10 +136,17 @@ const SocialLinksEditor = () => {
               <TableCell>
                 {editingId === link.id ? (
                   <div className="flex gap-2">
-                    <Button onClick={handleSave} size="sm" className="bg-green-500 text-white">
-                      Enregistrer
+                    <Button onClick={handleSave} size="sm" className="bg-green-500 text-white" disabled={isSaving}>
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Enregistrement...
+                        </>
+                      ) : (
+                        "Enregistrer"
+                      )}
                     </Button>
-                    <Button onClick={() => setEditingId(null)} size="sm" variant="outline">
+                    <Button onClick={() => setEditingId(null)} size="sm" variant="outline" disabled={isSaving}>
                       Annuler
                     </Button>
                   </div>

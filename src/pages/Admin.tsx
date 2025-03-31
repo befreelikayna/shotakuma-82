@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
@@ -35,6 +35,13 @@ const Admin = () => {
       setActiveTab(tab);
     }
   }, []);
+
+  // Update the URL hash when the active tab changes
+  React.useEffect(() => {
+    if (isAuthenticated && activeTab) {
+      window.location.hash = activeTab;
+    }
+  }, [activeTab, isAuthenticated]);
 
   if (!isAuthenticated) {
     return (

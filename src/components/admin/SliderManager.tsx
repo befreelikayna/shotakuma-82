@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -71,10 +72,15 @@ const SliderManager = () => {
     try {
       setIsSaving(true);
       
+      // Get the highest order_number
+      const highestOrder = images.length > 0 
+        ? Math.max(...images.map(img => img.order_number))
+        : -1;
+        
       const newImage = {
         image_url: newImageUrl,
         link: newImageLink || null,
-        order_number: images.length,
+        order_number: highestOrder + 1,
         active: true
       };
 
@@ -87,7 +93,7 @@ const SliderManager = () => {
         console.error('Error adding slider image:', error);
         toast({
           title: "Erreur",
-          description: "Impossible d'ajouter l'image au slider",
+          description: "Impossible d'ajouter l'image au slider: " + error.message,
           variant: "destructive",
         });
         return;
@@ -105,6 +111,11 @@ const SliderManager = () => {
       }
     } catch (error) {
       console.error('Error adding slider image:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de l'ajout de l'image",
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -123,7 +134,7 @@ const SliderManager = () => {
         console.error('Error removing slider image:', error);
         toast({
           title: "Erreur",
-          description: "Impossible de supprimer l'image du slider",
+          description: "Impossible de supprimer l'image du slider: " + error.message,
           variant: "destructive",
         });
         return;
@@ -135,11 +146,13 @@ const SliderManager = () => {
         title: "Image supprimée",
         description: "L'image a été supprimée du slider",
       });
-      
-      // Update order numbers
-      await updateOrderNumbers();
     } catch (error) {
       console.error('Error removing slider image:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de la suppression",
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -155,8 +168,6 @@ const SliderManager = () => {
     }
 
     try {
-      setIsSaving(true);
-      
       const newImages = [...images];
       const targetIndex = direction === "up" ? imageIndex - 1 : imageIndex + 1;
       
@@ -176,8 +187,6 @@ const SliderManager = () => {
       setHasUnsavedChanges(true);
     } catch (error) {
       console.error('Error moving slider image:', error);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -192,18 +201,27 @@ const SliderManager = () => {
         active: image.active
       }));
       
-      const { error } = await supabase
-        .from('slider_images')
-        .upsert(updates, { onConflict: 'id' });
-      
-      if (error) {
-        console.error('Error updating order numbers:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de mettre à jour l'ordre des images",
-          variant: "destructive",
-        });
-        return false;
+      // Handle each update individually to avoid RLS issues
+      for (const item of updates) {
+        const { error } = await supabase
+          .from('slider_images')
+          .update({
+            image_url: item.image_url,
+            link: item.link,
+            order_number: item.order_number,
+            active: item.active
+          })
+          .eq('id', item.id);
+          
+        if (error) {
+          console.error('Error updating image:', error);
+          toast({
+            title: "Erreur",
+            description: "Impossible de mettre à jour l'ordre des images: " + error.message,
+            variant: "destructive",
+          });
+          return false;
+        }
       }
       
       return true;
@@ -213,70 +231,58 @@ const SliderManager = () => {
     }
   };
 
-  const handleUpdateImageUrl = async (id: string, newUrl: string) => {
-    try {
-      setImages(
-        images.map((image) =>
-          image.id === id ? { ...image, image_url: newUrl } : image
-        )
-      );
-      setHasUnsavedChanges(true);
-    } catch (error) {
-      console.error('Error updating image URL:', error);
-    }
+  const handleUpdateImageUrl = (id: string, newUrl: string) => {
+    setImages(
+      images.map((image) =>
+        image.id === id ? { ...image, image_url: newUrl } : image
+      )
+    );
+    setHasUnsavedChanges(true);
   };
 
-  const handleUpdateImageLink = async (id: string, newLink: string) => {
-    try {
-      setImages(
-        images.map((image) =>
-          image.id === id ? { ...image, link: newLink || null } : image
-        )
-      );
-      setHasUnsavedChanges(true);
-    } catch (error) {
-      console.error('Error updating image link:', error);
-    }
+  const handleUpdateImageLink = (id: string, newLink: string) => {
+    setImages(
+      images.map((image) =>
+        image.id === id ? { ...image, link: newLink || null } : image
+      )
+    );
+    setHasUnsavedChanges(true);
   };
 
-  const handleToggleActive = async (id: string, active: boolean) => {
-    try {
-      setImages(
-        images.map((image) =>
-          image.id === id ? { ...image, active } : image
-        )
-      );
-      setHasUnsavedChanges(true);
-    } catch (error) {
-      console.error('Error updating image active status:', error);
-    }
+  const handleToggleActive = (id: string, active: boolean) => {
+    setImages(
+      images.map((image) =>
+        image.id === id ? { ...image, active } : image
+      )
+    );
+    setHasUnsavedChanges(true);
   };
 
   const handleSaveChanges = async () => {
     try {
       setIsSaving(true);
       
-      // Create an array of all images with their current state
-      const updates = images.map(image => ({
-        id: image.id,
-        image_url: image.image_url,
-        link: image.link,
-        order_number: image.order_number,
-        active: image.active
-      }));
-      
-      const { error } = await supabase
-        .from('slider_images')
-        .upsert(updates, { onConflict: 'id' });
-      
-      if (error) {
-        console.error('Error saving changes:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible d'enregistrer les modifications",
-          variant: "destructive",
-        });
-        return;
+      // Update each image individually
+      for (const image of images) {
+        const { error } = await supabase
+          .from('slider_images')
+          .update({
+            image_url: image.image_url,
+            link: image.link,
+            order_number: image.order_number,
+            active: image.active
+          })
+          .eq('id', image.id);
+        
+        if (error) {
+          console.error('Error saving image:', error);
+          toast({
+            title: "Erreur",
+            description: "Impossible d'enregistrer les modifications: " + error.message,
+            variant: "destructive",
+          });
+          return;
+        }
       }
       
       toast({
