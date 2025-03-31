@@ -1,12 +1,12 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { X, Plus, Image, Link, ArrowUp, ArrowDown, Loader2, RefreshCw } from "lucide-react";
+import { X, Plus, Image, ArrowUp, ArrowDown, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SliderImage {
@@ -27,7 +27,7 @@ const SliderManager = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Fetch slider images from Supabase
-  const fetchImages = async () => {
+  const fetchImages = useCallback(async () => {
     try {
       setIsLoading(true);
       
@@ -47,6 +47,7 @@ const SliderManager = () => {
       }
       
       if (data) {
+        console.log("Admin slider data loaded:", data);
         setImages(data);
       }
     } catch (error) {
@@ -54,11 +55,30 @@ const SliderManager = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchImages();
-  }, []);
+    
+    // Set up a subscription to listen for changes to the slider_images table
+    const channel = supabase
+      .channel('admin:slider_images')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'slider_images' 
+        }, 
+        () => {
+          console.log('Admin: Slider images changed, refreshing...');
+          fetchImages();
+        })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchImages]);
 
   const handleAddImage = async () => {
     if (!newImageUrl.trim()) {
@@ -296,6 +316,8 @@ const SliderManager = () => {
     try {
       setIsSaving(true);
       
+      let hasErrors = false;
+      
       // Update each image individually with only changed fields
       for (const image of images) {
         const { error } = await supabase
@@ -308,21 +330,28 @@ const SliderManager = () => {
         
         if (error) {
           console.error('Error saving image:', error);
-          toast({
-            title: "Erreur",
-            description: "Impossible d'enregistrer les modifications: " + error.message,
-            variant: "destructive",
-          });
-          return;
+          hasErrors = true;
         }
       }
       
-      toast({
-        title: "Modifications enregistrées",
-        description: "Les changements du slider ont été enregistrés avec succès",
-      });
+      if (hasErrors) {
+        toast({
+          title: "Erreur partielle",
+          description: "Certaines modifications n'ont pas pu être enregistrées",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Modifications enregistrées",
+          description: "Les changements du slider ont été enregistrés avec succès",
+        });
+      }
       
       setHasUnsavedChanges(false);
+      
+      // Refresh the images from database to ensure consistency
+      fetchImages();
+      
     } catch (error) {
       console.error('Error saving changes:', error);
       toast({
@@ -364,6 +393,9 @@ const SliderManager = () => {
         title: "Image mise à jour",
         description: "Les modifications de l'image ont été enregistrées",
       });
+      
+      // Refresh the images to ensure consistency
+      fetchImages();
       
     } catch (error) {
       console.error('Error saving individual image:', error);

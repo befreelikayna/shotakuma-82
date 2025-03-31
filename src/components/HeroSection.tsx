@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -19,40 +19,40 @@ const HeroSection = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   // Fetch slider images from Supabase
-  useEffect(() => {
-    const fetchSliderImages = async () => {
-      try {
-        setIsLoading(true);
-        
-        const { data, error } = await supabase
-          .from('slider_images')
-          .select('*')
-          .eq('active', true)
-          .order('order_number');
-        
-        if (error) {
-          console.error('Error fetching slider images:', error);
-          toast({
-            title: "Erreur",
-            description: "Impossible de charger les images du slider",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        if (data && data.length > 0) {
-          console.log("Slider images loaded:", data);
-          setSliderImages(data);
-        } else {
-          console.log("No active slider images found");
-        }
-      } catch (error) {
+  const fetchSliderImages = async () => {
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('slider_images')
+        .select('*')
+        .eq('active', true)
+        .order('order_number');
+      
+      if (error) {
         console.error('Error fetching slider images:', error);
-      } finally {
-        setIsLoading(false);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les images du slider",
+          variant: "destructive",
+        });
+        return;
       }
-    };
-    
+      
+      if (data && data.length > 0) {
+        console.log("Slider images loaded:", data);
+        setSliderImages(data);
+      } else {
+        console.log("No active slider images found");
+      }
+    } catch (error) {
+      console.error('Error fetching slider images:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchSliderImages();
     
     // Set up a subscription to listen for changes to the slider_images table
@@ -116,6 +116,14 @@ const HeroSection = () => {
   // Default background while loading
   const defaultBackground = "bg-gradient-to-br from-slate-900 to-gray-800";
 
+  const handleRefresh = () => {
+    fetchSliderImages();
+    toast({
+      title: "Actualisation",
+      description: "Images du slider actualisées",
+    });
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
       {/* Slider Background */}
@@ -162,6 +170,17 @@ const HeroSection = () => {
       </div>
 
       <div className="festival-container relative z-10 mt-16">
+        {/* Dev-only refresh button */}
+        {process.env.NODE_ENV !== 'production' && (
+          <button 
+            onClick={handleRefresh} 
+            className="absolute top-0 right-0 p-2 bg-black/30 rounded-full hover:bg-black/40 transition-colors"
+            title="Refresh slider images"
+          >
+            <RefreshCw className="h-4 w-4 text-white" />
+          </button>
+        )}
+        
         <motion.div
           className="flex flex-col items-center text-center"
           variants={containerVariants}

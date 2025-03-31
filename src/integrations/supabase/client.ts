@@ -18,7 +18,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 });
 
 // Enable realtime for the slider_images table
-supabase.channel('schema-db-changes')
+const channel = supabase.channel('schema-db-changes')
   .on('postgres_changes', { 
     event: '*', 
     schema: 'public', 
@@ -27,3 +27,6 @@ supabase.channel('schema-db-changes')
     console.log('Change received on slider_images!', payload);
   })
   .subscribe();
+
+// Export the channel for potential cleanup
+export const realtimeChannel = channel;

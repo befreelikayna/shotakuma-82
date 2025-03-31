@@ -39,15 +39,15 @@ const Admin = () => {
   // Update the URL hash when the active tab changes
   useEffect(() => {
     if (isAuthenticated && activeTab) {
-      window.location.hash = activeTab;
+      window.history.replaceState(null, '', `#${activeTab}`);
     }
   }, [activeTab, isAuthenticated]);
 
   // Handle tab value change
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    // Also update the URL hash
-    window.location.hash = value;
+    // Update URL hash using history API to avoid full page reload
+    window.history.replaceState(null, '', `#${value}`);
   };
 
   if (!isAuthenticated) {
