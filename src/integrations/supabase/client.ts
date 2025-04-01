@@ -17,8 +17,9 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   }
 });
 
-// Enable realtime for the slider_images table
-const channel = supabase.channel('schema-db-changes')
+// Enable realtime for all tables we use in admin panel
+const channel = supabase.channel('admin-panel-changes')
+  // Realtime for slider images
   .on('postgres_changes', { 
     event: '*', 
     schema: 'public', 
@@ -26,6 +27,7 @@ const channel = supabase.channel('schema-db-changes')
   }, (payload) => {
     console.log('Change received on slider_images!', payload);
   })
+  // Add more tables here when they're created in Supabase
   .subscribe();
 
 // Export the channel for potential cleanup

@@ -15,7 +15,7 @@ import AdminLogin from "@/components/admin/AdminLogin";
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState("gallery");
+  const [activeTab, setActiveTab] = useState("slider");
 
   const handleLogin = (success: boolean) => {
     if (success) {
@@ -33,6 +33,11 @@ const Admin = () => {
     if (hash) {
       const tab = hash.replace('#', '');
       setActiveTab(tab);
+    } else {
+      // Default to slider tab if no hash is present
+      setActiveTab('slider');
+      // Update URL hash using history API
+      window.history.replaceState(null, '', `#slider`);
     }
   }, []);
 

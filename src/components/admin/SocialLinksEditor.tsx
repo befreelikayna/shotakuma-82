@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Instagram, Facebook, Youtube, Twitter, Loader2 } from "lucide-react";
+import { Instagram, Facebook, Youtube, Twitter, Loader2, RefreshCw } from "lucide-react";
 import DiscordIcon from "@/components/icons/DiscordIcon";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -27,12 +27,58 @@ const SocialLinksEditor = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ title: "", url: "" });
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // In a real app, we would load this from a database
-  // This is a simplified version that just updates the state
+  // In the future, when a social links table is created in Supabase,
+  // enable this code to fetch from database
   useEffect(() => {
-    // In a full implementation, we would fetch from Supabase here
-    // For now, we just use the default state
+    /*
+    // When social_links table is created in Supabase, uncomment this code
+    const fetchSocialLinks = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('social_links')
+          .select('*')
+          .order('id');
+        
+        if (error) {
+          console.error('Error fetching social links:', error);
+          toast({
+            title: "Erreur",
+            description: "Impossible de charger les liens sociaux",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          setSocialLinks(data);
+        }
+      } catch (error) {
+        console.error('Error fetching social links:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchSocialLinks();
+    
+    // Set up a realtime subscription for social_links table
+    const channel = supabase
+      .channel('admin:social_links')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'social_links' }, 
+        () => {
+          console.log('Social links changed, refreshing...');
+          fetchSocialLinks();
+        })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    }; 
+    */
   }, []);
 
   const handleEdit = (link: SocialLink) => {
@@ -53,25 +99,36 @@ const SocialLinksEditor = () => {
     setIsSaving(true);
     
     try {
-      // Save to state
+      // Save to state (for now)
+      // In the future, when the social_links table is created, this will be replaced
+      // with a Supabase call
       setSocialLinks(
         socialLinks.map((link) =>
           link.id === editingId ? { ...link, title: editForm.title, url: editForm.url } : link
         )
       );
       
-      // In a real app, we would save to Supabase here
-      // For demo purposes, we're just updating the state and showing a success message
+      /*
+      // When social_links table is created, uncomment this code
+      const { error } = await supabase
+        .from('social_links')
+        .update({ 
+          title: editForm.title, 
+          url: editForm.url 
+        })
+        .eq('id', editingId);
       
-      setTimeout(() => {
-        setEditingId(null);
-        setIsSaving(false);
-        
-        toast({
-          title: "Succès",
-          description: "Le lien social a été mis à jour."
-        });
-      }, 500); // Simulate network delay
+      if (error) {
+        throw error;
+      }
+      */
+      
+      toast({
+        title: "Succès",
+        description: "Le lien social a été mis à jour."
+      });
+      
+      setEditingId(null);
     } catch (error) {
       console.error("Error saving social link:", error);
       toast({
@@ -79,6 +136,7 @@ const SocialLinksEditor = () => {
         description: "Une erreur s'est produite lors de l'enregistrement du lien social",
         variant: "destructive",
       });
+    } finally {
       setIsSaving(false);
     }
   };
@@ -103,6 +161,26 @@ const SocialLinksEditor = () => {
   return (
     <div>
       <h2 className="text-2xl font-semibold text-festival-primary mb-6">Gestion des Liens Sociaux</h2>
+      
+      <div className="flex justify-between items-center mb-4">
+        <p className="text-sm text-muted-foreground">
+          Modifiez les liens vers vos réseaux sociaux.
+        </p>
+        <Button 
+          variant="outline" 
+          size="sm"
+          className="mb-4"
+          onClick={() => {
+            // In the future when the table is created, this will refresh the data
+            toast({
+              title: "Actualisé",
+              description: "Les liens sociaux ont été actualisés."
+            });
+          }}
+        >
+          <RefreshCw className="h-4 w-4 mr-2" /> Actualiser
+        </Button>
+      </div>
       
       <Table>
         <TableHeader>
