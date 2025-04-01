@@ -13,6 +13,8 @@ interface SocialLink {
   title: string;
   url: string;
   icon: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const SocialLinksEditor = () => {
@@ -43,7 +45,7 @@ const SocialLinksEditor = () => {
       
       if (data) {
         console.log("Social links loaded:", data);
-        setSocialLinks(data);
+        setSocialLinks(data as SocialLink[]);
       }
     } catch (error) {
       console.error('Error fetching social links:', error);
