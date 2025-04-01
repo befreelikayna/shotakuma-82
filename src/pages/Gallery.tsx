@@ -1,39 +1,75 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 type GalleryItem = {
   id: string;
   src: string;
   alt: string;
   category: "cosplay" | "event" | "artwork" | "guests";
+  type: "image" | "video";
 };
 
 const Gallery = () => {
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   
-  // Sample gallery items
-  const galleryItems: GalleryItem[] = [
-    { id: "1", src: "https://source.unsplash.com/random/800x600?anime", alt: "Cosplay competition", category: "cosplay" },
-    { id: "2", src: "https://source.unsplash.com/random/800x600?manga", alt: "Main stage performance", category: "event" },
-    { id: "3", src: "https://source.unsplash.com/random/800x600?japan", alt: "Manga exhibition", category: "artwork" },
-    { id: "4", src: "https://source.unsplash.com/random/800x600?cosplay", alt: "Guest panel discussion", category: "guests" },
-    { id: "5", src: "https://source.unsplash.com/random/800x600?festival", alt: "Cosplay group photo", category: "cosplay" },
-    { id: "6", src: "https://source.unsplash.com/random/800x600?art", alt: "Artist showcase", category: "artwork" },
-    { id: "7", src: "https://source.unsplash.com/random/800x600?cartoon", alt: "Audience at main event", category: "event" },
-    { id: "8", src: "https://source.unsplash.com/random/800x600?costume", alt: "Special guest signing", category: "guests" },
-    { id: "9", src: "https://source.unsplash.com/random/800x600?digital-art", alt: "Digital art exhibition", category: "artwork" },
-    { id: "10", src: "https://source.unsplash.com/random/800x600?convention", alt: "Convention floor", category: "event" },
-    { id: "11", src: "https://source.unsplash.com/random/800x600?comic", alt: "Manga workshop", category: "artwork" },
-    { id: "12", src: "https://source.unsplash.com/random/800x600?character", alt: "Character cosplay", category: "cosplay" },
-  ];
+  // Fetch gallery items from Supabase
+  const fetchGalleryItems = async () => {
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('gallery_items')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching gallery items:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les éléments de la galerie",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (data) {
+        console.log("Gallery items loaded:", data);
+        setGalleryItems(data as GalleryItem[]);
+      }
+    } catch (error) {
+      console.error('Error fetching gallery items:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    fetchGalleryItems();
+    
+    // Set up a realtime subscription 
+    const channel = supabase
+      .channel('public:gallery')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'gallery_items' }, 
+        () => {
+          console.log('Gallery items changed, refreshing...');
+          fetchGalleryItems();
+        })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const filteredItems = activeFilter === "all" 
@@ -160,50 +196,75 @@ const Gallery = () => {
               </div>
             </div>
 
-            {/* Gallery Grid */}
-            <motion.div 
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-              initial="initial"
-              animate="animate"
-              variants={{
-                initial: { opacity: 0 },
-                animate: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1
-                  }
-                }
-              }}
-            >
-              {filteredItems.map((item) => (
-                <motion.div
-                  key={item.id}
-                  className="overflow-hidden rounded-xl shadow-soft group cursor-pointer"
-                  onClick={() => openLightbox(item)}
-                  variants={{
-                    initial: { opacity: 0, y: 20 },
-                    animate: { 
-                      opacity: 1, 
-                      y: 0,
-                      transition: { duration: 0.5 }
+            {/* Loading state */}
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin mr-2" />
+                <span>Chargement de la galerie...</span>
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="text-center py-20 text-gray-500">
+                <p>Aucun élément trouvé pour cette catégorie.</p>
+              </div>
+            ) : (
+              /* Gallery Grid */
+              <motion.div 
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                initial="initial"
+                animate="animate"
+                variants={{
+                  initial: { opacity: 0 },
+                  animate: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.1
                     }
-                  }}
-                  whileHover={{ y: -5 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <img
-                      src={item.src}
-                      alt={item.alt}
-                      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                      <p className="text-white text-sm">{item.alt}</p>
+                  }
+                }}
+              >
+                {filteredItems.map((item) => (
+                  <motion.div
+                    key={item.id}
+                    className="overflow-hidden rounded-xl shadow-soft group cursor-pointer"
+                    onClick={() => openLightbox(item)}
+                    variants={{
+                      initial: { opacity: 0, y: 20 },
+                      animate: { 
+                        opacity: 1, 
+                        y: 0,
+                        transition: { duration: 0.5 }
+                      }
+                    }}
+                    whileHover={{ y: -5 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="relative aspect-[4/3] overflow-hidden">
+                      {item.type === "image" ? (
+                        <img
+                          src={item.src}
+                          alt={item.alt}
+                          className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+                        />
+                      ) : (
+                        <div className="relative aspect-[4/3] bg-slate-200 flex items-center justify-center">
+                          <video 
+                            src={item.src} 
+                            className="object-cover w-full h-full" 
+                            muted 
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                            <span className="text-white text-lg">Cliquez pour lire la vidéo</span>
+                          </div>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                        <p className="text-white text-sm">{item.alt}</p>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
 
             {/* Lightbox */}
             {selectedImage && (
@@ -224,14 +285,26 @@ const Gallery = () => {
                   <ChevronLeft className="h-6 w-6" />
                 </button>
                 
-                <motion.img
-                  src={selectedImage.src}
-                  alt={selectedImage.alt}
-                  className="max-w-[90%] max-h-[80vh] object-contain rounded-md"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3 }}
-                />
+                {selectedImage.type === "image" ? (
+                  <motion.img
+                    src={selectedImage.src}
+                    alt={selectedImage.alt}
+                    className="max-w-[90%] max-h-[80vh] object-contain rounded-md"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                ) : (
+                  <motion.video
+                    src={selectedImage.src}
+                    className="max-w-[90%] max-h-[80vh] object-contain rounded-md"
+                    controls
+                    autoPlay
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                )}
                 
                 <button
                   onClick={() => navigateImage("next")}

@@ -35,7 +35,14 @@ const channel = supabase.channel('admin-panel-changes')
   }, (payload) => {
     console.log('Change received on social_links!', payload);
   })
-  // Add more tables here when they're created in Supabase
+  // Realtime for gallery items
+  .on('postgres_changes', { 
+    event: '*', 
+    schema: 'public', 
+    table: 'gallery_items' 
+  }, (payload) => {
+    console.log('Change received on gallery_items!', payload);
+  })
   .subscribe();
 
 // Export the channel for potential cleanup
