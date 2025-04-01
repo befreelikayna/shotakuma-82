@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -175,44 +176,76 @@ const SliderManager = () => {
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
       const filePath = `public/slider-images/${fileName}`;
       
-      // Upload the file to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('slider-images')
-        .upload(filePath, file, {
-          onUploadProgress: (progress) => {
-            // Calculate and update progress
-            const percent = Math.floor((progress.loaded / progress.total) * 100);
-            setUploadProgress(percent);
-          }
-        });
+      // Track upload progress manually
+      const totalBytes = file.size;
+      let uploadedBytes = 0;
       
-      if (uploadError) {
-        console.error('Error uploading image:', uploadError);
+      // Create a reader to track progress
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(file);
+      
+      reader.onload = async () => {
+        const arrayBuffer = reader.result as ArrayBuffer;
+        
+        // Upload the file to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('slider-images')
+          .upload(filePath, file);
+        
+        // Update progress to 100% when upload completes
+        setUploadProgress(100);
+        
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          toast({
+            title: "Erreur",
+            description: "Impossible de télécharger l'image: " + uploadError.message,
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Get the public URL of the uploaded image
+        const { data: publicUrlData } = supabase.storage
+          .from('slider-images')
+          .getPublicUrl(filePath);
+        
+        if (publicUrlData && publicUrlData.publicUrl) {
+          // Set the new image URL for adding to the slider
+          setNewImageUrl(publicUrlData.publicUrl);
+          
+          // Close the upload dialog
+          setShowUploadModal(false);
+          
+          toast({
+            title: "Image téléchargée",
+            description: "L'image a été téléchargée avec succès",
+          });
+        }
+      };
+      
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        if (uploadProgress < 90) {
+          setUploadProgress(prev => Math.min(prev + 10, 90));
+        }
+      }, 300);
+      
+      reader.onprogress = (event) => {
+        if (event.loaded && event.total) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(Math.min(percent, 90)); // Cap at 90% until actual upload completes
+        }
+      };
+      
+      reader.onerror = () => {
+        clearInterval(progressInterval);
         toast({
           title: "Erreur",
-          description: "Impossible de télécharger l'image: " + uploadError.message,
+          description: "Une erreur s'est produite lors de la lecture du fichier",
           variant: "destructive",
         });
-        return;
-      }
-      
-      // Get the public URL of the uploaded image
-      const { data: publicUrlData } = supabase.storage
-        .from('slider-images')
-        .getPublicUrl(filePath);
-      
-      if (publicUrlData && publicUrlData.publicUrl) {
-        // Set the new image URL for adding to the slider
-        setNewImageUrl(publicUrlData.publicUrl);
-        
-        // Close the upload dialog
-        setShowUploadModal(false);
-        
-        toast({
-          title: "Image téléchargée",
-          description: "L'image a été téléchargée avec succès",
-        });
-      }
+      };
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
@@ -699,10 +732,8 @@ const SliderManager = () => {
                         </Button>
                       </DialogClose>
                       <label htmlFor="image-upload">
-                        <Button 
-                          as="span" 
-                          disabled={isUploading}
-                          className="cursor-pointer"
+                        <span 
+                          className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 cursor-pointer ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
                         >
                           {isUploading ? (
                             <>
@@ -715,7 +746,7 @@ const SliderManager = () => {
                               Télécharger
                             </>
                           )}
-                        </Button>
+                        </span>
                       </label>
                     </div>
                   </div>
@@ -774,3 +805,4 @@ const SliderManager = () => {
 };
 
 export default SliderManager;
+
