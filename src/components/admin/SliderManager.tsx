@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -6,8 +5,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { X, Plus, Image, ArrowUp, ArrowDown, Loader2, RefreshCw } from "lucide-react";
+import { X, Plus, Image, ArrowUp, ArrowDown, Loader2, RefreshCw, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger, 
+  DialogClose 
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 
 interface SliderImage {
   id: string;
@@ -25,7 +36,10 @@ const SliderManager = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [savingItemId, setSavingItemId] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  
   // Fetch slider images from Supabase
   const fetchImages = useCallback(async () => {
     try {
@@ -139,6 +153,75 @@ const SliderManager = () => {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleUploadImage = async (file: File) => {
+    if (!file) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner un fichier",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      
+      // Create a unique file name to avoid conflicts
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+      const filePath = `public/slider-images/${fileName}`;
+      
+      // Upload the file to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('slider-images')
+        .upload(filePath, file, {
+          onUploadProgress: (progress) => {
+            // Calculate and update progress
+            const percent = Math.floor((progress.loaded / progress.total) * 100);
+            setUploadProgress(percent);
+          }
+        });
+      
+      if (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        toast({
+          title: "Erreur",
+          description: "Impossible de télécharger l'image: " + uploadError.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Get the public URL of the uploaded image
+      const { data: publicUrlData } = supabase.storage
+        .from('slider-images')
+        .getPublicUrl(filePath);
+      
+      if (publicUrlData && publicUrlData.publicUrl) {
+        // Set the new image URL for adding to the slider
+        setNewImageUrl(publicUrlData.publicUrl);
+        
+        // Close the upload dialog
+        setShowUploadModal(false);
+        
+        toast({
+          title: "Image téléchargée",
+          description: "L'image a été téléchargée avec succès",
+        });
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur s'est produite lors du téléchargement",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -409,6 +492,12 @@ const SliderManager = () => {
     }
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      handleUploadImage(event.target.files[0]);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-40">
@@ -557,13 +646,82 @@ const SliderManager = () => {
         <div className="grid gap-4">
           <div className="space-y-2">
             <Label htmlFor="new-image-url">URL de l'image</Label>
-            <Input
-              id="new-image-url"
-              value={newImageUrl}
-              onChange={(e) => setNewImageUrl(e.target.value)}
-              placeholder="https://example.com/image.jpg"
-              disabled={isSaving}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="new-image-url"
+                value={newImageUrl}
+                onChange={(e) => setNewImageUrl(e.target.value)}
+                placeholder="https://example.com/image.jpg"
+                disabled={isSaving}
+                className="flex-1"
+              />
+              <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Télécharger
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Télécharger une image</DialogTitle>
+                    <DialogDescription>
+                      Sélectionnez une image à télécharger pour le slider.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    {isUploading ? (
+                      <div className="space-y-2">
+                        <Progress value={uploadProgress} className="w-full" />
+                        <p className="text-sm text-center">
+                          {uploadProgress}% téléchargé
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid w-full items-center gap-1.5">
+                        <Label htmlFor="image-upload">Image</Label>
+                        <Input
+                          id="image-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Formats acceptés: JPG, PNG, GIF. Taille max: 5 MB.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex justify-end gap-2">
+                      <DialogClose asChild>
+                        <Button variant="outline" disabled={isUploading}>
+                          Annuler
+                        </Button>
+                      </DialogClose>
+                      <label htmlFor="image-upload">
+                        <Button 
+                          as="span" 
+                          disabled={isUploading}
+                          className="cursor-pointer"
+                        >
+                          {isUploading ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Téléchargement...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="mr-2 h-4 w-4" />
+                              Télécharger
+                            </>
+                          )}
+                        </Button>
+                      </label>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="new-image-link">Lien (optionnel)</Label>

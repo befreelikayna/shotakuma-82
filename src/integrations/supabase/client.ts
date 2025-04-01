@@ -14,6 +14,9 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     params: {
       eventsPerSecond: 10
     }
+  },
+  auth: {
+    persistSession: true,
   }
 });
 
