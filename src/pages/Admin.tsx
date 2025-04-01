@@ -59,7 +59,7 @@ const Admin = () => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
         <Navbar />
-        <div className="pt-32 pb-20">
+        <div className="pt-20 md:pt-32 pb-20 px-4 md:px-0">
           <div className="festival-container">
             <AdminLogin onLogin={handleLogin} />
           </div>
@@ -72,48 +72,55 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <Navbar />
-      <div className="pt-32 pb-20">
+      <div className="pt-20 md:pt-32 pb-20 px-4 md:px-0">
         <div className="festival-container">
-          <h1 className="text-3xl md:text-4xl font-bold text-festival-primary mb-8 text-center">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-festival-primary mb-6 md:mb-8 text-center">
             Panneau d'Administration
           </h1>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
-            <TabsList className="grid grid-cols-7 mb-8">
-              <TabsTrigger value="gallery">Galerie</TabsTrigger>
-              <TabsTrigger value="tickets">Billets</TabsTrigger>
-              <TabsTrigger value="packages">Forfaits</TabsTrigger>
-              <TabsTrigger value="slider">Slider</TabsTrigger>
-              <TabsTrigger value="content">Contenu</TabsTrigger>
-              <TabsTrigger value="social">Liens</TabsTrigger>
-              <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
+            <TabsList className="grid grid-cols-4 md:grid-cols-7 mb-6 md:mb-8 w-full overflow-x-auto">
+              <TabsTrigger value="gallery" className="whitespace-nowrap">Galerie</TabsTrigger>
+              <TabsTrigger value="tickets" className="whitespace-nowrap">Billets</TabsTrigger>
+              <TabsTrigger value="packages" className="whitespace-nowrap">Forfaits</TabsTrigger>
+              <TabsTrigger value="slider" className="whitespace-nowrap">Slider</TabsTrigger>
+              <TabsTrigger value="content" className="whitespace-nowrap hidden md:block">Contenu</TabsTrigger>
+              <TabsTrigger value="social" className="whitespace-nowrap hidden md:block">Liens</TabsTrigger>
+              <TabsTrigger value="newsletter" className="whitespace-nowrap hidden md:block">Newsletter</TabsTrigger>
+            </TabsList>
+            
+            {/* Second row for small screens */}
+            <TabsList className="grid grid-cols-3 mb-6 w-full overflow-x-auto md:hidden">
+              <TabsTrigger value="content" className="whitespace-nowrap">Contenu</TabsTrigger>
+              <TabsTrigger value="social" className="whitespace-nowrap">Liens</TabsTrigger>
+              <TabsTrigger value="newsletter" className="whitespace-nowrap">Newsletter</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="gallery" className="p-6 bg-white rounded-xl shadow-soft">
+            <TabsContent value="gallery" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <GalleryManager />
             </TabsContent>
 
-            <TabsContent value="tickets" className="p-6 bg-white rounded-xl shadow-soft">
+            <TabsContent value="tickets" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <TicketManager />
             </TabsContent>
 
-            <TabsContent value="packages" className="p-6 bg-white rounded-xl shadow-soft">
+            <TabsContent value="packages" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <TicketPackageManager />
             </TabsContent>
 
-            <TabsContent value="slider" className="p-6 bg-white rounded-xl shadow-soft">
+            <TabsContent value="slider" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <SliderManager />
             </TabsContent>
 
-            <TabsContent value="content" className="p-6 bg-white rounded-xl shadow-soft">
+            <TabsContent value="content" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <ContentManager />
             </TabsContent>
 
-            <TabsContent value="social" className="p-6 bg-white rounded-xl shadow-soft">
+            <TabsContent value="social" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <SocialLinksEditor />
             </TabsContent>
 
-            <TabsContent value="newsletter" className="p-6 bg-white rounded-xl shadow-soft">
+            <TabsContent value="newsletter" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <NewsletterSubscriptions />
             </TabsContent>
           </Tabs>
