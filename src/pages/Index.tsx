@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter, MessageSquare } from "lucide-react";
@@ -9,9 +8,12 @@ import FestivalLink from "@/components/FestivalLink";
 import Footer from "@/components/Footer";
 import DiscordIcon from "@/components/icons/DiscordIcon";
 import TicketPackage from "@/components/TicketPackage";
+import { useGalleryItems } from "@/hooks/use-gallery-items";
 
 const Index = () => {
   const [email, setEmail] = useState("");
+  const { items: galleryItems, isLoading } = useGalleryItems('event');
+  
   const [ticketPackages, setTicketPackages] = useState([
     {
       id: "1",
@@ -195,6 +197,64 @@ const Index = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* Gallery Preview Section */}
+      {!isLoading && galleryItems.length > 0 && (
+        <section className="py-20 bg-slate-50" id="gallery-preview">
+          <div className="festival-container">
+            <motion.div
+              className="text-center mb-12"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={sectionVariants}
+            >
+              <h2 className="section-heading inline-block">Aperçu de la Galerie</h2>
+              <p className="text-festival-secondary max-w-2xl mx-auto mt-4">
+                Découvrez quelques moments forts des éditions précédentes du festival.
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {galleryItems.slice(0, 6).map((item) => (
+                <motion.div
+                  key={item.id}
+                  className="overflow-hidden rounded-xl shadow-soft relative aspect-[4/3] group"
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                  variants={sectionVariants}
+                >
+                  {item.type === "image" ? (
+                    <img 
+                      src={item.src} 
+                      alt={item.alt}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-slate-200 flex items-center justify-center">
+                      <span>Vidéo: {item.alt}</span>
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent text-white">
+                    <p className="text-sm font-medium">{item.alt}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            
+            <div className="mt-8 text-center">
+              <motion.a
+                href="/gallery"
+                className="inline-block px-6 py-3 rounded-full bg-festival-accent text-white font-medium 
+                shadow-accent transition-all duration-300 hover:shadow-lg hover:bg-opacity-90"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Voir toute la galerie
+              </motion.a>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Social Media Links */}
       <section className="py-20 bg-gradient-to-br from-slate-50 to-white">
