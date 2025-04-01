@@ -27,6 +27,14 @@ const channel = supabase.channel('admin-panel-changes')
   }, (payload) => {
     console.log('Change received on slider_images!', payload);
   })
+  // Realtime for social links
+  .on('postgres_changes', { 
+    event: '*', 
+    schema: 'public', 
+    table: 'social_links' 
+  }, (payload) => {
+    console.log('Change received on social_links!', payload);
+  })
   // Add more tables here when they're created in Supabase
   .subscribe();
 

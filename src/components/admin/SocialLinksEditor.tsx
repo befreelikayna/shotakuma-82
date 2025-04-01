@@ -16,52 +16,43 @@ interface SocialLink {
 }
 
 const SocialLinksEditor = () => {
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([
-    { id: "1", title: "Instagram", url: "https://www.instagram.com/shotakume/", icon: "instagram" },
-    { id: "2", title: "Facebook", url: "https://facebook.com/OTAKU.sho", icon: "facebook" },
-    { id: "3", title: "Youtube", url: "https://www.youtube.com/@MarocEvents", icon: "youtube" },
-    { id: "4", title: "Twitter", url: "https://x.com/shotakume", icon: "twitter" },
-    { id: "5", title: "Discord", url: "https://discord.gg/KKGCF86z", icon: "discord" },
-  ]);
-
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ title: "", url: "" });
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // In the future, when a social links table is created in Supabase,
-  // enable this code to fetch from database
-  useEffect(() => {
-    /*
-    // When social_links table is created in Supabase, uncomment this code
-    const fetchSocialLinks = async () => {
-      try {
-        setIsLoading(true);
-        const { data, error } = await supabase
-          .from('social_links')
-          .select('*')
-          .order('id');
-        
-        if (error) {
-          console.error('Error fetching social links:', error);
-          toast({
-            title: "Erreur",
-            description: "Impossible de charger les liens sociaux",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        if (data && data.length > 0) {
-          setSocialLinks(data);
-        }
-      } catch (error) {
+  // Fetch social links from Supabase
+  const fetchSocialLinks = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('social_links')
+        .select('*')
+        .order('created_at');
+      
+      if (error) {
         console.error('Error fetching social links:', error);
-      } finally {
-        setIsLoading(false);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les liens sociaux",
+          variant: "destructive",
+        });
+        return;
       }
-    };
-    
+      
+      if (data) {
+        console.log("Social links loaded:", data);
+        setSocialLinks(data);
+      }
+    } catch (error) {
+      console.error('Error fetching social links:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchSocialLinks();
     
     // Set up a realtime subscription for social_links table
@@ -77,8 +68,7 @@ const SocialLinksEditor = () => {
     
     return () => {
       supabase.removeChannel(channel);
-    }; 
-    */
+    };
   }, []);
 
   const handleEdit = (link: SocialLink) => {
@@ -99,29 +89,18 @@ const SocialLinksEditor = () => {
     setIsSaving(true);
     
     try {
-      // Save to state (for now)
-      // In the future, when the social_links table is created, this will be replaced
-      // with a Supabase call
-      setSocialLinks(
-        socialLinks.map((link) =>
-          link.id === editingId ? { ...link, title: editForm.title, url: editForm.url } : link
-        )
-      );
-      
-      /*
-      // When social_links table is created, uncomment this code
       const { error } = await supabase
         .from('social_links')
         .update({ 
           title: editForm.title, 
-          url: editForm.url 
+          url: editForm.url,
+          updated_at: new Date().toISOString()
         })
         .eq('id', editingId);
       
       if (error) {
         throw error;
       }
-      */
       
       toast({
         title: "Succès",
@@ -129,6 +108,7 @@ const SocialLinksEditor = () => {
       });
       
       setEditingId(null);
+      // The data will be updated automatically via the subscription
     } catch (error) {
       console.error("Error saving social link:", error);
       toast({
@@ -158,6 +138,15 @@ const SocialLinksEditor = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin mr-2" />
+        <span>Chargement des liens sociaux...</span>
+      </div>
+    );
+  }
+
   return (
     <div>
       <h2 className="text-2xl font-semibold text-festival-primary mb-6">Gestion des Liens Sociaux</h2>
@@ -170,13 +159,7 @@ const SocialLinksEditor = () => {
           variant="outline" 
           size="sm"
           className="mb-4"
-          onClick={() => {
-            // In the future when the table is created, this will refresh the data
-            toast({
-              title: "Actualisé",
-              description: "Les liens sociaux ont été actualisés."
-            });
-          }}
+          onClick={fetchSocialLinks}
         >
           <RefreshCw className="h-4 w-4 mr-2" /> Actualiser
         </Button>

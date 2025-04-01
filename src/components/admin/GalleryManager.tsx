@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Trash, Plus, Image, Video } from "lucide-react";
+import { Trash, Plus, Image, Video, RefreshCw } from "lucide-react";
+// Import supabase client (commented out until gallery_items table is created)
+// import { supabase } from "@/integrations/supabase/client";
 
 interface GalleryItem {
   id: string;
@@ -29,6 +31,58 @@ const GalleryManager = () => {
     type: "image" as "image" | "video"
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Future function for fetching gallery items from Supabase
+  /* 
+  const fetchGalleryItems = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('gallery_items')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching gallery items:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les éléments de la galerie",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (data) {
+        setGalleryItems(data);
+      }
+    } catch (error) {
+      console.error('Error fetching gallery items:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Uncomment when the gallery_items table is created
+  useEffect(() => {
+    fetchGalleryItems();
+    
+    // Set up a realtime subscription 
+    const channel = supabase
+      .channel('admin:gallery')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'gallery_items' }, 
+        () => {
+          fetchGalleryItems();
+        })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+  */
+
   const handleAddItem = () => {
     if (!newItem.src || !newItem.alt) {
       toast({
@@ -39,6 +93,46 @@ const GalleryManager = () => {
       return;
     }
 
+    // Future Supabase implementation
+    /*
+    try {
+      setIsLoading(true);
+      
+      await supabase
+        .from('gallery_items')
+        .insert([{
+          src: newItem.src,
+          alt: newItem.alt,
+          category: newItem.category,
+          type: newItem.type
+        }]);
+      
+      // Data will refresh automatically via the subscription
+      
+      setNewItem({
+        src: "",
+        alt: "",
+        category: "cosplay",
+        type: "image"
+      });
+      
+      toast({
+        title: "Succès",
+        description: "L'élément a été ajouté à la galerie."
+      });
+    } catch (error) {
+      console.error('Error adding gallery item:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter l'élément à la galerie",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+    */
+
+    // For now, use local state
     const newId = Date.now().toString();
     setGalleryItems([...galleryItems, { ...newItem, id: newId }]);
     
@@ -56,6 +150,31 @@ const GalleryManager = () => {
   };
 
   const handleDeleteItem = (id: string) => {
+    // Future Supabase implementation
+    /*
+    try {
+      await supabase
+        .from('gallery_items')
+        .delete()
+        .eq('id', id);
+      
+      // Data will refresh automatically via the subscription
+      
+      toast({
+        title: "Supprimé",
+        description: "L'élément a été supprimé de la galerie."
+      });
+    } catch (error) {
+      console.error('Error deleting gallery item:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'élément de la galerie",
+        variant: "destructive",
+      });
+    }
+    */
+    
+    // For now, use local state
     setGalleryItems(galleryItems.filter(item => item.id !== id));
     toast({
       title: "Supprimé",
@@ -63,9 +182,29 @@ const GalleryManager = () => {
     });
   };
 
+  const handleRefresh = () => {
+    // Future implementation will call fetchGalleryItems()
+    toast({
+      title: "Actualisé",
+      description: "Les données ont été actualisées."
+    });
+  };
+
   return (
     <div>
       <h2 className="text-2xl font-semibold text-festival-primary mb-6">Gestion de la Galerie</h2>
+      
+      <div className="flex justify-end mb-4">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={handleRefresh}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="h-4 w-4" /> 
+          Actualiser
+        </Button>
+      </div>
       
       <div className="bg-slate-50 p-6 rounded-lg mb-8">
         <h3 className="text-lg font-medium text-festival-primary mb-4">Ajouter un nouveau contenu</h3>

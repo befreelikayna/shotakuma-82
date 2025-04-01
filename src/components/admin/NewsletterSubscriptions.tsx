@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Trash, Search, Download, Mail } from "lucide-react";
+import { Trash, Search, Download, Mail, RefreshCw } from "lucide-react";
+// Import supabase client (commented out until a newsletter subscribers table is created)
+// import { supabase } from "@/integrations/supabase/client";
 
 interface Subscriber {
   id: string;
@@ -20,8 +22,87 @@ const NewsletterSubscriptions = () => {
   ]);
   
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Future function for fetching subscribers from Supabase
+  /* 
+  const fetchSubscribers = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('newsletter_subscribers')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching subscribers:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les abonnés",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (data) {
+        setSubscribers(data.map(sub => ({
+          id: sub.id,
+          email: sub.email,
+          date: new Date(sub.created_at).toISOString().split('T')[0]
+        })));
+      }
+    } catch (error) {
+      console.error('Error fetching subscribers:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Uncomment when the newsletter_subscribers table is created
+  useEffect(() => {
+    fetchSubscribers();
+    
+    // Set up a realtime subscription 
+    const channel = supabase
+      .channel('admin:newsletter')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'newsletter_subscribers' }, 
+        () => {
+          fetchSubscribers();
+        })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+  */
   
   const handleDeleteSubscriber = (id: string) => {
+    // Future Supabase implementation
+    /*
+    try {
+      await supabase
+        .from('newsletter_subscribers')
+        .delete()
+        .eq('id', id);
+        
+      // The data will refresh automatically via the subscription
+      toast({
+        title: "Supprimé",
+        description: "L'abonné a été supprimé de la liste."
+      });
+    } catch (error) {
+      console.error('Error deleting subscriber:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'abonné",
+        variant: "destructive",
+      });
+    }
+    */
+    
+    // For now, use local state
     setSubscribers(subscribers.filter(subscriber => subscriber.id !== id));
     toast({
       title: "Supprimé",
@@ -130,6 +211,24 @@ const NewsletterSubscriptions = () => {
           )}
         </TableBody>
       </Table>
+      
+      {/* Add refresh button for future Supabase implementation */}
+      <div className="mt-4">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => {
+            toast({
+              title: "Actualisé",
+              description: "Les données ont été actualisées."
+            });
+          }}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="h-4 w-4" /> 
+          Actualiser
+        </Button>
+      </div>
     </div>
   );
 };
