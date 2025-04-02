@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from "@/hooks/use-toast";
 
 export interface FacebookPhoto {
@@ -17,11 +17,16 @@ export function useFacebookPhotos(pageId: string = 'OTAKU.sho') {
     try {
       setIsLoading(true);
       setError(null);
+      
+      // Get access token from localStorage (temporary solution for demo)
+      const accessToken = localStorage.getItem('fb_access_token');
+      
+      if (!accessToken) {
+        throw new Error("Access token not found");
+      }
 
-      // NOTE: For a production app, you should create a Supabase Edge Function to securely handle the API key
-      // This is a simplified version for demonstration purposes
       const response = await fetch(
-        `https://graph.facebook.com/v18.0/${pageId}/photos?fields=source,name&limit=100&access_token=${process.env.FACEBOOK_ACCESS_TOKEN}`
+        `https://graph.facebook.com/v18.0/${pageId}/photos?fields=source,name&limit=100&access_token=${accessToken}`
       );
 
       if (!response.ok) {
@@ -49,11 +54,6 @@ export function useFacebookPhotos(pageId: string = 'OTAKU.sho') {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    // We won't automatically fetch on mount since we need a token
-    // Call fetchPhotos manually when you have the token
-  }, [pageId]);
 
   return {
     photos,

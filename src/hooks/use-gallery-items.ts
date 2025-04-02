@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from "@/hooks/use-toast";
 
 export interface GalleryItem {
   id: string;
@@ -44,6 +45,11 @@ export function useGalleryItems(initialCategory?: string) {
     } catch (err) {
       console.error('Error fetching gallery items:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les éléments de la galerie",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -78,6 +84,11 @@ export function useGalleryItems(initialCategory?: string) {
       // Refresh the gallery items
       await fetchGalleryItems(activeCategory);
       
+      toast({
+        title: "Succès",
+        description: `${urls.length} image(s) importée(s) avec succès`,
+      });
+      
       return {
         success: true,
         count: urls.length
@@ -85,6 +96,11 @@ export function useGalleryItems(initialCategory?: string) {
     } catch (err) {
       console.error('Error adding images in bulk:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter les images: " + (err instanceof Error ? err.message : 'Erreur inconnue'),
+        variant: "destructive",
+      });
       return {
         success: false,
         error: err instanceof Error ? err.message : 'An unknown error occurred'

@@ -2,17 +2,19 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Download, Check, X } from "lucide-react";
+import { Loader2, Download, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { useFacebookPhotos, FacebookPhoto } from "@/hooks/use-facebook-photos";
-import { supabase } from "@/integrations/supabase/client";
+import { useFacebookPhotos } from "@/hooks/use-facebook-photos";
+import { useGalleryItems } from "@/hooks/use-gallery-items";
 
 const FacebookPhotosImporter = () => {
   const [accessToken, setAccessToken] = useState("");
   const [pageId, setPageId] = useState("OTAKU.sho");
   const [selectedPhotos, setSelectedPhotos] = useState<Record<string, boolean>>({});
   const [importing, setImporting] = useState<Record<string, boolean>>({});
+  
   const { photos, isLoading, error, fetchPhotos } = useFacebookPhotos(pageId);
+  const { addImagesFromUrls } = useGalleryItems();
 
   const handleFetchPhotos = async () => {
     if (!accessToken) {
@@ -51,46 +53,6 @@ const FacebookPhotosImporter = () => {
     setSelectedPhotos({});
   };
 
-  const importPhoto = async (photo: FacebookPhoto) => {
-    try {
-      setImporting(prev => ({ ...prev, [photo.id]: true }));
-      
-      // Download the image and convert to a proper format for our gallery
-      const galleryItem = {
-        src: photo.source,
-        alt: photo.name || "Photo importée de Facebook",
-        category: "event", // Default category
-        type: "image"
-      };
-      
-      const { data, error } = await supabase
-        .from('gallery_items')
-        .insert([galleryItem]);
-      
-      if (error) {
-        throw error;
-      }
-      
-      toast({
-        title: "Succès",
-        description: "Photo importée avec succès"
-      });
-      
-      // Mark as successfully imported
-      setSelectedPhotos(prev => ({ ...prev, [photo.id]: false }));
-      
-    } catch (err) {
-      console.error('Error importing photo:', err);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'importer cette photo",
-        variant: "destructive",
-      });
-    } finally {
-      setImporting(prev => ({ ...prev, [photo.id]: false }));
-    }
-  };
-
   const importSelectedPhotos = async () => {
     const selectedIds = Object.entries(selectedPhotos)
       .filter(([_, isSelected]) => isSelected)
@@ -104,50 +66,31 @@ const FacebookPhotosImporter = () => {
       return;
     }
     
-    // Find the photos to import
+    // Find the photos to import and get their URLs
     const photosToImport = photos.filter(photo => selectedIds.includes(photo.id));
+    const photoUrls = photosToImport.map(photo => photo.source);
     
-    let imported = 0;
-    for (const photo of photosToImport) {
-      try {
-        setImporting(prev => ({ ...prev, [photo.id]: true }));
-        
-        // Download the image and convert to a proper format for our gallery
-        const galleryItem = {
-          src: photo.source,
-          alt: photo.name || "Photo importée de Facebook",
-          category: "event", // Default category
-          type: "image"
-        };
-        
-        const { error } = await supabase
-          .from('gallery_items')
-          .insert([galleryItem]);
-        
-        if (error) {
-          throw error;
-        }
-        
-        imported++;
-      } catch (err) {
-        console.error('Error importing photo:', err);
-      } finally {
-        setImporting(prev => ({ ...prev, [photo.id]: false }));
+    try {
+      // Mark all as importing
+      const importingState = selectedIds.reduce((acc, id) => {
+        acc[id] = true;
+        return acc;
+      }, {} as Record<string, boolean>);
+      
+      setImporting(importingState);
+      
+      // Use our hook to add images in bulk
+      const result = await addImagesFromUrls(
+        photoUrls, 
+        'event', 
+        'Photo importée de Facebook'
+      );
+      
+      if (result?.success) {
+        setSelectedPhotos({});
       }
-    }
-    
-    if (imported > 0) {
-      toast({
-        title: "Succès",
-        description: `${imported} photos importées avec succès`
-      });
-      setSelectedPhotos({});
-    } else {
-      toast({
-        title: "Erreur",
-        description: "Aucune photo n'a pu être importée",
-        variant: "destructive",
-      });
+    } finally {
+      setImporting({});
     }
   };
 
