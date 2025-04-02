@@ -49,6 +49,51 @@ export function useGalleryItems(initialCategory?: string) {
     }
   };
 
+  // Add images from URLs in bulk
+  const addImagesFromUrls = async (
+    urls: string[],
+    category: 'cosplay' | 'event' | 'artwork' | 'guests' = 'event',
+    altText: string = 'Imported image'
+  ) => {
+    if (!urls.length) return;
+    
+    try {
+      setIsLoading(true);
+      
+      const galleryItems = urls.map(url => ({
+        src: url,
+        alt: altText,
+        category,
+        type: 'image' as const
+      }));
+      
+      const { error } = await supabase
+        .from('gallery_items')
+        .insert(galleryItems);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Refresh the gallery items
+      await fetchGalleryItems(activeCategory);
+      
+      return {
+        success: true,
+        count: urls.length
+      };
+    } catch (err) {
+      console.error('Error adding images in bulk:', err);
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'An unknown error occurred'
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Initialize realtime subscription
   useEffect(() => {
     fetchGalleryItems(activeCategory);
@@ -75,6 +120,7 @@ export function useGalleryItems(initialCategory?: string) {
     error,
     activeCategory,
     setActiveCategory,
-    refetch: () => fetchGalleryItems(activeCategory)
+    refetch: () => fetchGalleryItems(activeCategory),
+    addImagesFromUrls
   };
 }

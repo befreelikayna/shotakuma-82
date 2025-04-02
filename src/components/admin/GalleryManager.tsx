@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Trash, Plus, Image, Video, RefreshCw, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import FacebookPhotosImporter from "./FacebookPhotosImporter";
 
 interface GalleryItem {
   id: string;
@@ -62,7 +62,6 @@ const GalleryManager = () => {
   useEffect(() => {
     fetchGalleryItems();
     
-    // Set up a realtime subscription 
     const channel = supabase
       .channel('admin:gallery')
       .on('postgres_changes', 
@@ -104,8 +103,6 @@ const GalleryManager = () => {
         throw error;
       }
       
-      // Data will refresh automatically via the subscription
-      
       setNewItem({
         src: "",
         alt: "",
@@ -139,8 +136,6 @@ const GalleryManager = () => {
       if (error) {
         throw error;
       }
-      
-      // Data will refresh automatically via the subscription
       
       toast({
         title: "Supprimé",
@@ -179,6 +174,8 @@ const GalleryManager = () => {
           Actualiser
         </Button>
       </div>
+      
+      <FacebookPhotosImporter />
       
       <div className="bg-slate-50 p-6 rounded-lg mb-8">
         <h3 className="text-lg font-medium text-festival-primary mb-4">Ajouter un nouveau contenu</h3>

@@ -4,77 +4,22 @@ import { motion } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { supabase } from "@/integrations/supabase/client";
+import { useGalleryItems, GalleryItem } from "@/hooks/use-gallery-items";
 import { toast } from "@/hooks/use-toast";
 
-type GalleryItem = {
-  id: string;
-  src: string;
-  alt: string;
-  category: "cosplay" | "event" | "artwork" | "guests";
-  type: "image" | "video";
-};
-
 const Gallery = () => {
-  const [activeFilter, setActiveFilter] = useState<string>("all");
   const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const { 
+    items: galleryItems, 
+    isLoading, 
+    error, 
+    activeCategory, 
+    setActiveCategory 
+  } = useGalleryItems("all");
   
-  // Fetch gallery items from Supabase
-  const fetchGalleryItems = async () => {
-    try {
-      setIsLoading(true);
-      
-      const { data, error } = await supabase
-        .from('gallery_items')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching gallery items:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les éléments de la galerie",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (data) {
-        console.log("Gallery items loaded:", data);
-        setGalleryItems(data as GalleryItem[]);
-      }
-    } catch (error) {
-      console.error('Error fetching gallery items:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    fetchGalleryItems();
-    
-    // Set up a realtime subscription 
-    const channel = supabase
-      .channel('public:gallery')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'gallery_items' }, 
-        () => {
-          console.log('Gallery items changed, refreshing...');
-          fetchGalleryItems();
-        })
-      .subscribe();
-    
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const filteredItems = activeFilter === "all" 
+  const filteredItems = activeCategory === "all" 
     ? galleryItems 
-    : galleryItems.filter(item => item.category === activeFilter);
+    : galleryItems.filter(item => item.category === activeCategory);
 
   const openLightbox = (item: GalleryItem) => {
     setSelectedImage(item);
@@ -103,6 +48,8 @@ const Gallery = () => {
 
   // Handle keyboard navigation
   useEffect(() => {
+    window.scrollTo(0, 0);
+    
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!selectedImage) return;
       
@@ -118,6 +65,17 @@ const Gallery = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedImage, filteredItems]);
+
+  // Show error toast if there's an error
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les éléments de la galerie",
+        variant: "destructive",
+      });
+    }
+  }, [error]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -144,9 +102,9 @@ const Gallery = () => {
             <div className="flex justify-center mb-10">
               <div className="inline-flex p-1 rounded-full bg-white shadow-soft overflow-x-auto">
                 <button
-                  onClick={() => setActiveFilter("all")}
+                  onClick={() => setActiveCategory("all")}
                   className={`px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
-                    activeFilter === "all"
+                    activeCategory === "all"
                       ? "bg-festival-accent text-white shadow-accent"
                       : "text-festival-secondary hover:bg-slate-100"
                   }`}
@@ -154,9 +112,9 @@ const Gallery = () => {
                   Tous
                 </button>
                 <button
-                  onClick={() => setActiveFilter("cosplay")}
+                  onClick={() => setActiveCategory("cosplay")}
                   className={`px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
-                    activeFilter === "cosplay"
+                    activeCategory === "cosplay"
                       ? "bg-festival-accent text-white shadow-accent"
                       : "text-festival-secondary hover:bg-slate-100"
                   }`}
@@ -164,9 +122,9 @@ const Gallery = () => {
                   Cosplay
                 </button>
                 <button
-                  onClick={() => setActiveFilter("event")}
+                  onClick={() => setActiveCategory("event")}
                   className={`px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
-                    activeFilter === "event"
+                    activeCategory === "event"
                       ? "bg-festival-accent text-white shadow-accent"
                       : "text-festival-secondary hover:bg-slate-100"
                   }`}
@@ -174,9 +132,9 @@ const Gallery = () => {
                   Événements
                 </button>
                 <button
-                  onClick={() => setActiveFilter("artwork")}
+                  onClick={() => setActiveCategory("artwork")}
                   className={`px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
-                    activeFilter === "artwork"
+                    activeCategory === "artwork"
                       ? "bg-festival-accent text-white shadow-accent"
                       : "text-festival-secondary hover:bg-slate-100"
                   }`}
@@ -184,9 +142,9 @@ const Gallery = () => {
                   Œuvres d'art
                 </button>
                 <button
-                  onClick={() => setActiveFilter("guests")}
+                  onClick={() => setActiveCategory("guests")}
                   className={`px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
-                    activeFilter === "guests"
+                    activeCategory === "guests"
                       ? "bg-festival-accent text-white shadow-accent"
                       : "text-festival-secondary hover:bg-slate-100"
                   }`}
@@ -244,6 +202,7 @@ const Gallery = () => {
                           src={item.src}
                           alt={item.alt}
                           className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+                          loading="lazy"
                         />
                       ) : (
                         <div className="relative aspect-[4/3] bg-slate-200 flex items-center justify-center">
