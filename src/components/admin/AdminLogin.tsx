@@ -13,8 +13,8 @@ interface AdminLoginProps {
 
 // These are hardcoded credentials for demo purposes
 // In a real application, you would use Supabase auth properly
-const ADMIN_EMAIL = "admin@shotaku.ma";
-const ADMIN_PASSWORD = "shotaku2024";
+const ADMIN_EMAIL = "info@shotaku.ma";
+const ADMIN_PASSWORD = "shotaku2025";
 
 const AdminLogin = ({ onLogin }: AdminLoginProps) => {
   const [email, setEmail] = useState("");
@@ -129,8 +129,8 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
         
         {process.env.NODE_ENV !== 'production' && (
           <div className="text-xs text-muted-foreground mt-4 p-2 border border-dashed rounded">
-            <div><strong>Email:</strong> admin@shotaku.ma</div>
-            <div><strong>Mot de passe:</strong> shotaku2024</div>
+            <div><strong>Email:</strong> info@shotaku.ma</div>
+            <div><strong>Mot de passe:</strong> shotaku2025</div>
           </div>
         )}
       </form>
