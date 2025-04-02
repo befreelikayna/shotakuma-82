@@ -12,10 +12,41 @@ import NewsletterSubscriptions from "@/components/admin/NewsletterSubscriptions"
 import SliderManager from "@/components/admin/SliderManager";
 import ContentManager from "@/components/admin/ContentManager";
 import AdminLogin from "@/components/admin/AdminLogin";
+import { supabase } from "@/integrations/supabase/client";
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("slider");
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (data && data.session) {
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
+    
+    // Subscribe to auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+    
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   const handleLogin = (success: boolean) => {
     if (success) {
@@ -55,6 +86,29 @@ const Admin = () => {
     window.history.replaceState(null, '', `#${value}`);
   };
 
+  // Handle logout
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+    toast({
+      title: "Déconnexion réussie",
+      description: "Vous avez été déconnecté avec succès",
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent text-festival-primary align-[-0.125em]" role="status">
+            <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading...</span>
+          </div>
+          <p className="mt-2 text-festival-secondary">Chargement du panneau d'administration...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -74,9 +128,14 @@ const Admin = () => {
       <Navbar />
       <div className="pt-20 md:pt-32 pb-20 px-4 md:px-0">
         <div className="festival-container">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-festival-primary mb-6 md:mb-8 text-center">
-            Panneau d'Administration
-          </h1>
+          <div className="flex justify-between items-center mb-6 md:mb-8">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-festival-primary text-center md:text-left">
+              Panneau d'Administration
+            </h1>
+            <Button variant="outline" onClick={handleLogout}>
+              Déconnexion
+            </Button>
+          </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
             <TabsList className="grid grid-cols-4 md:grid-cols-7 mb-6 md:mb-8 w-full overflow-x-auto">
