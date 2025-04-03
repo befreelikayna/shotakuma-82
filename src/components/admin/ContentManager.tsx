@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit } from "lucide-react";
+import { Edit, RefreshCw, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PageContent {
   header: {
@@ -131,6 +132,68 @@ const initialContent: Record<string, PageContent> = {
 const ContentManager = () => {
   const [selectedPage, setSelectedPage] = useState("home");
   const [content, setContent] = useState<Record<string, PageContent>>(initialContent);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Fetch content from the database
+  const fetchContent = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('page_content')
+        .select('*');
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        // Convert the database data to our content structure
+        const newContent: Record<string, PageContent> = { ...initialContent };
+        
+        data.forEach(item => {
+          if (item.page_id && item.content) {
+            try {
+              const parsedContent = JSON.parse(item.content);
+              newContent[item.page_id] = parsedContent;
+            } catch (e) {
+              console.error(`Error parsing content for page ${item.page_id}:`, e);
+            }
+          }
+        });
+        
+        setContent(newContent);
+      }
+    } catch (error) {
+      console.error("Error fetching content:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger le contenu des pages",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchContent();
+    
+    // Set up a realtime subscription for content updates
+    const channel = supabase
+      .channel('admin:page_content')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'page_content' }, 
+        () => {
+          console.log('Page content changed, refreshing...');
+          fetchContent();
+        })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleContentChange = (
     pageId: string,
@@ -216,23 +279,99 @@ const ContentManager = () => {
     });
   };
 
-  const handleSaveChanges = () => {
-    // In a real app, this would save to a database
+  const handleSaveChanges = async () => {
+    setIsSaving(true);
+    
+    try {
+      // For each page, save or update the content in the database
+      for (const pageId of Object.keys(content)) {
+        const pageContent = content[pageId];
+        
+        const { data: existingContent, error: fetchError } = await supabase
+          .from('page_content')
+          .select('*')
+          .eq('page_id', pageId)
+          .single();
+        
+        if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116: No rows returned
+          throw fetchError;
+        }
+        
+        if (existingContent) {
+          // Update existing content
+          const { error: updateError } = await supabase
+            .from('page_content')
+            .update({ 
+              content: JSON.stringify(pageContent),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingContent.id);
+          
+          if (updateError) throw updateError;
+        } else {
+          // Insert new content
+          const { error: insertError } = await supabase
+            .from('page_content')
+            .insert({ 
+              page_id: pageId, 
+              content: JSON.stringify(pageContent)
+            });
+          
+          if (insertError) throw insertError;
+        }
+      }
+      
+      toast({
+        title: "Contenu enregistré",
+        description: "Les modifications du contenu ont été enregistrées avec succès",
+      });
+    } catch (error) {
+      console.error("Error saving content:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de l'enregistrement du contenu",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchContent();
     toast({
-      title: "Contenu enregistré",
-      description: "Les modifications du contenu ont été enregistrées avec succès",
+      title: "Actualisation",
+      description: "Le contenu a été actualisé",
     });
   };
 
-  const currentContent = content[selectedPage];
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin mr-2" />
+        <span>Chargement du contenu...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Gestion du Contenu</h2>
-        <p className="text-sm text-muted-foreground mb-6">
-          Modifiez le contenu textuel des différentes pages du site.
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-xl font-semibold mb-2">Gestion du Contenu</h2>
+          <p className="text-sm text-muted-foreground">
+            Modifiez le contenu textuel des différentes pages du site.
+          </p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={handleRefresh}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="h-4 w-4" /> 
+          Actualiser
+        </Button>
       </div>
 
       <Tabs value={selectedPage} onValueChange={setSelectedPage}>
@@ -443,8 +582,19 @@ const ContentManager = () => {
       </Tabs>
 
       <div className="pt-6">
-        <Button onClick={handleSaveChanges} className="w-full md:w-auto">
-          Enregistrer toutes les modifications
+        <Button 
+          onClick={handleSaveChanges} 
+          className="w-full md:w-auto"
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Enregistrement...
+            </>
+          ) : (
+            "Enregistrer toutes les modifications"
+          )}
         </Button>
       </div>
     </div>

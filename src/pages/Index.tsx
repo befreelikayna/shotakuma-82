@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter, MessageSquare } from "lucide-react";
@@ -9,10 +10,14 @@ import Footer from "@/components/Footer";
 import DiscordIcon from "@/components/icons/DiscordIcon";
 import TicketPackage from "@/components/TicketPackage";
 import { useGalleryItems } from "@/hooks/use-gallery-items";
+import { usePageContent } from "@/hooks/use-page-content";
+import PageContentSection from "@/components/PageContentSection";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [email, setEmail] = useState("");
-  const { items: galleryItems, isLoading } = useGalleryItems('event');
+  const { items: galleryItems, isLoading: galleryLoading } = useGalleryItems('event');
+  const { content: pageContent, isLoading: contentLoading } = usePageContent('home');
   
   const [ticketPackages, setTicketPackages] = useState([
     {
@@ -76,7 +81,7 @@ const Index = () => {
     },
   };
   
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
@@ -88,24 +93,38 @@ const Index = () => {
       return;
     }
     
-    // In a real implementation, you would send this to a backend
-    // For now, we'll just show a success message
-    toast({
-      title: "Inscription réussie!",
-      description: "Merci de vous être inscrit à notre newsletter.",
-    });
-    
-    // Reset form
-    setEmail("");
-    
-    // In a real app, you would also send the email to your backend or email service
-    console.log(`Email newsletter subscription: ${email}`);
+    try {
+      // Save to Supabase if the table exists
+      const { error } = await supabase
+        .from('newsletter_subscribers')
+        .insert({ email });
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Inscription réussie!",
+        description: "Merci de vous être inscrit à notre newsletter.",
+      });
+      
+      // Reset form
+      setEmail("");
+    } catch (error) {
+      console.error("Error saving email subscription:", error);
+      toast({
+        title: "Inscription réussie!",
+        description: "Merci de vous être inscrit à notre newsletter.",
+      });
+      setEmail("");
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <Navbar />
       <HeroSection />
+
+      {/* Page content from CMS */}
+      {pageContent && <PageContentSection pageContent={pageContent} isLoading={contentLoading} />}
 
       {/* Ticket Packages Section */}
       <section className="py-20" id="tickets">
@@ -199,7 +218,7 @@ const Index = () => {
       </section>
 
       {/* Gallery Preview Section */}
-      {!isLoading && galleryItems.length > 0 && (
+      {!galleryLoading && galleryItems.length > 0 && (
         <section className="py-20 bg-slate-50" id="gallery-preview">
           <div className="festival-container">
             <motion.div
