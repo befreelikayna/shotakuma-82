@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { RefreshCw, Plus, Loader2, Calendar, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useFacebookEvents } from "@/hooks/use-facebook-photos";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const EVENT_CATEGORIES = [
@@ -44,9 +43,9 @@ const EventManager = () => {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const { events: fbEvents, storedEvents, fetchEvents, saveEvent } = useFacebookEvents();
-
-  const fetchStoredEvents = async () => {
+  
+  // Fetch events from the database
+  const fetchEvents = async () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
@@ -74,16 +73,17 @@ const EventManager = () => {
     }
   };
 
+  // Initially load events and setup realtime subscription
   useEffect(() => {
-    fetchStoredEvents();
+    fetchEvents();
     
     const channel = supabase
-      .channel('admin:events')
+      .channel('events-changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'events' }, 
         () => {
           console.log('Events changed, refreshing...');
-          fetchStoredEvents();
+          fetchEvents();
         })
       .subscribe();
     
@@ -92,16 +92,343 @@ const EventManager = () => {
     };
   }, []);
 
+  // Add your past events to the database on component mount
+  useEffect(() => {
+    const addPastEvents = async () => {
+      // Check if events already exist
+      const { data: existingEvents, error: checkError } = await supabase
+        .from('events')
+        .select('count')
+        .single();
+      
+      if (checkError) {
+        console.error('Error checking existing events:', checkError);
+        return;
+      }
+      
+      // If events already exist, don't add the past events again
+      if (existingEvents && existingEvents.count > 0) {
+        console.log('Events already exist in the database, not adding past events');
+        return;
+      }
+      
+      const pastEvents = [
+        {
+          name: "Shotaku Shogatsu - Tour @Rabat Isamgi",
+          description: "Event by Shotaku",
+          place: "ISMAGi Rabat Reconnu par l'Etat",
+          location: "الرباط",
+          event_date: "2023-12-30T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Shotaku Summer Edition - ISMAGI, Rabat",
+          description: "Event by Shotaku",
+          place: "ISMAGI, Rabat",
+          location: "",
+          event_date: "2023-07-23T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Shotaku 9e festival - Enim, Rabat",
+          description: "Event by Shotaku",
+          place: "École nationale supérieure des mines de Rabat",
+          location: "الرباط",
+          event_date: "2023-04-29T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Shotaku Chiisai 3 @Rabat",
+          description: "Event by Shotaku",
+          place: "Rabat",
+          location: "",
+          event_date: "2023-01-29T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "SHOTAKU AUI EDITION",
+          description: "Event by Shotaku",
+          place: "Al Akhawayn University in Ifrane",
+          location: "إفران",
+          event_date: "2022-11-26T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Gamers M Area @Shotaku 7e Festival",
+          description: "Event by Shotaku",
+          place: "Rabat",
+          location: "الدار البيضاء",
+          event_date: "2022-07-24T10:00:00Z",
+          category: "gaming"
+        },
+        {
+          name: "Shotaku 8e festival - Rabat",
+          description: "Event by Shotaku",
+          place: "Rabat Morocoo",
+          location: "الرباط",
+          event_date: "2022-07-24T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Maroc Events - Staff recrutement *2",
+          description: "Event by Maroc Events",
+          place: "Maroc Events",
+          location: "الرباط",
+          event_date: "2020-03-22T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Shotaku Chiisai 2e Festival - Théâtre Bahnini",
+          description: "Event by Shotaku",
+          place: "Rabat",
+          location: "الرباط",
+          event_date: "2020-02-22T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Shotaku Chiisai 2 - Rabat",
+          description: "Event by Shotaku",
+          place: "Rabat",
+          location: "",
+          event_date: "2020-02-22T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Shotaku 7e festival - Rabat",
+          description: "Event by Shotaku",
+          place: "Ecole de danse Colibri Centre Artistique",
+          location: "الرباط",
+          event_date: "2019-12-08T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Gamers M Area @Shotaku 7",
+          description: "Event by Shotaku",
+          place: "Ecole de danse Colibri Centre Artistique",
+          location: "الرباط",
+          event_date: "2019-12-08T10:00:00Z",
+          category: "gaming"
+        },
+        {
+          name: "Faber Castell Drawing contest @Shotaku 7",
+          description: "Event by Shotaku",
+          place: "Ecole de danse Colibri Centre Artistique",
+          location: "الرباط",
+          event_date: "2019-12-08T10:00:00Z",
+          category: "manga"
+        },
+        {
+          name: "Ohayo Japan 3",
+          description: "Event by JapaMines",
+          place: "École Nationale Supérieure des Mines de Rabat",
+          location: "الرباط",
+          event_date: "2019-04-06T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "L'Foire / JAPAN @Kenitra",
+          description: "Event by Shotaku",
+          place: "ENSA-K",
+          location: "القنيطرة",
+          event_date: "2019-03-17T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Tournoi PUBG @Kenitra",
+          description: "Event by Shotaku",
+          place: "ENSA-K",
+          location: "القنيطرة",
+          event_date: "2019-03-17T10:00:00Z",
+          category: "gaming"
+        },
+        {
+          name: "L'after Shotaku 6e Festival @Théâtre Bahnini",
+          description: "Event by Shotaku",
+          place: "Théâtre Bahnini",
+          location: "الرباط",
+          event_date: "2018-07-18T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Shotaku 6e Festival - Mega Mall",
+          description: "Event by Shotaku",
+          place: "Mega Mall Rabat",
+          location: "الرباط",
+          event_date: "2018-06-24T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Shotaku 5e Festival - Mega Mall",
+          description: "Event by Shotaku",
+          place: "Mega Mall Rabat",
+          location: "الرباط",
+          event_date: "2018-02-04T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Shotaku 2017 @Morocco",
+          description: "Event by Shotaku",
+          place: "Morocco",
+          location: "",
+          event_date: "2017-12-31T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Shotaku",
+          description: "Event by Maroc Events",
+          place: "Morocco",
+          location: "",
+          event_date: "2017-12-31T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Asiexpo 2 @Théâtre Allal El Fassi",
+          description: "Event by Shotaku",
+          place: "Théatre Allal El fassi Agdal Rabat",
+          location: "الرباط",
+          event_date: "2017-10-15T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Shotaku @Théâtre allal el fassi - ST1",
+          description: "Event by Shotaku",
+          place: "Théatre Allal El fassi Agdal Rabat",
+          location: "الرباط",
+          event_date: "2017-07-09T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Shotaku Awards - Page",
+          description: "Event by Maroc Events",
+          place: "Maroc Events",
+          location: "الرباط",
+          event_date: "2017-02-11T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Shotaku 4 @Mega Mall",
+          description: "Event by Maroc Events",
+          place: "Mega Mall Rabat",
+          location: "الرباط",
+          event_date: "2017-02-11T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Concours cosplays (Best cosplayeurs 2017) @Shotaku 4",
+          description: "Event by Maroc Events",
+          place: "Mega Mall Rabat",
+          location: "الرباط",
+          event_date: "2017-02-11T10:00:00Z",
+          category: "cosplay"
+        },
+        {
+          name: "Shotaku Awards - Groupe",
+          description: "Event by Maroc Events",
+          place: "Maroc Events",
+          location: "الرباط",
+          event_date: "2017-02-11T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Shotaku Awards - chaîne",
+          description: "Event by Maroc Events",
+          place: "Maroc Events",
+          location: "الرباط",
+          event_date: "2017-02-11T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Gamers M 4 - The legends area",
+          description: "Event by Maroc Events",
+          place: "Maroc Events",
+          location: "الرباط",
+          event_date: "2017-02-11T10:00:00Z",
+          category: "gaming"
+        },
+        {
+          name: "Concours dessin 3 @Shotaku 3",
+          description: "Event by Shotaku",
+          place: "Mega Mall Rabat",
+          location: "الرباط",
+          event_date: "2016-08-03T10:00:00Z",
+          category: "manga"
+        },
+        {
+          name: "Best Morrocan Cosplay 2K16 @Shotaku 3",
+          description: "Event by Shotaku",
+          place: "Mega Mall Rabat",
+          location: "الرباط",
+          event_date: "2016-08-03T10:00:00Z",
+          category: "cosplay"
+        },
+        {
+          name: "Shotaku 3 @Mega Mall - Rabat",
+          description: "Event by Maroc Events",
+          place: "Mega Mall Rabat",
+          location: "الرباط",
+          event_date: "2016-08-03T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Compétition de dessin @ Shotaku 2",
+          description: "Event by Maroc Events",
+          place: "Théâtre allal el fassi Rabat",
+          location: "الرباط",
+          event_date: "2016-01-24T10:00:00Z",
+          category: "manga"
+        },
+        {
+          name: "Shotaku 2 @ Théâtre allal el fassi Rabat",
+          description: "Event by Shotaku",
+          place: "Théâtre allal el fassi Rabat",
+          location: "الرباط",
+          event_date: "2016-01-24T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "Shotaku @ Rabat",
+          description: "Event by Shotaku",
+          place: "Salle Allal Lfassi, Agdal.",
+          location: "الرباط",
+          event_date: "2015-07-25T10:00:00Z",
+          category: "culture"
+        },
+        {
+          name: "✖ CASTING TOP COSPLAYEUR ✖ ♕ MAROC EVENTS ♕",
+          description: "Event by Maroc Events",
+          place: "Salle Allal Lfassi, Agdal.",
+          location: "الرباط",
+          event_date: "2015-07-25T10:00:00Z",
+          category: "cosplay"
+        }
+      ];
+
+      try {
+        console.log('Adding past events to the database...');
+        const { error: insertError } = await supabase
+          .from('events')
+          .insert(pastEvents);
+        
+        if (insertError) {
+          console.error('Error inserting past events:', insertError);
+        } else {
+          console.log('Past events added successfully');
+          fetchEvents(); // Refresh the list
+        }
+      } catch (error) {
+        console.error('Error adding past events:', error);
+      }
+    };
+
+    addPastEvents();
+  }, []);
+
   const handleRefresh = () => {
-    fetchStoredEvents();
+    fetchEvents();
     toast({
       title: "Actualisé",
       description: "Les événements ont été actualisés."
     });
-  };
-
-  const handleFacebookSync = () => {
-    fetchEvents();
   };
 
   const handleAddEvent = async () => {
@@ -148,7 +475,7 @@ const EventManager = () => {
         description: "L'événement a été ajouté"
       });
 
-      fetchStoredEvents();
+      fetchEvents();
     } catch (error: any) {
       console.error('Error adding event:', error);
       toast({
@@ -158,27 +485,6 @@ const EventManager = () => {
       });
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleSaveFacebookEvent = async (event: any) => {
-    try {
-      const formattedEvent = {
-        id: event.id,
-        name: event.name,
-        description: event.description || '',
-        place: event.place?.name || '',
-        location: event.place?.location ? 
-          `${event.place.location.city || ''}, ${event.place.location.country || ''}` : '',
-        event_date: event.start_time ? new Date(event.start_time).toISOString() : new Date().toISOString(),
-        image_url: event.cover?.source || '',
-        category: 'culture'
-      };
-      
-      await saveEvent(formattedEvent);
-      fetchStoredEvents();
-    } catch (error) {
-      console.error('Error saving Facebook event:', error);
     }
   };
 
@@ -209,7 +515,7 @@ const EventManager = () => {
       });
 
       setSelectedEvent(null);
-      fetchStoredEvents();
+      fetchEvents();
     } catch (error: any) {
       console.error('Error updating event:', error);
       toast({
@@ -238,7 +544,7 @@ const EventManager = () => {
         description: "L'événement a été supprimé"
       });
 
-      fetchStoredEvents();
+      fetchEvents();
     } catch (error: any) {
       console.error('Error deleting event:', error);
       toast({
@@ -267,14 +573,6 @@ const EventManager = () => {
       <h2 className="text-2xl font-semibold text-festival-primary mb-6">Gestion des Événements</h2>
       
       <div className="flex justify-end mb-4 gap-2">
-        <Button 
-          variant="outline" 
-          onClick={handleFacebookSync}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className="h-4 w-4" /> 
-          Synchroniser avec Facebook
-        </Button>
         <Button 
           variant="outline" 
           onClick={handleRefresh}
@@ -383,48 +681,6 @@ const EventManager = () => {
         </Button>
       </div>
       
-      {/* Facebook Events section */}
-      {fbEvents && fbEvents.length > 0 && (
-        <div className="bg-slate-50 p-6 rounded-lg mb-8">
-          <h3 className="text-lg font-medium text-festival-primary mb-4">Événements Facebook ({fbEvents.length})</h3>
-          
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Lieu</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {fbEvents.map((event) => (
-                  <TableRow key={event.id}>
-                    <TableCell>{event.name}</TableCell>
-                    <TableCell>
-                      {event.start_time && formatEventDate(event.start_time)}
-                    </TableCell>
-                    <TableCell>
-                      {event.place?.name}
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleSaveFacebookEvent(event)}
-                      >
-                        Importer
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      )}
-      
       {/* Stored Events section */}
       <h3 className="text-lg font-medium text-festival-primary mb-4">Événements ({events.length})</h3>
       
@@ -487,7 +743,7 @@ const EventManager = () => {
         </div>
       )}
       
-      {/* Edit event modal - simplified for brevity */}
+      {/* Edit event modal */}
       {selectedEvent && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">

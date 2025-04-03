@@ -1,14 +1,13 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import EventItem from "@/components/EventItem";
 import { supabase } from "@/integrations/supabase/client";
-import { useFacebookEvents } from "@/hooks/use-facebook-photos";
 
 interface Event {
   id: string;
@@ -29,9 +28,7 @@ const Events = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const eventsPerPage = 9;
-  
-  const { events: fbEvents, isLoading: isFbEventsLoading, error: fbEventsError, fetchEvents } = useFacebookEvents();
-  
+
   // Fetch events from Supabase
   useEffect(() => {
     const fetchEvents = async () => {
@@ -76,6 +73,21 @@ const Events = () => {
     };
 
     fetchEvents();
+    
+    // Subscribe to events changes
+    const channel = supabase
+      .channel('events-page-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'events' }, 
+        () => {
+          console.log('Events changed, refreshing...');
+          fetchEvents();
+        })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Format date for display
@@ -106,14 +118,6 @@ const Events = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
-
-  // Attempt to fetch Facebook events if we have an access token
-  useEffect(() => {
-    const hasToken = localStorage.getItem('fb_access_token');
-    if (hasToken) {
-      fetchEvents();
-    }
   }, []);
 
   // Update URL params when filters change

@@ -49,6 +49,14 @@ const channel = supabase.channel('admin-panel-changes')
   }, (payload) => {
     console.log('Change received on gallery_items!', payload);
   })
+  // Realtime for events
+  .on('postgres_changes', { 
+    event: '*', 
+    schema: 'public', 
+    table: 'events' 
+  }, (payload) => {
+    console.log('Change received on events!', payload);
+  })
   .subscribe();
 
 // Export the channel for potential cleanup
