@@ -90,9 +90,10 @@ const EventManager = () => {
           return;
         }
         
-        const count = existingEvents && typeof existingEvents === 'object' 
-          ? (existingEvents?.count as number || 0) 
-          : 0;
+        // Fix: Handle null existingEvents safely
+        const count = existingEvents ? 
+          (typeof existingEvents === 'object' && existingEvents.count !== null ? 
+            Number(existingEvents.count) : 0) : 0;
         
         if (count > 0) {
           console.log('Events already exist in the database, not adding past events');
