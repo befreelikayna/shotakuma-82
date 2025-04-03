@@ -52,6 +52,7 @@ export const usePageContent = (pageId: string) => {
       setError(null);
 
       try {
+        // Use the custom supabase client to avoid TypeScript errors
         const { data, error } = await supabase
           .from('page_content')
           .select('*')
@@ -67,9 +68,9 @@ export const usePageContent = (pageId: string) => {
           throw error;
         }
 
-        if (data && data.content) {
+        if (data) {
           try {
-            const parsedContent = JSON.parse(data.content);
+            const parsedContent = JSON.parse(data.content as string);
             setContent(parsedContent);
           } catch (e) {
             console.error(`Error parsing content for page ${pageId}:`, e);
