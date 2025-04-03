@@ -24,6 +24,9 @@ export interface FacebookEvent {
   cover?: {
     source: string;
   };
+  // Added fields for managing custom images and categories
+  custom_image?: string;
+  category?: "anime" | "manga" | "cosplay" | "gaming" | "culture";
 }
 
 export function useFacebookPhotos(pageId: string = 'OTAKU.sho') {
@@ -85,6 +88,7 @@ export function useFacebookEvents(pageId: string = 'OTAKU.sho') {
   const [events, setEvents] = useState<FacebookEvent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [storedEvents, setStoredEvents] = useState<any[]>([]);
 
   const fetchEvents = async () => {
     try {
@@ -115,6 +119,24 @@ export function useFacebookEvents(pageId: string = 'OTAKU.sho') {
         console.error('Unexpected response format:', data);
         setEvents([]);
       }
+
+      // Now fetch stored events with custom images from Supabase
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data: eventsData, error } = await supabase
+          .from('events')
+          .select('*')
+          .order('event_date', { ascending: false });
+          
+        if (error) throw error;
+        
+        if (eventsData) {
+          console.log('Stored events fetched:', eventsData);
+          setStoredEvents(eventsData);
+        }
+      } catch (dbError) {
+        console.error('Error fetching stored events:', dbError);
+      }
     } catch (err) {
       console.error('Error fetching Facebook events:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -128,10 +150,53 @@ export function useFacebookEvents(pageId: string = 'OTAKU.sho') {
     }
   };
 
+  // Helper function to save event to database
+  const saveEvent = async (event: FacebookEvent & { image?: string, category?: string, event_date?: string }) => {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      const { data, error } = await supabase
+        .from('events')
+        .upsert({
+          id: event.id,
+          name: event.name,
+          description: event.description || '',
+          place: event.place?.name || '',
+          location: event.place?.location ? 
+            `${event.place.location.city || ''}, ${event.place.location.country || ''}` : '',
+          event_date: event.event_date || event.start_time || new Date().toISOString(),
+          image_url: event.image || event.cover?.source || '',
+          category: event.category || 'culture'
+        })
+        .select();
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Succès",
+        description: "Événement sauvegardé avec succès"
+      });
+      
+      // Refresh the stored events
+      fetchEvents();
+      return data;
+    } catch (err) {
+      console.error('Error saving event:', err);
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder l'événement",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
   return {
     events,
+    storedEvents,
     isLoading,
     error,
-    fetchEvents
+    fetchEvents,
+    saveEvent
   };
 }
