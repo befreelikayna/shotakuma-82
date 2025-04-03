@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,20 +81,21 @@ const EventManager = () => {
   useEffect(() => {
     const addPastEvents = async () => {
       try {
+        // Change the query to simply check if there are any events
         const { data, error: checkError } = await supabase
           .from('events')
-          .select('count')
-          .single();
+          .select('*')
+          .limit(1);
       
         if (checkError) {
           console.error('Error checking existing events:', checkError);
           return;
         }
         
-        const count = data && typeof data.count !== 'undefined' ? 
-          (typeof data.count === 'number' ? data.count : parseInt(data.count) || 0) : 0;
+        // If data is an array with length > 0, then events exist
+        const eventsExist = Array.isArray(data) && data.length > 0;
         
-        if (count > 0) {
+        if (eventsExist) {
           console.log('Events already exist in the database, not adding past events');
           return;
         }
