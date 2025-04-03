@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { RefreshCw, Plus, Loader2, Calendar, MapPin } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { customSupabase as supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const EVENT_CATEGORIES = [
@@ -44,7 +43,6 @@ const EventManager = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   
-  // Fetch events from the database
   const fetchEvents = async () => {
     try {
       setIsLoading(true);
@@ -59,7 +57,7 @@ const EventManager = () => {
       
       if (data) {
         console.log("Events loaded:", data);
-        setEvents(data);
+        setEvents(data as Event[]);
       }
     } catch (error) {
       console.error('Error fetching events:', error);
@@ -73,7 +71,6 @@ const EventManager = () => {
     }
   };
 
-  // Initially load events and setup realtime subscription
   useEffect(() => {
     fetchEvents();
     
@@ -92,10 +89,8 @@ const EventManager = () => {
     };
   }, []);
 
-  // Add your past events to the database on component mount
   useEffect(() => {
     const addPastEvents = async () => {
-      // Check if events already exist
       const { data: existingEvents, error: checkError } = await supabase
         .from('events')
         .select('count')
@@ -106,7 +101,6 @@ const EventManager = () => {
         return;
       }
       
-      // If events already exist, don't add the past events again
       if (existingEvents && existingEvents.count > 0) {
         console.log('Events already exist in the database, not adding past events');
         return;
@@ -407,7 +401,7 @@ const EventManager = () => {
         console.log('Adding past events to the database...');
         const { error: insertError } = await supabase
           .from('events')
-          .insert(pastEvents);
+          .insert(pastEvents as any);
         
         if (insertError) {
           console.error('Error inserting past events:', insertError);
@@ -454,7 +448,7 @@ const EventManager = () => {
           event_date: newEvent.event_date,
           image_url: newEvent.image_url || '',
           category: newEvent.category || 'culture'
-        }]);
+        }] as any);
       
       if (error) {
         throw error;
@@ -502,7 +496,7 @@ const EventManager = () => {
           event_date: event.event_date,
           image_url: event.image_url,
           category: event.category
-        })
+        } as any)
         .eq('id', event.id);
       
       if (error) {
@@ -583,7 +577,6 @@ const EventManager = () => {
         </Button>
       </div>
       
-      {/* Add new event form */}
       <div className="bg-slate-50 p-6 rounded-lg mb-8">
         <h3 className="text-lg font-medium text-festival-primary mb-4">Ajouter un nouvel événement</h3>
         
@@ -681,7 +674,6 @@ const EventManager = () => {
         </Button>
       </div>
       
-      {/* Stored Events section */}
       <h3 className="text-lg font-medium text-festival-primary mb-4">Événements ({events.length})</h3>
       
       {isLoading ? (
@@ -743,7 +735,6 @@ const EventManager = () => {
         </div>
       )}
       
-      {/* Edit event modal */}
       {selectedEvent && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">

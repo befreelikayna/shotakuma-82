@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import EventItem from "@/components/EventItem";
-import { supabase } from "@/integrations/supabase/client";
+import { customSupabase as supabase } from "@/integrations/supabase/client";
 
 interface Event {
   id: string;
@@ -18,13 +18,14 @@ interface Event {
   location: string;
   image_url: string;
   category: "anime" | "manga" | "cosplay" | "gaming" | "culture";
+  past?: boolean;
 }
 
 const Events = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState<string>(searchParams.get("category") || "all");
   const [activeTab, setActiveTab] = useState<string>(searchParams.get("tab") || "upcoming");
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const eventsPerPage = 9;
@@ -52,12 +53,16 @@ const Events = () => {
             
             return {
               id: event.id,
+              name: event.name,
               title: event.name,
               description: event.description,
               date: formatDate(event.event_date),
               time: extractTime(event.event_date),
               location: event.place + (event.location ? `, ${event.location}` : ''),
+              place: event.place,
+              event_date: event.event_date,
               image: event.image_url || "https://source.unsplash.com/random/800x600?festival",
+              image_url: event.image_url || "https://source.unsplash.com/random/800x600?festival",
               category: event.category as "anime" | "manga" | "cosplay" | "gaming" | "culture",
               past: isPast
             };
