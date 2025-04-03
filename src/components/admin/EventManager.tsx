@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,7 +80,7 @@ const EventManager = () => {
   useEffect(() => {
     const addPastEvents = async () => {
       try {
-        const { data: existingEvents, error: checkError } = await supabase
+        const { data, error: checkError } = await supabase
           .from('events')
           .select('count')
           .single();
@@ -91,13 +90,8 @@ const EventManager = () => {
           return;
         }
         
-        // Completely revised null check approach
-        let count = 0;
-        if (existingEvents !== null) {
-          count = typeof existingEvents.count === 'number' ? 
-            existingEvents.count : 
-            (existingEvents.count !== null ? Number(existingEvents.count) : 0);
-        }
+        const count = data && typeof data.count !== 'undefined' ? 
+          (typeof data.count === 'number' ? data.count : parseInt(data.count) || 0) : 0;
         
         if (count > 0) {
           console.log('Events already exist in the database, not adding past events');
