@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,10 +91,10 @@ const EventManager = () => {
           return;
         }
         
-        // Fix: Handle null existingEvents safely
+        // Fix: Handle null existingEvents safely and prevent TypeScript errors
         const count = existingEvents ? 
-          (typeof existingEvents === 'object' && existingEvents.count !== null ? 
-            Number(existingEvents.count) : 0) : 0;
+          (typeof existingEvents === 'object' && existingEvents?.count !== null ? 
+            Number(existingEvents?.count) : 0) : 0;
         
         if (count > 0) {
           console.log('Events already exist in the database, not adding past events');
