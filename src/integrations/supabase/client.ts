@@ -62,11 +62,40 @@ const channel = supabase.channel('admin-panel-changes')
 // Export the channel for potential cleanup
 export const realtimeChannel = channel;
 
-// Create a custom typed version of supabase client for the Events table
-// This is a workaround for the TypeScript definitions not being updated
-// We can remove this once we regenerate the types properly
+// Define a base event interface that all components can use
+export interface Event {
+  id: string;
+  name: string;
+  description: string | null;
+  place: string;
+  location: string | null;
+  event_date: string;
+  image_url: string | null;
+  category: string;
+  created_at?: string;
+  updated_at?: string;
+  past?: boolean;
+  
+  // Additional fields needed for EventItem component
+  title?: string;
+  date?: string;
+  time?: string;
+  image?: string;
+  registrationLink?: string;
+}
+
+// Create a custom typed version of supabase client for the database
+// This is a workaround for TypeScript definitions
 export const customSupabase = {
   from: (table: string) => {
     return supabase.from(table as any);
+  },
+  // Add channel method to our custom client
+  channel: (name: string) => {
+    return supabase.channel(name);
+  },
+  // Add removeChannel method to our custom client
+  removeChannel: (channel: any) => {
+    return supabase.removeChannel(channel);
   }
 };

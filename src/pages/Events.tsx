@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Calendar, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
@@ -7,19 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import EventItem from "@/components/EventItem";
-import { customSupabase as supabase } from "@/integrations/supabase/client";
-
-interface Event {
-  id: string;
-  name: string;
-  description: string;
-  event_date: string;
-  place: string;
-  location: string;
-  image_url: string;
-  category: "anime" | "manga" | "cosplay" | "gaming" | "culture";
-  past?: boolean;
-}
+import { customSupabase as supabase, Event } from "@/integrations/supabase/client";
 
 const Events = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -45,8 +32,8 @@ const Events = () => {
         if (data) {
           console.log('Events fetched from Supabase:', data);
           
-          // Process events
-          const processedEvents = data.map(event => {
+          // Process events with explicit type casting
+          const processedEvents = (data as any[]).map(event => {
             const eventDate = new Date(event.event_date);
             const currentDate = new Date();
             const isPast = eventDate < currentDate;
@@ -283,13 +270,13 @@ const Events = () => {
                   <EventItem 
                     key={event.id} 
                     id={event.id}
-                    title={event.title}
-                    description={event.description}
-                    date={event.date}
+                    title={event.title || event.name}
+                    description={event.description || ''}
+                    date={event.date || formatDate(event.event_date)}
                     time={event.time}
-                    location={event.location}
-                    image={event.image}
-                    category={event.category}
+                    location={event.location || event.place}
+                    image={event.image || event.image_url || ''}
+                    category={event.category as "anime" | "manga" | "cosplay" | "gaming" | "culture"}
                     registrationLink={event.registrationLink}
                     past={event.past}
                   />

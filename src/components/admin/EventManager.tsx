@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { RefreshCw, Plus, Loader2, Calendar, MapPin } from "lucide-react";
-import { customSupabase as supabase } from "@/integrations/supabase/client";
+import { customSupabase as supabase, Event } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const EVENT_CATEGORIES = [
@@ -15,18 +15,6 @@ const EVENT_CATEGORIES = [
   { value: "gaming", label: "Gaming" },
   { value: "culture", label: "Culture" }
 ];
-
-interface Event {
-  id: string;
-  name: string;
-  description: string;
-  place: string;
-  location: string;
-  event_date: string;
-  image_url: string;
-  category: string;
-  created_at?: string;
-}
 
 const EventManager = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -57,7 +45,7 @@ const EventManager = () => {
       
       if (data) {
         console.log("Events loaded:", data);
-        setEvents(data as Event[]);
+        setEvents(data as unknown as Event[]);
       }
     } catch (error) {
       console.error('Error fetching events:', error);
@@ -91,326 +79,334 @@ const EventManager = () => {
 
   useEffect(() => {
     const addPastEvents = async () => {
-      const { data: existingEvents, error: checkError } = await supabase
-        .from('events')
-        .select('count')
-        .single();
-      
-      if (checkError) {
-        console.error('Error checking existing events:', checkError);
-        return;
-      }
-      
-      if (existingEvents && existingEvents.count > 0) {
-        console.log('Events already exist in the database, not adding past events');
-        return;
-      }
-      
-      const pastEvents = [
-        {
-          name: "Shotaku Shogatsu - Tour @Rabat Isamgi",
-          description: "Event by Shotaku",
-          place: "ISMAGi Rabat Reconnu par l'Etat",
-          location: "الرباط",
-          event_date: "2023-12-30T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Shotaku Summer Edition - ISMAGI, Rabat",
-          description: "Event by Shotaku",
-          place: "ISMAGI, Rabat",
-          location: "",
-          event_date: "2023-07-23T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Shotaku 9e festival - Enim, Rabat",
-          description: "Event by Shotaku",
-          place: "École nationale supérieure des mines de Rabat",
-          location: "الرباط",
-          event_date: "2023-04-29T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Shotaku Chiisai 3 @Rabat",
-          description: "Event by Shotaku",
-          place: "Rabat",
-          location: "",
-          event_date: "2023-01-29T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "SHOTAKU AUI EDITION",
-          description: "Event by Shotaku",
-          place: "Al Akhawayn University in Ifrane",
-          location: "إفران",
-          event_date: "2022-11-26T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Gamers M Area @Shotaku 7e Festival",
-          description: "Event by Shotaku",
-          place: "Rabat",
-          location: "الدار البيضاء",
-          event_date: "2022-07-24T10:00:00Z",
-          category: "gaming"
-        },
-        {
-          name: "Shotaku 8e festival - Rabat",
-          description: "Event by Shotaku",
-          place: "Rabat Morocoo",
-          location: "الرباط",
-          event_date: "2022-07-24T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Maroc Events - Staff recrutement *2",
-          description: "Event by Maroc Events",
-          place: "Maroc Events",
-          location: "الرباط",
-          event_date: "2020-03-22T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Shotaku Chiisai 2e Festival - Théâtre Bahnini",
-          description: "Event by Shotaku",
-          place: "Rabat",
-          location: "الرباط",
-          event_date: "2020-02-22T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Shotaku Chiisai 2 - Rabat",
-          description: "Event by Shotaku",
-          place: "Rabat",
-          location: "",
-          event_date: "2020-02-22T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Shotaku 7e festival - Rabat",
-          description: "Event by Shotaku",
-          place: "Ecole de danse Colibri Centre Artistique",
-          location: "الرباط",
-          event_date: "2019-12-08T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Gamers M Area @Shotaku 7",
-          description: "Event by Shotaku",
-          place: "Ecole de danse Colibri Centre Artistique",
-          location: "الرباط",
-          event_date: "2019-12-08T10:00:00Z",
-          category: "gaming"
-        },
-        {
-          name: "Faber Castell Drawing contest @Shotaku 7",
-          description: "Event by Shotaku",
-          place: "Ecole de danse Colibri Centre Artistique",
-          location: "الرباط",
-          event_date: "2019-12-08T10:00:00Z",
-          category: "manga"
-        },
-        {
-          name: "Ohayo Japan 3",
-          description: "Event by JapaMines",
-          place: "École Nationale Supérieure des Mines de Rabat",
-          location: "الرباط",
-          event_date: "2019-04-06T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "L'Foire / JAPAN @Kenitra",
-          description: "Event by Shotaku",
-          place: "ENSA-K",
-          location: "القنيطرة",
-          event_date: "2019-03-17T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Tournoi PUBG @Kenitra",
-          description: "Event by Shotaku",
-          place: "ENSA-K",
-          location: "القنيطرة",
-          event_date: "2019-03-17T10:00:00Z",
-          category: "gaming"
-        },
-        {
-          name: "L'after Shotaku 6e Festival @Théâtre Bahnini",
-          description: "Event by Shotaku",
-          place: "Théâtre Bahnini",
-          location: "الرباط",
-          event_date: "2018-07-18T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Shotaku 6e Festival - Mega Mall",
-          description: "Event by Shotaku",
-          place: "Mega Mall Rabat",
-          location: "الرباط",
-          event_date: "2018-06-24T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Shotaku 5e Festival - Mega Mall",
-          description: "Event by Shotaku",
-          place: "Mega Mall Rabat",
-          location: "الرباط",
-          event_date: "2018-02-04T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Shotaku 2017 @Morocco",
-          description: "Event by Shotaku",
-          place: "Morocco",
-          location: "",
-          event_date: "2017-12-31T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Shotaku",
-          description: "Event by Maroc Events",
-          place: "Morocco",
-          location: "",
-          event_date: "2017-12-31T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Asiexpo 2 @Théâtre Allal El Fassi",
-          description: "Event by Shotaku",
-          place: "Théatre Allal El fassi Agdal Rabat",
-          location: "الرباط",
-          event_date: "2017-10-15T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Shotaku @Théâtre allal el fassi - ST1",
-          description: "Event by Shotaku",
-          place: "Théatre Allal El fassi Agdal Rabat",
-          location: "الرباط",
-          event_date: "2017-07-09T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Shotaku Awards - Page",
-          description: "Event by Maroc Events",
-          place: "Maroc Events",
-          location: "الرباط",
-          event_date: "2017-02-11T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Shotaku 4 @Mega Mall",
-          description: "Event by Maroc Events",
-          place: "Mega Mall Rabat",
-          location: "الرباط",
-          event_date: "2017-02-11T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Concours cosplays (Best cosplayeurs 2017) @Shotaku 4",
-          description: "Event by Maroc Events",
-          place: "Mega Mall Rabat",
-          location: "الرباط",
-          event_date: "2017-02-11T10:00:00Z",
-          category: "cosplay"
-        },
-        {
-          name: "Shotaku Awards - Groupe",
-          description: "Event by Maroc Events",
-          place: "Maroc Events",
-          location: "الرباط",
-          event_date: "2017-02-11T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Shotaku Awards - chaîne",
-          description: "Event by Maroc Events",
-          place: "Maroc Events",
-          location: "الرباط",
-          event_date: "2017-02-11T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Gamers M 4 - The legends area",
-          description: "Event by Maroc Events",
-          place: "Maroc Events",
-          location: "الرباط",
-          event_date: "2017-02-11T10:00:00Z",
-          category: "gaming"
-        },
-        {
-          name: "Concours dessin 3 @Shotaku 3",
-          description: "Event by Shotaku",
-          place: "Mega Mall Rabat",
-          location: "الرباط",
-          event_date: "2016-08-03T10:00:00Z",
-          category: "manga"
-        },
-        {
-          name: "Best Morrocan Cosplay 2K16 @Shotaku 3",
-          description: "Event by Shotaku",
-          place: "Mega Mall Rabat",
-          location: "الرباط",
-          event_date: "2016-08-03T10:00:00Z",
-          category: "cosplay"
-        },
-        {
-          name: "Shotaku 3 @Mega Mall - Rabat",
-          description: "Event by Maroc Events",
-          place: "Mega Mall Rabat",
-          location: "الرباط",
-          event_date: "2016-08-03T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Compétition de dessin @ Shotaku 2",
-          description: "Event by Maroc Events",
-          place: "Théâtre allal el fassi Rabat",
-          location: "الرباط",
-          event_date: "2016-01-24T10:00:00Z",
-          category: "manga"
-        },
-        {
-          name: "Shotaku 2 @ Théâtre allal el fassi Rabat",
-          description: "Event by Shotaku",
-          place: "Théâtre allal el fassi Rabat",
-          location: "الرباط",
-          event_date: "2016-01-24T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "Shotaku @ Rabat",
-          description: "Event by Shotaku",
-          place: "Salle Allal Lfassi, Agdal.",
-          location: "الرباط",
-          event_date: "2015-07-25T10:00:00Z",
-          category: "culture"
-        },
-        {
-          name: "✖ CASTING TOP COSPLAYEUR ✖ ♕ MAROC EVENTS ♕",
-          description: "Event by Maroc Events",
-          place: "Salle Allal Lfassi, Agdal.",
-          location: "الرباط",
-          event_date: "2015-07-25T10:00:00Z",
-          category: "cosplay"
-        }
-      ];
-
       try {
-        console.log('Adding past events to the database...');
-        const { error: insertError } = await supabase
+        const { data: existingEvents, error: checkError } = await supabase
           .from('events')
-          .insert(pastEvents as any);
+          .select('count')
+          .single();
+      
+        if (checkError) {
+          console.error('Error checking existing events:', checkError);
+          return;
+        }
         
-        if (insertError) {
-          console.error('Error inserting past events:', insertError);
-        } else {
-          console.log('Past events added successfully');
-          fetchEvents(); // Refresh the list
+        const count = existingEvents && typeof existingEvents === 'object' && 'count' in existingEvents 
+          ? (existingEvents.count as number) 
+          : 0;
+        
+        if (count > 0) {
+          console.log('Events already exist in the database, not adding past events');
+          return;
+        }
+        
+        const pastEvents = [
+          {
+            name: "Shotaku Shogatsu - Tour @Rabat Isamgi",
+            description: "Event by Shotaku",
+            place: "ISMAGi Rabat Reconnu par l'Etat",
+            location: "الرباط",
+            event_date: "2023-12-30T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Shotaku Summer Edition - ISMAGI, Rabat",
+            description: "Event by Shotaku",
+            place: "ISMAGI, Rabat",
+            location: "",
+            event_date: "2023-07-23T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Shotaku 9e festival - Enim, Rabat",
+            description: "Event by Shotaku",
+            place: "École nationale supérieure des mines de Rabat",
+            location: "الرباط",
+            event_date: "2023-04-29T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Shotaku Chiisai 3 @Rabat",
+            description: "Event by Shotaku",
+            place: "Rabat",
+            location: "",
+            event_date: "2023-01-29T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "SHOTAKU AUI EDITION",
+            description: "Event by Shotaku",
+            place: "Al Akhawayn University in Ifrane",
+            location: "إفران",
+            event_date: "2022-11-26T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Gamers M Area @Shotaku 7e Festival",
+            description: "Event by Shotaku",
+            place: "Rabat",
+            location: "الدار البيضاء",
+            event_date: "2022-07-24T10:00:00Z",
+            category: "gaming"
+          },
+          {
+            name: "Shotaku 8e festival - Rabat",
+            description: "Event by Shotaku",
+            place: "Rabat Morocoo",
+            location: "الرباط",
+            event_date: "2022-07-24T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Maroc Events - Staff recrutement *2",
+            description: "Event by Maroc Events",
+            place: "Maroc Events",
+            location: "الرباط",
+            event_date: "2020-03-22T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Shotaku Chiisai 2e Festival - Théâtre Bahnini",
+            description: "Event by Shotaku",
+            place: "Rabat",
+            location: "الرباط",
+            event_date: "2020-02-22T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Shotaku Chiisai 2 - Rabat",
+            description: "Event by Shotaku",
+            place: "Rabat",
+            location: "",
+            event_date: "2020-02-22T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Shotaku 7e festival - Rabat",
+            description: "Event by Shotaku",
+            place: "Ecole de danse Colibri Centre Artistique",
+            location: "الرباط",
+            event_date: "2019-12-08T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Gamers M Area @Shotaku 7",
+            description: "Event by Shotaku",
+            place: "Ecole de danse Colibri Centre Artistique",
+            location: "الرباط",
+            event_date: "2019-12-08T10:00:00Z",
+            category: "gaming"
+          },
+          {
+            name: "Faber Castell Drawing contest @Shotaku 7",
+            description: "Event by Shotaku",
+            place: "Ecole de danse Colibri Centre Artistique",
+            location: "الرباط",
+            event_date: "2019-12-08T10:00:00Z",
+            category: "manga"
+          },
+          {
+            name: "Ohayo Japan 3",
+            description: "Event by JapaMines",
+            place: "École Nationale Supérieure des Mines de Rabat",
+            location: "الرباط",
+            event_date: "2019-04-06T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "L'Foire / JAPAN @Kenitra",
+            description: "Event by Shotaku",
+            place: "ENSA-K",
+            location: "القنيطرة",
+            event_date: "2019-03-17T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Tournoi PUBG @Kenitra",
+            description: "Event by Shotaku",
+            place: "ENSA-K",
+            location: "القنيطرة",
+            event_date: "2019-03-17T10:00:00Z",
+            category: "gaming"
+          },
+          {
+            name: "L'after Shotaku 6e Festival @Théâtre Bahnini",
+            description: "Event by Shotaku",
+            place: "Théâtre Bahnini",
+            location: "الرباط",
+            event_date: "2018-07-18T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Shotaku 6e Festival - Mega Mall",
+            description: "Event by Shotaku",
+            place: "Mega Mall Rabat",
+            location: "الرباط",
+            event_date: "2018-06-24T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Shotaku 5e Festival - Mega Mall",
+            description: "Event by Shotaku",
+            place: "Mega Mall Rabat",
+            location: "الرباط",
+            event_date: "2018-02-04T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Shotaku 2017 @Morocco",
+            description: "Event by Shotaku",
+            place: "Morocco",
+            location: "",
+            event_date: "2017-12-31T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Shotaku",
+            description: "Event by Maroc Events",
+            place: "Morocco",
+            location: "",
+            event_date: "2017-12-31T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Asiexpo 2 @Théâtre Allal El Fassi",
+            description: "Event by Shotaku",
+            place: "Théâtre Allal El fassi Agdal Rabat",
+            location: "الرباط",
+            event_date: "2017-10-15T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Shotaku @Théâtre allal el fassi - ST1",
+            description: "Event by Shotaku",
+            place: "Théâtre Allal El fassi Agdal Rabat",
+            location: "الرباط",
+            event_date: "2017-07-09T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Shotaku Awards - Page",
+            description: "Event by Maroc Events",
+            place: "Maroc Events",
+            location: "الرباط",
+            event_date: "2017-02-11T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Shotaku 4 @Mega Mall",
+            description: "Event by Maroc Events",
+            place: "Mega Mall Rabat",
+            location: "الرباط",
+            event_date: "2017-02-11T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Concours cosplays (Best cosplayeurs 2017) @Shotaku 4",
+            description: "Event by Maroc Events",
+            place: "Mega Mall Rabat",
+            location: "الرباط",
+            event_date: "2017-02-11T10:00:00Z",
+            category: "cosplay"
+          },
+          {
+            name: "Shotaku Awards - Groupe",
+            description: "Event by Maroc Events",
+            place: "Maroc Events",
+            location: "الرباط",
+            event_date: "2017-02-11T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Shotaku Awards - chaîne",
+            description: "Event by Maroc Events",
+            place: "Maroc Events",
+            location: "الرباط",
+            event_date: "2017-02-11T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Gamers M 4 - The legends area",
+            description: "Event by Maroc Events",
+            place: "Maroc Events",
+            location: "الرباط",
+            event_date: "2017-02-11T10:00:00Z",
+            category: "gaming"
+          },
+          {
+            name: "Concours dessin 3 @Shotaku 3",
+            description: "Event by Shotaku",
+            place: "Mega Mall Rabat",
+            location: "الرباط",
+            event_date: "2016-08-03T10:00:00Z",
+            category: "manga"
+          },
+          {
+            name: "Best Morrocan Cosplay 2K16 @Shotaku 3",
+            description: "Event by Shotaku",
+            place: "Mega Mall Rabat",
+            location: "الرباط",
+            event_date: "2016-08-03T10:00:00Z",
+            category: "cosplay"
+          },
+          {
+            name: "Shotaku 3 @Mega Mall - Rabat",
+            description: "Event by Maroc Events",
+            place: "Mega Mall Rabat",
+            location: "الرباط",
+            event_date: "2016-08-03T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Compétition de dessin @ Shotaku 2",
+            description: "Event by Maroc Events",
+            place: "Théâtre allal el fassi Rabat",
+            location: "الرباط",
+            event_date: "2016-01-24T10:00:00Z",
+            category: "manga"
+          },
+          {
+            name: "Shotaku 2 @ Théâtre allal el fassi Rabat",
+            description: "Event by Shotaku",
+            place: "Théâtre allal el fassi Rabat",
+            location: "الرباط",
+            event_date: "2016-01-24T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "Shotaku @ Rabat",
+            description: "Event by Shotaku",
+            place: "Salle Allal Lfassi, Agdal.",
+            location: "الرباط",
+            event_date: "2015-07-25T10:00:00Z",
+            category: "culture"
+          },
+          {
+            name: "✖ CASTING TOP COSPLAYEUR ✖ ♕ MAROC EVENTS ♕",
+            description: "Event by Maroc Events",
+            place: "Salle Allal Lfassi, Agdal.",
+            location: "الرباط",
+            event_date: "2015-07-25T10:00:00Z",
+            category: "cosplay"
+          }
+        ];
+
+        try {
+          console.log('Adding past events to the database...');
+          const { error: insertError } = await supabase
+            .from('events')
+            .insert(pastEvents as any);
+          
+          if (insertError) {
+            console.error('Error inserting past events:', insertError);
+          } else {
+            console.log('Past events added successfully');
+            fetchEvents(); // Refresh the list
+          }
+        } catch (error) {
+          console.error('Error adding past events:', error);
         }
       } catch (error) {
-        console.error('Error adding past events:', error);
+        console.error('Error in addPastEvents:', error);
       }
     };
 

@@ -3,13 +3,14 @@ import React from "react";
 import { Calendar, MapPin, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
+import { Event } from "@/integrations/supabase/client";
 
-export interface EventItemProps {
+export type EventItemProps = {
   id: string;
   title: string;
   description: string;
   date: string;
-  time?: string;
+  time?: string | null;
   location: string;
   image: string;
   category: "anime" | "manga" | "cosplay" | "gaming" | "culture";
