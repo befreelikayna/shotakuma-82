@@ -91,10 +91,13 @@ const EventManager = () => {
           return;
         }
         
-        // Fix: Handle null existingEvents safely and prevent TypeScript errors
-        const count = existingEvents ? 
-          (typeof existingEvents === 'object' && existingEvents?.count !== null ? 
-            Number(existingEvents?.count) : 0) : 0;
+        // Completely revised null check approach
+        let count = 0;
+        if (existingEvents !== null) {
+          count = typeof existingEvents.count === 'number' ? 
+            existingEvents.count : 
+            (existingEvents.count !== null ? Number(existingEvents.count) : 0);
+        }
         
         if (count > 0) {
           console.log('Events already exist in the database, not adding past events');
