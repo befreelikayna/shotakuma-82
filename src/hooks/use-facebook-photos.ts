@@ -8,6 +8,24 @@ export interface FacebookPhoto {
   name?: string;
 }
 
+export interface FacebookEvent {
+  id: string;
+  name: string;
+  description?: string;
+  start_time?: string;
+  end_time?: string;
+  place?: {
+    name: string;
+    location?: {
+      city: string;
+      country: string;
+    }
+  };
+  cover?: {
+    source: string;
+  };
+}
+
 export function useFacebookPhotos(pageId: string = 'OTAKU.sho') {
   const [photos, setPhotos] = useState<FacebookPhoto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -60,5 +78,60 @@ export function useFacebookPhotos(pageId: string = 'OTAKU.sho') {
     isLoading,
     error,
     fetchPhotos
+  };
+}
+
+export function useFacebookEvents(pageId: string = 'OTAKU.sho') {
+  const [events, setEvents] = useState<FacebookEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchEvents = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Get access token from localStorage (temporary solution for demo)
+      const accessToken = localStorage.getItem('fb_access_token');
+      
+      if (!accessToken) {
+        throw new Error("Access token not found");
+      }
+
+      const response = await fetch(
+        `https://graph.facebook.com/v18.0/${pageId}/events?fields=name,description,start_time,end_time,place,cover&limit=100&access_token=${accessToken}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch events: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Facebook events fetched:', data);
+      
+      if (data.data && Array.isArray(data.data)) {
+        setEvents(data.data);
+      } else {
+        console.error('Unexpected response format:', data);
+        setEvents([]);
+      }
+    } catch (err) {
+      console.error('Error fetching Facebook events:', err);
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les événements depuis Facebook",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return {
+    events,
+    isLoading,
+    error,
+    fetchEvents
   };
 }

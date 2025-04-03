@@ -1,11 +1,12 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Clock, Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, MapPin, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
+import { useFacebookEvents } from "@/hooks/use-facebook-photos";
 
 type Event = {
   id: string;
@@ -24,7 +25,9 @@ const Events = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState<string>(searchParams.get("category") || "all");
   const [activeTab, setActiveTab] = useState<string>(searchParams.get("tab") || "upcoming");
+  const { events: fbEvents, isLoading: isFbEventsLoading, error: fbEventsError, fetchEvents } = useFacebookEvents();
   
+  // Combined upcoming and past events
   const [events, setEvents] = useState<Event[]>([
     // Upcoming events
     {
@@ -91,7 +94,7 @@ const Events = () => {
       category: "culture"
     },
     
-    // Past events from Facebook
+    // Past events from Facebook - manually added from provided list
     {
       id: "7",
       title: "Shotaku Shogatsu - Tour @Rabat Isamgi",
@@ -291,12 +294,180 @@ const Events = () => {
       image: "https://source.unsplash.com/random/800x600?first-festival",
       category: "culture",
       past: true
+    },
+    {
+      id: "27",
+      title: "✖ CASTING TOP COSPLAYEUR ✖ ♕ MAROC EVENTS ♕",
+      description: "Casting pour trouver les meilleurs cosplayeurs du Maroc.",
+      date: "25 Juillet 2015",
+      location: "Salle Allal Lfassi, Agdal. · الرباط",
+      image: "https://source.unsplash.com/random/800x600?cosplay-casting",
+      category: "cosplay",
+      past: true
+    },
+    {
+      id: "28",
+      title: "Concours dessin 3 @Shotaku 3",
+      description: "Concours de dessin avec plusieurs catégories et prix à gagner.",
+      date: "3 Août 2016",
+      location: "Mega Mall Rabat · الرباط",
+      image: "https://source.unsplash.com/random/800x600?drawing-competition",
+      category: "manga",
+      past: true
+    },
+    {
+      id: "29",
+      title: "Best Morrocan Cosplay 2K16 @Shotaku 3",
+      description: "Compétition pour désigner le meilleur cosplay marocain de l'année 2016.",
+      date: "3 Août 2016",
+      location: "Mega Mall Rabat · الرباط",
+      image: "https://source.unsplash.com/random/800x600?best-cosplay",
+      category: "cosplay",
+      past: true
+    },
+    {
+      id: "30",
+      title: "Compétition de dessin @ Shotaku 2",
+      description: "Compétition artistique avec plusieurs catégories de dessins manga et anime.",
+      date: "24 Janvier 2016",
+      location: "Théâtre allal el fassi Rabat · الرباط",
+      image: "https://source.unsplash.com/random/800x600?drawing",
+      category: "manga",
+      past: true
+    },
+    {
+      id: "31",
+      title: "Maroc Events - Staff recrutement *2",
+      description: "Session de recrutement pour rejoindre l'équipe d'organisation des événements.",
+      date: "22 Mars 2020",
+      location: "Maroc Events · الرباط",
+      image: "https://source.unsplash.com/random/800x600?recruitment",
+      category: "culture",
+      past: true
+    },
+    {
+      id: "32",
+      title: "Shotaku Chiisai 2 - Rabat",
+      description: "Edition compacte du festival Shotaku à Rabat.",
+      date: "22 Février 2020",
+      location: "Rabat · الرباط",
+      image: "https://source.unsplash.com/random/800x600?small-festival",
+      category: "culture",
+      past: true
+    },
+    {
+      id: "33",
+      title: "Shotaku 2017 @Morocco",
+      description: "Edition spéciale du festival Shotaku au Maroc.",
+      date: "31 Décembre 2017",
+      location: "Morocco",
+      image: "https://source.unsplash.com/random/800x600?morocco-festival",
+      category: "culture",
+      past: true
+    },
+    {
+      id: "34",
+      title: "Shotaku @Théâtre allal el fassi - ST1",
+      description: "Première édition spéciale du festival Shotaku au théâtre Allal El Fassi.",
+      date: "9 Juillet 2017",
+      location: "Théatre Allal El fassi Agdal Rabat · الرباط",
+      image: "https://source.unsplash.com/random/800x600?theatre-anime",
+      category: "culture",
+      past: true
+    },
+    {
+      id: "35",
+      title: "Shotaku Awards - Page",
+      description: "Cérémonie de remise des prix Shotaku Awards.",
+      date: "11 Février 2017",
+      location: "Maroc Events · الرباط",
+      image: "https://source.unsplash.com/random/800x600?awards-ceremony",
+      category: "culture",
+      past: true
+    },
+    {
+      id: "36",
+      title: "Concours cosplays (Best cosplayeurs 2017) @Shotaku 4",
+      description: "Concours pour élire les meilleurs cosplayeurs de 2017.",
+      date: "11 Février 2017",
+      location: "Mega Mall Rabat · الرباط",
+      image: "https://source.unsplash.com/random/800x600?cosplay-awards",
+      category: "cosplay",
+      past: true
+    },
+    {
+      id: "37",
+      title: "Shotaku Awards - Groupe",
+      description: "Remise des prix pour les groupes de cosplay.",
+      date: "11 Février 2017",
+      location: "Maroc Events · الرباط",
+      image: "https://source.unsplash.com/random/800x600?group-cosplay",
+      category: "cosplay",
+      past: true
+    },
+    {
+      id: "38",
+      title: "Shotaku Awards - chaîne",
+      description: "Remise des prix pour les chaînes de contenu japonais.",
+      date: "11 Février 2017",
+      location: "Maroc Events · الرباط",
+      image: "https://source.unsplash.com/random/800x600?content-awards",
+      category: "culture",
+      past: true
+    },
+    {
+      id: "39",
+      title: "Gamers M 4 - The legends area",
+      description: "Espace dédié aux jeux vidéo légendaires.",
+      date: "11 Février 2017",
+      location: "Maroc Events · الرباط",
+      image: "https://source.unsplash.com/random/800x600?retro-gaming",
+      category: "gaming",
+      past: true
+    },
+    {
+      id: "40",
+      title: "Ohayo Japan 3",
+      description: "Troisième édition de l'événement dédié à la culture japonaise.",
+      date: "6 Avril 2019",
+      location: "École Nationale Supérieure des Mines de Rabat · الرباط",
+      image: "https://source.unsplash.com/random/800x600?japan-culture",
+      category: "culture",
+      past: true
+    },
+    {
+      id: "41",
+      title: "L'after Shotaku 6e Festival @Théâtre Bahnini",
+      description: "Soirée post-festival avec animations et rencontres.",
+      date: "18 Juillet 2018",
+      location: "Théâtre Bahnini · الرباط",
+      image: "https://source.unsplash.com/random/800x600?after-party",
+      category: "culture",
+      past: true
     }
   ]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Attempt to fetch Facebook events if we have an access token
+  useEffect(() => {
+    const hasToken = localStorage.getItem('fb_access_token');
+    if (hasToken) {
+      fetchEvents();
+    }
+  }, []);
+
+  // Process Facebook events when they load
+  useEffect(() => {
+    if (fbEvents && fbEvents.length > 0) {
+      console.log("Processing Facebook events:", fbEvents);
+
+      // We can add Facebook events to our events list if needed
+      // For now, we're using the manual list as it's more complete
+    }
+  }, [fbEvents]);
 
   // Update URL params when filters change
   useEffect(() => {
