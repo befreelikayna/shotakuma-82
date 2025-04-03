@@ -90,8 +90,8 @@ const EventManager = () => {
           return;
         }
         
-        const count = existingEvents && typeof existingEvents === 'object' && 'count' in existingEvents 
-          ? (existingEvents.count as number) 
+        const count = existingEvents && typeof existingEvents === 'object' 
+          ? (existingEvents?.count as number || 0) 
           : 0;
         
         if (count > 0) {
