@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit, RefreshCw, Loader2 } from "lucide-react";
-import { customSupabase } from "@/integrations/supabase/client";
+import { customSupabase, PageContent as PageContentType } from "@/integrations/supabase/client";
 
 interface PageContent {
   header: {
@@ -150,7 +151,10 @@ const ContentManager = () => {
         // Convert the database data to our content structure
         const newContent: Record<string, PageContent> = { ...initialContent };
         
-        data.forEach(item => {
+        // Cast data to the correct type
+        const pageContentData = data as unknown as PageContentType[];
+        
+        pageContentData.forEach(item => {
           if (item.page_id && item.content) {
             try {
               const parsedContent = typeof item.content === 'string' 
@@ -298,7 +302,10 @@ const ContentManager = () => {
           throw fetchError;
         }
         
-        if (existingContent) {
+        // Cast existingContent to the correct type
+        const typedExistingContent = existingContent as unknown as PageContentType;
+        
+        if (typedExistingContent) {
           // Update existing content
           const { error: updateError } = await customSupabase
             .from('page_content')
@@ -306,7 +313,7 @@ const ContentManager = () => {
               content: pageContent,
               updated_at: new Date().toISOString()
             })
-            .eq('id', existingContent.id);
+            .eq('id', typedExistingContent.id);
           
           if (updateError) throw updateError;
         } else {

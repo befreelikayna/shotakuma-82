@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { customSupabase } from "@/integrations/supabase/client";
+import { customSupabase, PageContent as PageContentType } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 export interface PageContent {
@@ -52,7 +52,6 @@ export const usePageContent = (pageId: string) => {
       setError(null);
 
       try {
-        // Using customSupabase with proper typing
         const { data, error } = await customSupabase
           .from('page_content')
           .select('*')
@@ -68,11 +67,14 @@ export const usePageContent = (pageId: string) => {
           throw error;
         }
 
-        if (data && data.content) {
+        if (data) {
           try {
-            const parsedContent = typeof data.content === 'string' 
-              ? JSON.parse(data.content) 
-              : data.content;
+            // Cast data to the correct type
+            const pageContentData = data as unknown as PageContentType;
+            const parsedContent = typeof pageContentData.content === 'string' 
+              ? JSON.parse(pageContentData.content) 
+              : pageContentData.content;
+            
             setContent(parsedContent);
           } catch (e) {
             console.error(`Error parsing content for page ${pageId}:`, e);

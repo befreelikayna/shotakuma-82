@@ -99,17 +99,10 @@ export interface NewsletterSubscriber {
   subscribed_at: string;
 }
 
-// Create a custom typed version of supabase client for the database
-// This is a workaround for TypeScript definitions
+// Create a custom typed version of supabase client
 export const customSupabase = {
   from: (table: string) => {
-    // We need a different approach for type safety
-    if (table === 'page_content') {
-      return supabase.from(table as any);
-    } else if (table === 'newsletter_subscribers') {
-      return supabase.from(table as any);
-    }
-    return supabase.from(table as any);
+    return supabase.from(table);
   },
   // Add channel method to our custom client
   channel: (name: string) => {
