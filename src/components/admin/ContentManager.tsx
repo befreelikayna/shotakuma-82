@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit, RefreshCw, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { customSupabase } from "@/integrations/supabase/client";
 
 interface PageContent {
   header: {
@@ -139,7 +138,7 @@ const ContentManager = () => {
   const fetchContent = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await customSupabase
         .from('page_content')
         .select('*');
       
@@ -154,7 +153,9 @@ const ContentManager = () => {
         data.forEach(item => {
           if (item.page_id && item.content) {
             try {
-              const parsedContent = JSON.parse(item.content);
+              const parsedContent = typeof item.content === 'string' 
+                ? JSON.parse(item.content)
+                : item.content;
               newContent[item.page_id] = parsedContent;
             } catch (e) {
               console.error(`Error parsing content for page ${item.page_id}:`, e);
@@ -180,7 +181,7 @@ const ContentManager = () => {
     fetchContent();
     
     // Set up a realtime subscription for content updates
-    const channel = supabase
+    const channel = customSupabase
       .channel('admin:page_content')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'page_content' }, 
@@ -191,7 +192,7 @@ const ContentManager = () => {
       .subscribe();
     
     return () => {
-      supabase.removeChannel(channel);
+      customSupabase.removeChannel(channel);
     };
   }, []);
 
@@ -287,7 +288,7 @@ const ContentManager = () => {
       for (const pageId of Object.keys(content)) {
         const pageContent = content[pageId];
         
-        const { data: existingContent, error: fetchError } = await supabase
+        const { data: existingContent, error: fetchError } = await customSupabase
           .from('page_content')
           .select('*')
           .eq('page_id', pageId)
@@ -299,10 +300,10 @@ const ContentManager = () => {
         
         if (existingContent) {
           // Update existing content
-          const { error: updateError } = await supabase
+          const { error: updateError } = await customSupabase
             .from('page_content')
             .update({ 
-              content: JSON.stringify(pageContent),
+              content: pageContent,
               updated_at: new Date().toISOString()
             })
             .eq('id', existingContent.id);
@@ -310,11 +311,11 @@ const ContentManager = () => {
           if (updateError) throw updateError;
         } else {
           // Insert new content
-          const { error: insertError } = await supabase
+          const { error: insertError } = await customSupabase
             .from('page_content')
             .insert({ 
               page_id: pageId, 
-              content: JSON.stringify(pageContent)
+              content: pageContent
             });
           
           if (insertError) throw insertError;

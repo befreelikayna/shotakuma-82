@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter, MessageSquare } from "lucide-react";
@@ -12,7 +11,7 @@ import TicketPackage from "@/components/TicketPackage";
 import { useGalleryItems } from "@/hooks/use-gallery-items";
 import { usePageContent } from "@/hooks/use-page-content";
 import PageContentSection from "@/components/PageContentSection";
-import { supabase } from "@/integrations/supabase/client";
+import { customSupabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [email, setEmail] = useState("");
@@ -94,8 +93,7 @@ const Index = () => {
     }
     
     try {
-      // Save to Supabase if the table exists
-      const { error } = await supabase
+      const { error } = await customSupabase
         .from('newsletter_subscribers')
         .insert({ email });
         
@@ -106,7 +104,6 @@ const Index = () => {
         description: "Merci de vous être inscrit à notre newsletter.",
       });
       
-      // Reset form
       setEmail("");
     } catch (error) {
       console.error("Error saving email subscription:", error);

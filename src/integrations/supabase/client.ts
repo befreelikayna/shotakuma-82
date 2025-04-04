@@ -84,10 +84,31 @@ export interface Event {
   registrationLink?: string;
 }
 
+// Define interfaces for the tables not included in the auto-generated types
+export interface PageContent {
+  id: string;
+  page_id: string;
+  content: any;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NewsletterSubscriber {
+  id: string;
+  email: string;
+  subscribed_at: string;
+}
+
 // Create a custom typed version of supabase client for the database
 // This is a workaround for TypeScript definitions
 export const customSupabase = {
   from: (table: string) => {
+    // Add type casting to handle tables that aren't in the auto-generated types
+    if (table === 'page_content') {
+      return supabase.from(table as any) as unknown as ReturnType<typeof supabase.from<PageContent>>;
+    } else if (table === 'newsletter_subscribers') {
+      return supabase.from(table as any) as unknown as ReturnType<typeof supabase.from<NewsletterSubscriber>>;
+    }
     return supabase.from(table as any);
   },
   // Add channel method to our custom client
