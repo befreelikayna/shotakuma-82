@@ -70,6 +70,14 @@ const Index = () => {
     return `${hours}:${minutes}`;
   };
 
+  // Helper to ensure category is one of the valid values
+  const validateCategory = (category: string | null): "anime" | "manga" | "cosplay" | "gaming" | "culture" => {
+    if (category === "anime" || category === "manga" || category === "cosplay" || category === "gaming") {
+      return category;
+    }
+    return "culture"; // Default category if not valid
+  };
+
   return (
     <div>
       <HeroSection />
@@ -178,7 +186,7 @@ const Index = () => {
                   time={formatEventTime(event.event_date)}
                   image={event.image_url || '/placeholder.svg'}
                   location={event.place}
-                  category={event.category || 'culture'}
+                  category={validateCategory(event.category)}
                   description={event.description || ''}
                   registrationLink="#"
                   onClick={() => handleEventClick(event.id)}
