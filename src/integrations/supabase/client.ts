@@ -103,11 +103,11 @@ export interface NewsletterSubscriber {
 // This is a workaround for TypeScript definitions
 export const customSupabase = {
   from: (table: string) => {
-    // Add type casting to handle tables that aren't in the auto-generated types
+    // We need a different approach for type safety
     if (table === 'page_content') {
-      return supabase.from(table as any) as unknown as ReturnType<typeof supabase.from<PageContent>>;
+      return supabase.from(table as any);
     } else if (table === 'newsletter_subscribers') {
-      return supabase.from(table as any) as unknown as ReturnType<typeof supabase.from<NewsletterSubscriber>>;
+      return supabase.from(table as any);
     }
     return supabase.from(table as any);
   },
