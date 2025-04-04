@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit, RefreshCw, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { PageContent } from "@/hooks/use-page-content";
+
+interface PageContent {
+  header: {
+    title: string;
+    subtitle: string;
+  };
+  sections: {
+    id: string;
+    title: string;
+    content: string;
+  }[];
+  sidebar?: {
+    title: string;
+    content: string;
+  };
+  footer: {
+    text: string;
+  };
+}
 
 const pages = [
   { id: "home", name: "Accueil" },
@@ -116,6 +135,7 @@ const ContentManager = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Fetch content from the database
   const fetchContent = async () => {
     setIsLoading(true);
     try {
@@ -128,17 +148,19 @@ const ContentManager = () => {
       }
       
       if (data && data.length > 0) {
+        // Convert the database data to our content structure
         const newContent: Record<string, PageContent> = { ...initialContent };
         
-        for (const item of data) {
+        data.forEach(item => {
           if (item.page_id && item.content) {
             try {
-              newContent[item.page_id] = item.content as unknown as PageContent;
+              const parsedContent = JSON.parse(item.content);
+              newContent[item.page_id] = parsedContent;
             } catch (e) {
               console.error(`Error parsing content for page ${item.page_id}:`, e);
             }
           }
-        }
+        });
         
         setContent(newContent);
       }
@@ -157,6 +179,7 @@ const ContentManager = () => {
   useEffect(() => {
     fetchContent();
     
+    // Set up a realtime subscription for content updates
     const channel = supabase
       .channel('admin:page_content')
       .on('postgres_changes', 
@@ -260,6 +283,7 @@ const ContentManager = () => {
     setIsSaving(true);
     
     try {
+      // For each page, save or update the content in the database
       for (const pageId of Object.keys(content)) {
         const pageContent = content[pageId];
         
@@ -269,26 +293,28 @@ const ContentManager = () => {
           .eq('page_id', pageId)
           .single();
         
-        if (fetchError && fetchError.code !== 'PGRST116') {
+        if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116: No rows returned
           throw fetchError;
         }
         
         if (existingContent) {
+          // Update existing content
           const { error: updateError } = await supabase
             .from('page_content')
             .update({ 
-              content: pageContent,
+              content: JSON.stringify(pageContent),
               updated_at: new Date().toISOString()
             })
             .eq('id', existingContent.id);
           
           if (updateError) throw updateError;
         } else {
+          // Insert new content
           const { error: insertError } = await supabase
             .from('page_content')
             .insert({ 
               page_id: pageId, 
-              content: pageContent
+              content: JSON.stringify(pageContent)
             });
           
           if (insertError) throw insertError;
