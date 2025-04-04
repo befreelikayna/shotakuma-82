@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,7 +80,6 @@ const EventManager = () => {
   useEffect(() => {
     const addPastEvents = async () => {
       try {
-        // Change the query to simply check if there are any events
         const { data, error: checkError } = await supabase
           .from('events')
           .select('*')
@@ -92,7 +90,6 @@ const EventManager = () => {
           return;
         }
         
-        // If data is an array with length > 0, then events exist
         const eventsExist = Array.isArray(data) && data.length > 0;
         
         if (eventsExist) {
@@ -561,7 +558,7 @@ const EventManager = () => {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold text-festival-primary mb-6">Gestion des Événements</h2>
+      <h2 className="text-2xl font-semibold text-festival-primary mb-6">Gestion des Événements ({events.length})</h2>
       
       <div className="flex justify-end mb-4 gap-2">
         <Button 

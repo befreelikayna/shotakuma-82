@@ -16,6 +16,7 @@ const Events = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalEventsCount, setTotalEventsCount] = useState(0);
   const eventsPerPage = 9;
 
   // Fetch events from Supabase
@@ -32,6 +33,7 @@ const Events = () => {
         
         if (data) {
           console.log('Events fetched from Supabase:', data);
+          setTotalEventsCount(data.length);
           
           // Process events with explicit type casting
           const processedEvents = data.map(event => {
@@ -169,7 +171,7 @@ const Events = () => {
                 Événements
               </h1>
               <p className="text-lg text-festival-secondary max-w-2xl mx-auto">
-                Découvrez nos événements passés et à venir
+                Découvrez nos événements passés et à venir {totalEventsCount > 0 && `(${totalEventsCount})`}
               </p>
             </div>
 
@@ -269,6 +271,15 @@ const Events = () => {
             {isLoading && (
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-festival-accent"></div>
+              </div>
+            )}
+
+            {/* Filtered count */}
+            {!isLoading && filteredEvents.length > 0 && (
+              <div className="text-center mb-6">
+                <p className="text-festival-secondary">
+                  {filteredEvents.length} événement{filteredEvents.length > 1 ? 's' : ''} {activeFilter !== 'all' ? `de ${activeFilter}` : ''} {activeTab === 'upcoming' ? 'à venir' : 'passés'}
+                </p>
               </div>
             )}
 
