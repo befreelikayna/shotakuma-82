@@ -1,219 +1,277 @@
 
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { CalendarDays, MapPin, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
+import { useMediaQuery } from "@/hooks/use-mobile";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import HeroSection from "@/components/HeroSection";
-import { useIsMobile } from "@/hooks/use-mobile";
-import EventItem from "@/components/EventItem";
-import { Ticket, Users, Calendar, Image } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Event } from "@/integrations/supabase/client";
+import { Event, customSupabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+
+import HeroSection from "@/components/HeroSection";
 import PageContentSection from "@/components/PageContentSection";
+import TicketPackage from "@/components/TicketPackage";
+import EventItem from "@/components/EventItem";
 import { usePageContent } from "@/hooks/use-page-content";
 
 const Index = () => {
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
+  const { content: pageContent, isLoading: contentLoading } = usePageContent('home');
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+  const [email, setEmail] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [events, setEvents] = useState<Event[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { content: pageContent, isLoading: isContentLoading } = usePageContent('home');
+  const [eventsLoading, setEventsLoading] = useState(true);
 
   useEffect(() => {
     const fetchEvents = async () => {
-      setIsLoading(true);
+      setEventsLoading(true);
       try {
-        const { data, error } = await supabase
+        const { data, error } = await customSupabase
           .from('events')
           .select('*')
-          .order('event_date', { ascending: true })
-          .limit(4);
+          .order('event_date', { ascending: true });
 
         if (error) {
-          console.error("Error fetching events:", error);
           throw error;
         }
 
-        // Cast the data to Event[] to fix type error
-        setEvents(data as unknown as Event[]);
+        if (data) {
+          const upcomingEvents = (data as Event[]).filter(event => new Date(event.event_date) >= new Date());
+          setEvents(upcomingEvents);
+        }
       } catch (error) {
         console.error("Error fetching events:", error);
         toast({
           title: "Erreur",
-          description: "Impossible de charger les événements.",
+          description: "Impossible de charger les événements",
           variant: "destructive",
         });
       } finally {
-        setIsLoading(false);
+        setEventsLoading(false);
       }
     };
 
     fetchEvents();
   }, []);
 
-  const handleEventClick = (id: string) => {
-    navigate(`/events/${id}`);
-  };
-
-  const formatEventDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-
-  const formatEventTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
-  };
-
-  // Helper to ensure category is one of the valid values
-  const validateCategory = (category: string | null): "anime" | "manga" | "cosplay" | "gaming" | "culture" => {
-    if (category === "anime" || category === "manga" || category === "cosplay" || category === "gaming") {
-      return category;
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    if (!email) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez entrer votre adresse email",
+        variant: "destructive",
+      });
+      return;
     }
-    return "culture"; // Default category if not valid
+    
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    setSuccess(false);
+    setError(null);
+    
+    try {
+      const { error } = await customSupabase
+        .from('newsletter_subscribers')
+        .insert({ email });
+    
+      if (error) {
+        if (error.code === '23505') {
+          setError("Cette adresse email est déjà inscrite.");
+        } else {
+          setError("Une erreur s'est produite. Veuillez réessayer.");
+          console.error("Newsletter subscription error:", error);
+        }
+      } else {
+        setSuccess(true);
+        setEmail('');
+        toast({
+          title: "Merci!",
+          description: "Vous êtes maintenant inscrit à notre newsletter.",
+        });
+      }
+    } catch (err) {
+      console.error("Error submitting newsletter form:", err);
+      setError("Une erreur s'est produite. Veuillez réessayer ultérieurement.");
+    } finally {
+      setIsLoading(false);
+    }
   };
-
+  
   return (
-    <div>
+    <>
       <HeroSection />
-
-      {pageContent && (
-        <PageContentSection 
-          pageContent={pageContent} 
-          isLoading={isContentLoading} 
-        />
-      )}
-
-      <section className="py-16 md:py-20 bg-festival-bg">
+      
+      <PageContentSection pageContent={pageContent} isLoading={contentLoading} />
+      
+      <section className="py-20" id="tickets">
         <div className="festival-container">
-          <div className="text-center mb-14">
-            <h2 className="section-heading inline-block">Découvrez SHOTAKU</h2>
-            <p className="text-festival-secondary mt-4 max-w-2xl mx-auto">
-              Plongez dans le plus grand événement d'anime et de manga du Maroc !
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <h2 className="section-heading inline-block">Billets & Forfaits</h2>
+            <p className="text-festival-secondary max-w-2xl mx-auto mt-4">
+              Réservez vos billets pour vivre une expérience inoubliable au Festival SHOTAKU.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <motion.div
-              className="bg-white p-8 rounded-2xl shadow-soft border border-slate-100 text-center"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-            >
-              <div className="w-16 h-16 bg-festival-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Calendar size={24} className="text-festival-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">3 Jours</h3>
-              <p className="text-festival-secondary">
-                Trois jours complets d'activités, d'expositions et d'animations
-              </p>
-            </motion.div>
-
-            <motion.div
-              className="bg-white p-8 rounded-2xl shadow-soft border border-slate-100 text-center"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              viewport={{ once: true, margin: "-100px" }}
-            >
-              <div className="w-16 h-16 bg-festival-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Users size={24} className="text-festival-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">+5000 Visiteurs</h3>
-              <p className="text-festival-secondary">
-                Plus de 5000 fans d'anime et de manga réunis au même endroit
-              </p>
-            </motion.div>
-
-            <motion.div
-              className="bg-white p-8 rounded-2xl shadow-soft border border-slate-100 text-center"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              viewport={{ once: true, margin: "-100px" }}
-            >
-              <div className="w-16 h-16 bg-festival-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Image size={24} className="text-festival-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">+20 Exposants</h3>
-              <p className="text-festival-secondary">
-                Plus de 20 exposants présentant des produits liés à la culture japonaise
-              </p>
-            </motion.div>
-
-            <motion.div
-              className="bg-white p-8 rounded-2xl shadow-soft border border-slate-100 text-center"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              viewport={{ once: true, margin: "-100px" }}
-            >
-              <div className="w-16 h-16 bg-festival-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Ticket size={24} className="text-festival-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">+15 Activités</h3>
-              <p className="text-festival-secondary">
-                Plus de 15 activités différentes à découvrir pendant l'événement
-              </p>
-            </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <TicketPackage
+              title="Billet Standard"
+              price="50 DH"
+              description="Accès à tous les événements et activités du festival pendant une journée."
+              features={[
+                "Accès aux expositions",
+                "Participation aux ateliers",
+                "Accès aux projections",
+              ]}
+              buttonText="Acheter un billet"
+              buttonLink="#"
+            />
+            <TicketPackage
+              title="Pass Premium"
+              price="120 DH"
+              description="Accès illimité à tous les événements et activités du festival pendant les trois jours."
+              features={[
+                "Accès prioritaire",
+                "Rencontres avec les invités",
+                "Goodies exclusifs",
+              ]}
+              buttonText="Acheter un pass"
+              buttonLink="#"
+            />
+            <TicketPackage
+              title="Forfait VIP"
+              price="250 DH"
+              description="Expérience VIP avec accès exclusif aux coulisses, rencontres privées et avantages spéciaux."
+              features={[
+                "Accès VIP à tous les événements",
+                "Accès aux coulisses",
+                "Rencontres privées avec les invités",
+                "Repas et boissons offerts",
+              ]}
+              buttonText="Réserver un forfait"
+              buttonLink="#"
+            />
           </div>
         </div>
       </section>
 
-      <section className="py-16 md:py-20">
+      <section className="py-20" id="program">
         <div className="festival-container">
-          <div className="text-center mb-14">
-            <h2 className="section-heading inline-block">Événements à venir</h2>
-            <p className="text-festival-secondary mt-4 max-w-2xl mx-auto">
-              Découvrez nos prochains événements et ne manquez aucune activité lors du festival !
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <h2 className="section-heading inline-block">Programme des Événements</h2>
+            <p className="text-festival-secondary max-w-2xl mx-auto mt-4">
+              Découvrez le programme complet des événements, des projections aux compétitions de cosplay.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {events.length > 0 ? (
-              events.map((event) => (
+          {eventsLoading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin mr-2" />
+              <span>Chargement des événements...</span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {events.map((event) => (
                 <EventItem
                   key={event.id}
-                  id={event.id}
                   title={event.name}
-                  date={formatEventDate(event.event_date)}
-                  time={formatEventTime(event.event_date)}
-                  image={event.image_url || '/placeholder.svg'}
-                  location={event.place}
-                  category={validateCategory(event.category)}
-                  description={event.description || ''}
+                  date={new Date(event.event_date).toLocaleDateString('fr-FR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                  time={new Date(event.event_date).toLocaleTimeString('fr-FR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                  image={event.image_url || "https://source.unsplash.com/random/800x600?anime"}
+                  location={event.location || event.place}
                   registrationLink="#"
-                  onClick={() => handleEventClick(event.id)}
                 />
-              ))
-            ) : (
-              <div className="col-span-full text-center py-10">
-                <p className="text-lg text-gray-500">Aucun événement à venir pour le moment.</p>
-              </div>
-            )}
-          </div>
-
-          {events.length > 0 && (
-            <div className="text-center mt-10">
-              <motion.button
-                className="inline-flex items-center justify-center bg-festival-primary text-white px-6 py-3 rounded-full font-medium hover:bg-festival-primary-dark transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/events')}
-              >
-                Voir tous les événements
-              </motion.button>
+              ))}
             </div>
           )}
         </div>
       </section>
-    </div>
+
+      <section className="py-20 bg-festival-primary text-white" id="newsletter">
+        <div className="festival-container">
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <h2 className="section-heading inline-block text-white">
+              Inscrivez-vous à la Newsletter
+            </h2>
+            <p className="text-festival-secondary-light max-w-2xl mx-auto mt-4">
+              Restez informé de toutes les dernières nouvelles et mises à jour du festival.
+            </p>
+          </motion.div>
+
+          <motion.form
+            className="max-w-md mx-auto"
+            onSubmit={handleSubmit}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div className="relative">
+              <input
+                type="email"
+                id="email"
+                className="w-full px-4 py-3 rounded-full text-black shadow-soft focus:ring-festival-accent focus:border-festival-accent"
+                placeholder="Votre adresse email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading || success}
+              />
+              <button
+                type="submit"
+                className="absolute top-1/2 right-2 transform -translate-y-1/2 px-4 py-2 rounded-full bg-festival-accent text-white font-medium shadow-accent transition-all duration-300 hover:shadow-lg hover:bg-opacity-90 disabled:bg-opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading || success}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Envoi...
+                  </>
+                ) : (
+                  "S'inscrire"
+                )}
+              </button>
+            </div>
+            {error && (
+              <p className="mt-3 text-sm text-red-500 text-center">{error}</p>
+            )}
+            {success && (
+              <p className="mt-3 text-sm text-green-500 text-center">
+                <CheckCircle className="inline-block mr-1" size="1em" />{" "}
+                Merci pour votre inscription!
+              </p>
+            )}
+          </motion.form>
+        </div>
+      </section>
+    </>
   );
 };
 

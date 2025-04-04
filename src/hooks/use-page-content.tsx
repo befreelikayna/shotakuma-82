@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { customSupabase } from "@/integrations/supabase/custom-client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 export interface PageContent {
@@ -53,7 +53,7 @@ export const usePageContent = (pageId: string) => {
 
       try {
         // Use the custom supabase client to avoid TypeScript errors
-        const { data, error } = await customSupabase
+        const { data, error } = await supabase
           .from('page_content')
           .select('*')
           .eq('page_id', pageId)
@@ -70,9 +70,7 @@ export const usePageContent = (pageId: string) => {
 
         if (data) {
           try {
-            // Type assertion to handle the data safely
-            const rawContent = data as unknown as { content: string };
-            const parsedContent = JSON.parse(rawContent.content) as PageContent;
+            const parsedContent = JSON.parse(data.content as string);
             setContent(parsedContent);
           } catch (e) {
             console.error(`Error parsing content for page ${pageId}:`, e);
@@ -94,7 +92,7 @@ export const usePageContent = (pageId: string) => {
     fetchPageContent();
     
     // Set up a realtime subscription for content updates
-    const channel = customSupabase
+    const channel = supabase
       .channel(`page-content-${pageId}`)
       .on('postgres_changes', 
         { 
@@ -110,7 +108,7 @@ export const usePageContent = (pageId: string) => {
       .subscribe();
     
     return () => {
-      customSupabase.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
   }, [pageId]);
 

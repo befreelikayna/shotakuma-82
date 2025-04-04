@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit, RefreshCw, Loader2 } from "lucide-react";
-import { customSupabase } from "@/integrations/supabase/custom-client";
+import { supabase } from "@/integrations/supabase/client";
 import { PageContent } from "@/hooks/use-page-content";
 
 const pages = [
@@ -119,7 +119,7 @@ const ContentManager = () => {
   const fetchContent = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await customSupabase
+      const { data, error } = await supabase
         .from('page_content')
         .select('*');
       
@@ -131,15 +131,12 @@ const ContentManager = () => {
         const newContent: Record<string, PageContent> = { ...initialContent };
         
         for (const item of data) {
-          try {
-            const pageId = (item as any).page_id as string;
-            const contentData = (item as any).content as PageContent;
-            
-            if (pageId) {
-              newContent[pageId] = contentData;
+          if (item.page_id && item.content) {
+            try {
+              newContent[item.page_id] = item.content as unknown as PageContent;
+            } catch (e) {
+              console.error(`Error parsing content for page ${item.page_id}:`, e);
             }
-          } catch (e) {
-            console.error(`Error parsing content:`, e);
           }
         }
         
@@ -160,7 +157,7 @@ const ContentManager = () => {
   useEffect(() => {
     fetchContent();
     
-    const channel = customSupabase
+    const channel = supabase
       .channel('admin:page_content')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'page_content' }, 
@@ -171,7 +168,7 @@ const ContentManager = () => {
       .subscribe();
     
     return () => {
-      customSupabase.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -266,7 +263,7 @@ const ContentManager = () => {
       for (const pageId of Object.keys(content)) {
         const pageContent = content[pageId];
         
-        const { data: existingContent, error: fetchError } = await customSupabase
+        const { data: existingContent, error: fetchError } = await supabase
           .from('page_content')
           .select('*')
           .eq('page_id', pageId)
@@ -277,17 +274,17 @@ const ContentManager = () => {
         }
         
         if (existingContent) {
-          const { error: updateError } = await customSupabase
+          const { error: updateError } = await supabase
             .from('page_content')
             .update({ 
               content: pageContent,
               updated_at: new Date().toISOString()
             })
-            .eq('id', (existingContent as any).id);
+            .eq('id', existingContent.id);
           
           if (updateError) throw updateError;
         } else {
-          const { error: insertError } = await customSupabase
+          const { error: insertError } = await supabase
             .from('page_content')
             .insert({ 
               page_id: pageId, 

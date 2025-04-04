@@ -16,7 +16,6 @@ export type EventItemProps = {
   category: "anime" | "manga" | "cosplay" | "gaming" | "culture";
   registrationLink?: string;
   past?: boolean;
-  onClick?: () => void;
 }
 
 const EventItem: React.FC<EventItemProps> = ({
@@ -28,8 +27,7 @@ const EventItem: React.FC<EventItemProps> = ({
   image,
   category,
   registrationLink,
-  past,
-  onClick
+  past
 }) => {
   const getCategoryColor = (category: EventItemProps["category"]) => {
     switch (category) {
@@ -55,7 +53,6 @@ const EventItem: React.FC<EventItemProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
       whileHover={{ y: -5 }}
-      onClick={onClick}
     >
       <div className="relative h-48 overflow-hidden">
         <img
