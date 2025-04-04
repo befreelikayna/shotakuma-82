@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -648,7 +647,6 @@ const EventManager = () => {
     }
   };
 
-  // Extract time from a date string
   const extractTimeFromDate = (dateString: string) => {
     try {
       const date = new Date(dateString);

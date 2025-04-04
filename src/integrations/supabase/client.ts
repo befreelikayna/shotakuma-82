@@ -70,8 +70,8 @@ export interface Event {
   place: string;
   location: string | null;
   event_date: string;
-  start_time?: string;
-  end_time?: string;
+  start_time: string | null;
+  end_time: string | null;
   image_url: string | null;
   category: string;
   created_at?: string;
