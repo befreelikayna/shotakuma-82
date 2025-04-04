@@ -3,8 +3,8 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import HeroSection from "@/components/HeroSection";
-import { useMobile } from "@/hooks/use-mobile";
-import { EventItem } from "@/components/EventItem";
+import { useIsMobile } from "@/hooks/use-mobile";
+import EventItem from "@/components/EventItem";
 import { Ticket, Users, Calendar, Image } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Event } from "@/integrations/supabase/client";
@@ -14,7 +14,7 @@ import { usePageContent } from "@/hooks/use-page-content";
 
 const Index = () => {
   const navigate = useNavigate();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { content: pageContent, isLoading: isContentLoading } = usePageContent('home');

@@ -70,8 +70,9 @@ export const usePageContent = (pageId: string) => {
 
         if (data) {
           try {
-            // Since we're using customSupabase, we need to type cast the content
-            const parsedContent = JSON.parse(data.content as unknown as string) as PageContent;
+            // Type assertion to handle the data safely
+            const rawContent = data as unknown as { content: string };
+            const parsedContent = JSON.parse(rawContent.content) as PageContent;
             setContent(parsedContent);
           } catch (e) {
             console.error(`Error parsing content for page ${pageId}:`, e);
