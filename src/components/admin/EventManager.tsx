@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { RefreshCw, Plus, Loader2, Calendar, MapPin } from "lucide-react";
+import { RefreshCw, Plus, Loader2, Calendar, MapPin, Upload, Clock } from "lucide-react";
 import { customSupabase as supabase, Event } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -25,11 +26,14 @@ const EventManager = () => {
     place: "",
     location: "",
     event_date: new Date().toISOString().split('T')[0],
+    start_time: "10:00",
+    end_time: "18:00",
     image_url: "",
     category: "culture"
   });
   const [isSaving, setIsSaving] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   
   const fetchEvents = async () => {
     try {
@@ -419,6 +423,82 @@ const EventManager = () => {
     });
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, isEditMode = false) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+    const filePath = `events/${fileName}`;
+    
+    try {
+      setIsUploading(true);
+      
+      // Create storage bucket if it doesn't exist
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const eventsBucketExists = buckets?.some(bucket => bucket.name === 'events');
+      
+      if (!eventsBucketExists) {
+        const { error: createBucketError } = await supabase.storage.createBucket('events', {
+          public: true
+        });
+        
+        if (createBucketError) {
+          throw createBucketError;
+        }
+      }
+      
+      // Upload the file
+      const { error: uploadError } = await supabase.storage.from('events').upload(filePath, file);
+      
+      if (uploadError) {
+        throw uploadError;
+      }
+      
+      // Get the public URL
+      const { data } = supabase.storage.from('events').getPublicUrl(filePath);
+      const publicUrl = data.publicUrl;
+      
+      // Update the state with the new image URL
+      if (isEditMode && selectedEvent) {
+        setSelectedEvent({
+          ...selectedEvent,
+          image_url: publicUrl
+        });
+      } else {
+        setNewEvent({
+          ...newEvent,
+          image_url: publicUrl
+        });
+      }
+      
+      toast({
+        title: "Succès",
+        description: "L'image a été téléchargée avec succès"
+      });
+    } catch (error: any) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de télécharger l'image: " + error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const combineDateTime = (date: string, time?: string) => {
+    if (!date) return null;
+    
+    // Use the provided time or default to midnight
+    const timeString = time || '00:00';
+    
+    // Combine date and time
+    return `${date}T${timeString}:00`;
+  };
+
   const handleAddEvent = async () => {
     if (!newEvent.name || !newEvent.event_date) {
       toast({
@@ -432,6 +512,9 @@ const EventManager = () => {
     try {
       setIsSaving(true);
       
+      // Format the event_date to include the time
+      const formattedDate = combineDateTime(newEvent.event_date, newEvent.start_time);
+      
       const { error } = await supabase
         .from('events')
         .insert([{
@@ -439,7 +522,9 @@ const EventManager = () => {
           description: newEvent.description || '',
           place: newEvent.place || '',
           location: newEvent.location || '',
-          event_date: newEvent.event_date,
+          event_date: formattedDate,
+          start_time: newEvent.start_time || '',
+          end_time: newEvent.end_time || '',
           image_url: newEvent.image_url || '',
           category: newEvent.category || 'culture'
         }] as any);
@@ -454,6 +539,8 @@ const EventManager = () => {
         place: "",
         location: "",
         event_date: new Date().toISOString().split('T')[0],
+        start_time: "10:00",
+        end_time: "18:00",
         image_url: "",
         category: "culture"
       });
@@ -480,6 +567,9 @@ const EventManager = () => {
     try {
       setIsSaving(true);
       
+      // Format the event_date to include the time
+      const formattedDate = combineDateTime(event.event_date, event.start_time);
+      
       const { error } = await supabase
         .from('events')
         .update({
@@ -487,7 +577,9 @@ const EventManager = () => {
           description: event.description,
           place: event.place,
           location: event.location,
-          event_date: event.event_date,
+          event_date: formattedDate,
+          start_time: event.start_time || '',
+          end_time: event.end_time || '',
           image_url: event.image_url,
           category: event.category
         } as any)
@@ -556,6 +648,19 @@ const EventManager = () => {
     }
   };
 
+  // Extract time from a date string
+  const extractTimeFromDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return '';
+    }
+  };
+
   return (
     <div>
       <h2 className="text-2xl font-semibold text-festival-primary mb-6">Gestion des Événements ({events.length})</h2>
@@ -592,6 +697,25 @@ const EventManager = () => {
             />
           </div>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Heure de début</label>
+            <Input
+              type="time"
+              value={newEvent.start_time || ''}
+              onChange={(e) => setNewEvent({ ...newEvent, start_time: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Heure de fin</label>
+            <Input
+              type="time"
+              value={newEvent.end_time || ''}
+              onChange={(e) => setNewEvent({ ...newEvent, end_time: e.target.value })}
+            />
+          </div>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
@@ -624,12 +748,47 @@ const EventManager = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">URL de l'image</label>
-            <Input
-              value={newEvent.image_url || ''}
-              onChange={(e) => setNewEvent({ ...newEvent, image_url: e.target.value })}
-              placeholder="https://exemple.com/image.jpg"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
+            <div className="flex items-center gap-2">
+              <Input
+                value={newEvent.image_url || ''}
+                onChange={(e) => setNewEvent({ ...newEvent, image_url: e.target.value })}
+                placeholder="https://exemple.com/image.jpg"
+              />
+              <div className="relative">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e)}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  disabled={isUploading}
+                  className="flex items-center gap-2 w-[120px]"
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Upload...
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={16} /> Upload
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+            {newEvent.image_url && (
+              <div className="mt-2">
+                <img 
+                  src={newEvent.image_url}
+                  alt="Aperçu de l'image"
+                  className="h-20 w-auto object-cover rounded-md"
+                />
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
@@ -683,6 +842,7 @@ const EventManager = () => {
                 <TableHead>Image</TableHead>
                 <TableHead>Nom</TableHead>
                 <TableHead>Date</TableHead>
+                <TableHead>Horaires</TableHead>
                 <TableHead>Lieu</TableHead>
                 <TableHead>Catégorie</TableHead>
                 <TableHead>Actions</TableHead>
@@ -702,6 +862,15 @@ const EventManager = () => {
                   </TableCell>
                   <TableCell>{event.name}</TableCell>
                   <TableCell>{formatEventDate(event.event_date)}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4 text-festival-accent" />
+                      <span>{event.start_time || extractTimeFromDate(event.event_date)}</span>
+                      {event.end_time && (
+                        <span> - {event.end_time}</span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>{event.place}</TableCell>
                   <TableCell>
                     <span className="capitalize">{event.category}</span>
@@ -754,6 +923,25 @@ const EventManager = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Heure de début</label>
+                <Input
+                  type="time"
+                  value={selectedEvent.start_time || extractTimeFromDate(selectedEvent.event_date)}
+                  onChange={(e) => setSelectedEvent({ ...selectedEvent, start_time: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Heure de fin</label>
+                <Input
+                  type="time"
+                  value={selectedEvent.end_time || ''}
+                  onChange={(e) => setSelectedEvent({ ...selectedEvent, end_time: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Lieu</label>
                 <Input
                   value={selectedEvent.place}
@@ -778,13 +966,48 @@ const EventManager = () => {
               />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">URL de l'image</label>
-                <Input
-                  value={selectedEvent.image_url}
-                  onChange={(e) => setSelectedEvent({ ...selectedEvent, image_url: e.target.value })}
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={selectedEvent.image_url}
+                    onChange={(e) => setSelectedEvent({ ...selectedEvent, image_url: e.target.value })}
+                  />
+                  <div className="relative">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, true)}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      disabled={isUploading}
+                      className="flex items-center gap-2 w-[120px]"
+                    >
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" /> Upload...
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={16} /> Upload
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                {selectedEvent.image_url && (
+                  <div className="mt-2">
+                    <img 
+                      src={selectedEvent.image_url}
+                      alt="Aperçu de l'image"
+                      className="h-20 w-auto object-cover rounded-md"
+                    />
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
