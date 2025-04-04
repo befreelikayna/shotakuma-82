@@ -52,8 +52,9 @@ export const usePageContent = (pageId: string) => {
       setError(null);
 
       try {
+        // Using type assertion to handle the TypeScript error with page_content table
         const { data, error } = await supabase
-          .from('page_content')
+          .from('page_content' as any)
           .select('*')
           .eq('page_id', pageId)
           .single();
@@ -67,9 +68,9 @@ export const usePageContent = (pageId: string) => {
           throw error;
         }
 
-        if (data && data.content) {
+        if (data && (data as any).content) {
           try {
-            const parsedContent = JSON.parse(data.content);
+            const parsedContent = JSON.parse((data as any).content);
             setContent(parsedContent);
           } catch (e) {
             console.error(`Error parsing content for page ${pageId}:`, e);

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Calendar, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
@@ -6,7 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import EventItem from "@/components/EventItem";
-import { customSupabase as supabase, Event } from "@/integrations/supabase/client";
+import { supabase, Event } from "@/integrations/supabase/client";
 
 const Events = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -33,7 +34,7 @@ const Events = () => {
           console.log('Events fetched from Supabase:', data);
           
           // Process events with explicit type casting
-          const processedEvents = (data as any[]).map(event => {
+          const processedEvents = data.map(event => {
             const eventDate = new Date(event.event_date);
             const currentDate = new Date();
             const isPast = eventDate < currentDate;
@@ -42,7 +43,7 @@ const Events = () => {
               id: event.id,
               name: event.name,
               title: event.name,
-              description: event.description,
+              description: event.description || '',
               date: formatDate(event.event_date),
               time: extractTime(event.event_date),
               location: event.place + (event.location ? `, ${event.location}` : ''),
@@ -50,7 +51,7 @@ const Events = () => {
               event_date: event.event_date,
               image: event.image_url || "https://source.unsplash.com/random/800x600?festival",
               image_url: event.image_url || "https://source.unsplash.com/random/800x600?festival",
-              category: event.category as "anime" | "manga" | "cosplay" | "gaming" | "culture",
+              category: event.category || 'culture',
               past: isPast
             };
           });
@@ -106,6 +107,14 @@ const Events = () => {
     } catch (e) {
       return null;
     }
+  };
+
+  // Ensure category is valid for EventItem component
+  const validateCategory = (category: string): "anime" | "manga" | "cosplay" | "gaming" | "culture" => {
+    const validCategories = ["anime", "manga", "cosplay", "gaming", "culture"];
+    return validCategories.includes(category) 
+      ? category as "anime" | "manga" | "cosplay" | "gaming" | "culture" 
+      : "culture";
   };
 
   useEffect(() => {
@@ -276,7 +285,7 @@ const Events = () => {
                     time={event.time}
                     location={event.location || event.place}
                     image={event.image || event.image_url || ''}
-                    category={event.category as "anime" | "manga" | "cosplay" | "gaming" | "culture"}
+                    category={validateCategory(event.category)}
                     registrationLink={event.registrationLink}
                     past={event.past}
                   />
@@ -304,17 +313,17 @@ const Events = () => {
                   </button>
                   
                   {/* Page numbers */}
-                  {[...Array(totalPages).keys()].map(number => (
+                  {Array.from({ length: totalPages }).map((_, index) => (
                     <button 
-                      key={number + 1}
+                      key={index}
                       className={`w-10 h-10 flex items-center justify-center rounded-full ${
-                        currentPage === number + 1 
+                        currentPage === index + 1 
                           ? "bg-festival-accent text-white" 
                           : "border border-slate-200 text-festival-secondary hover:bg-slate-50"
                       }`}
-                      onClick={() => paginate(number + 1)}
+                      onClick={() => paginate(index + 1)}
                     >
-                      {number + 1}
+                      {index + 1}
                     </button>
                   ))}
                   

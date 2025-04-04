@@ -3,7 +3,6 @@ import React from "react";
 import { Calendar, MapPin, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import { Event } from "@/integrations/supabase/client";
 
 export type EventItemProps = {
   id: string;
@@ -16,6 +15,7 @@ export type EventItemProps = {
   category: "anime" | "manga" | "cosplay" | "gaming" | "culture";
   registrationLink?: string;
   past?: boolean;
+  onClick?: () => void;
 }
 
 const EventItem: React.FC<EventItemProps> = ({
@@ -27,7 +27,8 @@ const EventItem: React.FC<EventItemProps> = ({
   image,
   category,
   registrationLink,
-  past
+  past,
+  onClick
 }) => {
   const getCategoryColor = (category: EventItemProps["category"]) => {
     switch (category) {
@@ -48,11 +49,12 @@ const EventItem: React.FC<EventItemProps> = ({
 
   return (
     <motion.div
-      className="bg-white rounded-2xl overflow-hidden shadow-soft border border-slate-100"
+      className="bg-white rounded-2xl overflow-hidden shadow-soft border border-slate-100 cursor-pointer"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
       whileHover={{ y: -5 }}
+      onClick={onClick}
     >
       <div className="relative h-48 overflow-hidden">
         <img
@@ -103,6 +105,7 @@ const EventItem: React.FC<EventItemProps> = ({
             href={registrationLink}
             className="block w-full text-center py-2 rounded-full bg-festival-accent text-white text-sm font-medium 
             transition-all duration-300 hover:bg-opacity-90"
+            onClick={(e) => e.stopPropagation()}
           >
             S'inscrire
           </a>
