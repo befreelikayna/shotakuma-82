@@ -74,7 +74,7 @@ const Events = () => {
       .channel('events-page-changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'events' }, 
-        () => {
+        (payload) => {
           console.log('Events changed, refreshing...');
           fetchEvents();
         })
@@ -154,6 +154,10 @@ const Events = () => {
     // Scroll to top when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  console.log('Total events:', events.length);
+  console.log('Filtered events:', filteredEvents.length);
+  console.log('Current events:', currentEvents.length);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -286,21 +290,27 @@ const Events = () => {
             {/* Events Grid */}
             {!isLoading && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {currentEvents.map((event) => (
-                  <EventItem 
-                    key={event.id} 
-                    id={event.id}
-                    title={event.title || event.name}
-                    description={event.description || ''}
-                    date={event.date || formatDate(event.event_date)}
-                    time={event.time}
-                    location={event.location || event.place}
-                    image={event.image || event.image_url || ''}
-                    category={validateCategory(event.category)}
-                    registrationLink={event.registrationLink}
-                    past={event.past}
-                  />
-                ))}
+                {currentEvents.length > 0 ? (
+                  currentEvents.map((event) => (
+                    <EventItem 
+                      key={event.id} 
+                      id={event.id}
+                      title={event.title || event.name}
+                      description={event.description || ''}
+                      date={event.date || formatDate(event.event_date)}
+                      time={event.time}
+                      location={event.location || event.place}
+                      image={event.image || event.image_url || ''}
+                      category={validateCategory(event.category)}
+                      registrationLink={event.registrationLink}
+                      past={event.past}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-12">
+                    <p className="text-festival-secondary">Aucun événement trouvé pour cette catégorie.</p>
+                  </div>
+                )}
               </div>
             )}
 
