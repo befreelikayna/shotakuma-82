@@ -88,7 +88,7 @@ export interface Event {
 export interface PageContent {
   id: string;
   page_id: string;
-  content: any;
+  content: Json;
   created_at: string;
   updated_at: string;
 }
@@ -99,10 +99,20 @@ export interface NewsletterSubscriber {
   subscribed_at: string;
 }
 
-// Create a custom typed version of supabase client
+// Define a Json type to match Supabase's Json type
+export type Json = 
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json }
+  | Json[];
+
+// Create a typed version of supabase client that handles our custom tables
 export const customSupabase = {
   from: (table: string) => {
-    return supabase.from(table);
+    // This type assertion tells TypeScript to trust us that the table exists
+    return supabase.from(table as any);
   },
   // Add channel method to our custom client
   channel: (name: string) => {

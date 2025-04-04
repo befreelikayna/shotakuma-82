@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit, RefreshCw, Loader2 } from "lucide-react";
-import { customSupabase, PageContent as PageContentType } from "@/integrations/supabase/client";
+import { customSupabase, PageContent as PageContentType, Json } from "@/integrations/supabase/client";
 
 interface PageContent {
   header: {
@@ -292,6 +292,9 @@ const ContentManager = () => {
       for (const pageId of Object.keys(content)) {
         const pageContent = content[pageId];
         
+        // Convert pageContent to a JSON-compatible object
+        const jsonContent: Json = pageContent as unknown as Json;
+        
         const { data: existingContent, error: fetchError } = await customSupabase
           .from('page_content')
           .select('*')
@@ -310,7 +313,7 @@ const ContentManager = () => {
           const { error: updateError } = await customSupabase
             .from('page_content')
             .update({ 
-              content: pageContent,
+              content: jsonContent,
               updated_at: new Date().toISOString()
             })
             .eq('id', typedExistingContent.id);
@@ -322,7 +325,7 @@ const ContentManager = () => {
             .from('page_content')
             .insert({ 
               page_id: pageId, 
-              content: pageContent
+              content: jsonContent
             });
           
           if (insertError) throw insertError;
