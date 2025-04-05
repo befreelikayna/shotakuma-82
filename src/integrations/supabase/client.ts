@@ -70,8 +70,6 @@ export interface Event {
   place: string;
   location: string | null;
   event_date: string;
-  start_time: string | null;
-  end_time: string | null;
   image_url: string | null;
   category: string;
   created_at?: string;
@@ -123,12 +121,5 @@ export const customSupabase = {
   // Add removeChannel method to our custom client
   removeChannel: (channel: any) => {
     return supabase.removeChannel(channel);
-  },
-  // Add storage methods to our custom client
-  storage: {
-    from: (bucket: string) => supabase.storage.from(bucket),
-    listBuckets: () => supabase.storage.listBuckets(),
-    createBucket: (id: string, options?: { public: boolean }) => 
-      supabase.storage.createBucket(id, options)
   }
 };
