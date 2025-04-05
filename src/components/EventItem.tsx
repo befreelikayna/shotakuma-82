@@ -3,7 +3,6 @@ import React from "react";
 import { Calendar, MapPin, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import { useTranslation } from "react-i18next";
 
 export type EventItemProps = {
   id: string;
@@ -31,8 +30,6 @@ const EventItem: React.FC<EventItemProps> = ({
   past,
   onClick
 }) => {
-  const { t } = useTranslation();
-  
   const getCategoryColor = (category: EventItemProps["category"]) => {
     switch (category) {
       case "anime":
@@ -70,14 +67,14 @@ const EventItem: React.FC<EventItemProps> = ({
             category
           )}`}
         >
-          {t(`events.filters.${category}`)}
+          {category.charAt(0).toUpperCase() + category.slice(1)}
         </span>
         {past && (
           <Badge
             variant="outline"
             className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm text-xs font-medium"
           >
-            {t("events.past")}
+            Passé
           </Badge>
         )}
       </div>
@@ -110,7 +107,7 @@ const EventItem: React.FC<EventItemProps> = ({
             transition-all duration-300 hover:bg-opacity-90"
             onClick={(e) => e.stopPropagation()}
           >
-            {t("event.register")}
+            S'inscrire
           </a>
         )}
       </div>

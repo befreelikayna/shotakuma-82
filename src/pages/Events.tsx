@@ -1,14 +1,15 @@
+
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { Calendar, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { Badge } from "@/components/ui/badge";
 import EventItem from "@/components/EventItem";
 import { supabase, Event } from "@/integrations/supabase/client";
-import { useTranslation } from "react-i18next";
 
 const Events = () => {
-  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState<string>(searchParams.get("category") || "all");
   const [activeTab, setActiveTab] = useState<string>(searchParams.get("tab") || "upcoming");
@@ -34,12 +35,11 @@ const Events = () => {
           console.log('Events fetched from Supabase:', data);
           setTotalEventsCount(data.length);
           
+          // Process events with explicit type casting
           const processedEvents = data.map(event => {
             const eventDate = new Date(event.event_date);
             const currentDate = new Date();
             const isPast = eventDate < currentDate;
-            
-            const standardTime = "10:00";
             
             return {
               id: event.id,
@@ -47,7 +47,7 @@ const Events = () => {
               title: event.name,
               description: event.description || '',
               date: formatDate(event.event_date),
-              time: standardTime,
+              time: extractTime(event.event_date),
               location: event.place + (event.location ? `, ${event.location}` : ''),
               place: event.place,
               event_date: event.event_date,
@@ -69,6 +69,7 @@ const Events = () => {
 
     fetchEvents();
     
+    // Subscribe to events changes
     const channel = supabase
       .channel('events-page-changes')
       .on('postgres_changes', 
@@ -98,6 +99,18 @@ const Events = () => {
     }
   };
 
+  // Extract time from datetime for display
+  const extractTime = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
+    } catch (e) {
+      return null;
+    }
+  };
+
   // Ensure category is valid for EventItem component
   const validateCategory = (category: string): "anime" | "manga" | "cosplay" | "gaming" | "culture" => {
     const validCategories = ["anime", "manga", "cosplay", "gaming", "culture"];
@@ -122,8 +135,10 @@ const Events = () => {
 
   const filteredEvents = events
     .filter(event => {
+      // Filter by tab (upcoming or past)
       if (activeTab === "upcoming" && event.past) return false;
       if (activeTab === "past" && !event.past) return false;
+      // Filter by category
       return activeFilter === "all" || event.category === activeFilter;
     });
 
@@ -136,8 +151,13 @@ const Events = () => {
   
   const paginate = (pageNumber: number) => {
     setCurrentPage(pageNumber);
+    // Scroll to top when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  console.log('Total events:', events.length);
+  console.log('Filtered events:', filteredEvents.length);
+  console.log('Current events:', currentEvents.length);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -152,10 +172,10 @@ const Events = () => {
           >
             <div className="mb-12 text-center">
               <h1 className="text-4xl md:text-5xl font-bold text-festival-primary mb-6">
-                {t("events.title")}
+                Événements
               </h1>
               <p className="text-lg text-festival-secondary max-w-2xl mx-auto">
-                {t("events.description")} {totalEventsCount > 0 && `(${totalEventsCount})`}
+                Découvrez nos événements passés et à venir {totalEventsCount > 0 && `(${totalEventsCount})`}
               </p>
             </div>
 
@@ -170,7 +190,7 @@ const Events = () => {
                       : "text-festival-secondary hover:bg-slate-100"
                   }`}
                 >
-                  {t("events.upcoming")}
+                  À venir
                 </button>
                 <button
                   onClick={() => setActiveTab("past")}
@@ -180,7 +200,7 @@ const Events = () => {
                       : "text-festival-secondary hover:bg-slate-100"
                   }`}
                 >
-                  {t("events.past")}
+                  Passés
                 </button>
               </div>
             </div>
@@ -196,7 +216,7 @@ const Events = () => {
                       : "text-festival-secondary hover:bg-slate-100"
                   }`}
                 >
-                  {t("events.filters.all")}
+                  Tous
                 </button>
                 <button
                   onClick={() => setActiveFilter("anime")}
@@ -206,7 +226,7 @@ const Events = () => {
                       : "text-festival-secondary hover:bg-slate-100"
                   }`}
                 >
-                  {t("events.filters.anime")}
+                  Anime
                 </button>
                 <button
                   onClick={() => setActiveFilter("manga")}
@@ -216,7 +236,7 @@ const Events = () => {
                       : "text-festival-secondary hover:bg-slate-100"
                   }`}
                 >
-                  {t("events.filters.manga")}
+                  Manga
                 </button>
                 <button
                   onClick={() => setActiveFilter("cosplay")}
@@ -226,7 +246,7 @@ const Events = () => {
                       : "text-festival-secondary hover:bg-slate-100"
                   }`}
                 >
-                  {t("events.filters.cosplay")}
+                  Cosplay
                 </button>
                 <button
                   onClick={() => setActiveFilter("gaming")}
@@ -236,7 +256,7 @@ const Events = () => {
                       : "text-festival-secondary hover:bg-slate-100"
                   }`}
                 >
-                  {t("events.filters.gaming")}
+                  Gaming
                 </button>
                 <button
                   onClick={() => setActiveFilter("culture")}
@@ -246,7 +266,7 @@ const Events = () => {
                       : "text-festival-secondary hover:bg-slate-100"
                   }`}
                 >
-                  {t("events.filters.culture")}
+                  Culture
                 </button>
               </div>
             </div>
@@ -288,7 +308,7 @@ const Events = () => {
                   ))
                 ) : (
                   <div className="col-span-3 text-center py-12">
-                    <p className="text-festival-secondary">{t("events.noEvents")}</p>
+                    <p className="text-festival-secondary">Aucun événement trouvé pour cette catégorie.</p>
                   </div>
                 )}
               </div>
@@ -297,7 +317,7 @@ const Events = () => {
             {/* No results message */}
             {!isLoading && filteredEvents.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-festival-secondary">{t("events.noEvents")}</p>
+                <p className="text-festival-secondary">Aucun événement trouvé pour cette catégorie.</p>
               </div>
             )}
             
@@ -310,8 +330,7 @@ const Events = () => {
                     onClick={() => paginate(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
                   >
-                    <span className="sr-only">Previous</span>
-                    «
+                    <ChevronLeft className="h-5 w-5" />
                   </button>
                   
                   {/* Page numbers */}
@@ -334,8 +353,7 @@ const Events = () => {
                     onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
                   >
-                    <span className="sr-only">Next</span>
-                    »
+                    <ChevronRight className="h-5 w-5" />
                   </button>
                 </div>
               </div>

@@ -1,5 +1,5 @@
 
-import { useState, ReactNode } from "react";
+import { useState } from "react";
 import { ExternalLink, Share } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -7,11 +7,10 @@ interface FestivalLinkProps {
   title: string;
   description?: string;
   url: string;
-  icon?: ReactNode;
-  children?: ReactNode;
+  icon?: React.ReactNode;
 }
 
-const FestivalLink = ({ title, description, url, icon, children }: FestivalLinkProps) => {
+const FestivalLink = ({ title, description, url, icon }: FestivalLinkProps) => {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleShare = (e: React.MouseEvent) => {
@@ -23,25 +22,6 @@ const FestivalLink = ({ title, description, url, icon, children }: FestivalLinkP
       setTimeout(() => setIsCopied(false), 2000);
     });
   };
-
-  // If children are provided, render them instead of the default content
-  if (children) {
-    return (
-      <motion.a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="festival-link group"
-        whileHover={{ y: -4 }}
-        whileTap={{ scale: 0.98 }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        {children}
-      </motion.a>
-    );
-  }
 
   return (
     <motion.a
