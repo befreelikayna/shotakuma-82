@@ -1,71 +1,227 @@
 
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import FestivalLink from "./FestivalLink";
+import { useTranslation } from "react-i18next";
+import LanguageSelector from "./LanguageSelector";
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const location = useLocation();
+  const { t } = useTranslation();
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location]);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md shadow-soft">
-      <div className="festival-container py-4 flex justify-between items-center">
-        <Link to="/" className="text-2xl font-bold text-festival-primary">
-          SHOTAKU
-        </Link>
-        
-        {/* Mobile menu button */}
-        <button 
-          className="md:hidden p-2 rounded-md text-festival-primary"
-          onClick={toggleMenu}
-          aria-label="Toggle menu"
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 py-4 transition-all duration-300 ${
+        isScrolled ? "bg-white shadow-lg" : "bg-transparent"
+      }`}
+    >
+      <div className="festival-container flex items-center justify-between">
+        <FestivalLink
+          to="/"
+          className={`text-xl sm:text-2xl font-bold ${
+            isScrolled ? "text-festival-primary" : "text-white"
+          }`}
         >
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+          <span className="text-festival-accent">Shotaku</span> Festival
+        </FestivalLink>
 
-        {/* Desktop navigation */}
-        <div className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="nav-link">Accueil</Link>
-          <Link to="/about" className="nav-link">À propos</Link>
-          <Link to="/events" className="nav-link">Événements</Link>
-          <Link to="/schedule" className="nav-link">Programme</Link>
-          <Link to="/gallery" className="nav-link">Galerie</Link>
-          <Link
-            to="/admin"
-            className="px-3 py-1 rounded-full bg-festival-accent/10 text-festival-accent font-medium 
-              hover:bg-festival-accent/20 transition-colors duration-300 ml-2"
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center space-x-2">
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              `nav-link ${
+                isScrolled
+                  ? isActive
+                    ? "text-festival-accent"
+                    : "text-festival-primary hover:text-festival-accent"
+                  : isActive
+                  ? "text-festival-accent"
+                  : "text-white hover:text-festival-accent"
+              }`
+            }
           >
-            Admin
-          </Link>
-        </div>
-
-        {/* Mobile navigation */}
-        <div className={cn(
-          "absolute top-full left-0 right-0 bg-white shadow-md transition-all duration-300 md:hidden",
-          isMenuOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
-        )}>
-          <div className="flex flex-col p-4 space-y-4">
-            <Link to="/" className="nav-link" onClick={toggleMenu}>Accueil</Link>
-            <Link to="/about" className="nav-link" onClick={toggleMenu}>À propos</Link>
-            <Link to="/events" className="nav-link" onClick={toggleMenu}>Événements</Link>
-            <Link to="/schedule" className="nav-link" onClick={toggleMenu}>Programme</Link>
-            <Link to="/gallery" className="nav-link" onClick={toggleMenu}>Galerie</Link>
-            <Link
-              to="/admin"
-              className="px-3 py-1 w-fit rounded-full bg-festival-accent/10 text-festival-accent font-medium 
-                hover:bg-festival-accent/20 transition-colors duration-300"
-              onClick={toggleMenu}
-            >
-              Admin
-            </Link>
+            {t("navbar.home")}
+          </NavLink>
+          <NavLink
+            to="/about"
+            className={({ isActive }) =>
+              `nav-link ${
+                isScrolled
+                  ? isActive
+                    ? "text-festival-accent"
+                    : "text-festival-primary hover:text-festival-accent"
+                  : isActive
+                  ? "text-festival-accent"
+                  : "text-white hover:text-festival-accent"
+              }`
+            }
+          >
+            {t("navbar.about")}
+          </NavLink>
+          <NavLink
+            to="/schedule"
+            className={({ isActive }) =>
+              `nav-link ${
+                isScrolled
+                  ? isActive
+                    ? "text-festival-accent"
+                    : "text-festival-primary hover:text-festival-accent"
+                  : isActive
+                  ? "text-festival-accent"
+                  : "text-white hover:text-festival-accent"
+              }`
+            }
+          >
+            {t("navbar.schedule")}
+          </NavLink>
+          <NavLink
+            to="/gallery"
+            className={({ isActive }) =>
+              `nav-link ${
+                isScrolled
+                  ? isActive
+                    ? "text-festival-accent"
+                    : "text-festival-primary hover:text-festival-accent"
+                  : isActive
+                  ? "text-festival-accent"
+                  : "text-white hover:text-festival-accent"
+              }`
+            }
+          >
+            {t("navbar.gallery")}
+          </NavLink>
+          <NavLink
+            to="/events"
+            className={({ isActive }) =>
+              `nav-link ${
+                isScrolled
+                  ? isActive
+                    ? "text-festival-accent"
+                    : "text-festival-primary hover:text-festival-accent"
+                  : isActive
+                  ? "text-festival-accent"
+                  : "text-white hover:text-festival-accent"
+              }`
+            }
+          >
+            {t("navbar.events")}
+          </NavLink>
+          <div className="ml-4">
+            <LanguageSelector />
           </div>
+        </nav>
+
+        {/* Mobile Menu Button */}
+        <div className="flex items-center md:hidden">
+          <LanguageSelector />
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className={`p-2 rounded-full ${
+              isScrolled ? "text-festival-primary" : "text-white"
+            }`}
+          >
+            {isOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
         </div>
       </div>
-    </nav>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden bg-white"
+          >
+            <div className="festival-container py-4 flex flex-col space-y-4">
+              <NavLink
+                to="/"
+                className={({ isActive }) =>
+                  `block py-2 ${
+                    isActive
+                      ? "text-festival-accent"
+                      : "text-festival-primary hover:text-festival-accent"
+                  }`
+                }
+              >
+                {t("navbar.home")}
+              </NavLink>
+              <NavLink
+                to="/about"
+                className={({ isActive }) =>
+                  `block py-2 ${
+                    isActive
+                      ? "text-festival-accent"
+                      : "text-festival-primary hover:text-festival-accent"
+                  }`
+                }
+              >
+                {t("navbar.about")}
+              </NavLink>
+              <NavLink
+                to="/schedule"
+                className={({ isActive }) =>
+                  `block py-2 ${
+                    isActive
+                      ? "text-festival-accent"
+                      : "text-festival-primary hover:text-festival-accent"
+                  }`
+                }
+              >
+                {t("navbar.schedule")}
+              </NavLink>
+              <NavLink
+                to="/gallery"
+                className={({ isActive }) =>
+                  `block py-2 ${
+                    isActive
+                      ? "text-festival-accent"
+                      : "text-festival-primary hover:text-festival-accent"
+                  }`
+                }
+              >
+                {t("navbar.gallery")}
+              </NavLink>
+              <NavLink
+                to="/events"
+                className={({ isActive }) =>
+                  `block py-2 ${
+                    isActive
+                      ? "text-festival-accent"
+                      : "text-festival-primary hover:text-festival-accent"
+                  }`
+                }
+              >
+                {t("navbar.events")}
+              </NavLink>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
   );
 };
 

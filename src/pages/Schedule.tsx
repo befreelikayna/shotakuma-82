@@ -1,9 +1,10 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Clock, MapPin, Users } from "lucide-react";
+import { Clock, MapPin } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useTranslation } from "react-i18next";
 
 type Event = {
   id: string;
@@ -22,6 +23,7 @@ type Day = {
 };
 
 const Schedule = () => {
+  const { t } = useTranslation();
   const [activeDay, setActiveDay] = useState<string>("day1");
   const [schedule, setSchedule] = useState<Day[]>([
     {
@@ -83,7 +85,7 @@ const Schedule = () => {
           id: "e6",
           title: "Qualifications Concours Cosplay",
           description: "Première phase du grand concours de cosplay du festival.",
-          startTime: "10:30",
+          startTime: "10:00",
           endTime: "12:30",
           location: "Scène principale",
           category: "competition",
@@ -216,10 +218,10 @@ const Schedule = () => {
           >
             <div className="mb-12 text-center">
               <h1 className="text-4xl md:text-5xl font-bold text-festival-primary mb-6">
-                Programme du Festival
+                {t("schedule.title")}
               </h1>
               <p className="text-lg text-festival-secondary max-w-2xl mx-auto">
-                Découvrez les événements, ateliers, projections et performances prévus pendant les trois jours du festival
+                {t("schedule.description")}
               </p>
             </div>
 
@@ -247,23 +249,23 @@ const Schedule = () => {
             <div className="flex flex-wrap justify-center gap-3 mb-10">
               <div className="flex items-center">
                 <span className="inline-block w-3 h-3 rounded-full bg-blue-400 mr-2"></span>
-                <span className="text-sm text-festival-secondary">Panels</span>
+                <span className="text-sm text-festival-secondary">{t("schedule.categories.panels")}</span>
               </div>
               <div className="flex items-center">
                 <span className="inline-block w-3 h-3 rounded-full bg-green-400 mr-2"></span>
-                <span className="text-sm text-festival-secondary">Ateliers</span>
+                <span className="text-sm text-festival-secondary">{t("schedule.categories.workshops")}</span>
               </div>
               <div className="flex items-center">
                 <span className="inline-block w-3 h-3 rounded-full bg-purple-400 mr-2"></span>
-                <span className="text-sm text-festival-secondary">Compétitions</span>
+                <span className="text-sm text-festival-secondary">{t("schedule.categories.competitions")}</span>
               </div>
               <div className="flex items-center">
                 <span className="inline-block w-3 h-3 rounded-full bg-amber-400 mr-2"></span>
-                <span className="text-sm text-festival-secondary">Projections</span>
+                <span className="text-sm text-festival-secondary">{t("schedule.categories.screenings")}</span>
               </div>
               <div className="flex items-center">
                 <span className="inline-block w-3 h-3 rounded-full bg-rose-400 mr-2"></span>
-                <span className="text-sm text-festival-secondary">Performances</span>
+                <span className="text-sm text-festival-secondary">{t("schedule.categories.performances")}</span>
               </div>
             </div>
 
@@ -311,7 +313,7 @@ const Schedule = () => {
                 className="inline-flex items-center px-6 py-3 rounded-full bg-festival-primary text-white font-medium 
                 shadow-soft transition-all duration-300 hover:shadow-md hover:bg-opacity-90"
               >
-                Télécharger le programme complet (PDF)
+                {t("schedule.download")}
               </a>
             </div>
           </motion.div>

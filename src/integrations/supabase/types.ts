@@ -14,36 +14,42 @@ export type Database = {
           category: string | null
           created_at: string
           description: string | null
+          end_time: string | null
           event_date: string
           id: string
           image_url: string | null
           location: string | null
           name: string
           place: string
+          start_time: string | null
           updated_at: string
         }
         Insert: {
           category?: string | null
           created_at?: string
           description?: string | null
+          end_time?: string | null
           event_date: string
           id?: string
           image_url?: string | null
           location?: string | null
           name: string
           place: string
+          start_time?: string | null
           updated_at?: string
         }
         Update: {
           category?: string | null
           created_at?: string
           description?: string | null
+          end_time?: string | null
           event_date?: string
           id?: string
           image_url?: string | null
           location?: string | null
           name?: string
           place?: string
+          start_time?: string | null
           updated_at?: string
         }
         Relationships: []

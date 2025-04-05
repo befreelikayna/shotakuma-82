@@ -1,0 +1,41 @@
+
+{
+  "navbar": {
+    "home": "Accueil",
+    "about": "À propos",
+    "schedule": "Programme",
+    "gallery": "Galerie",
+    "events": "Événements"
+  },
+  "events": {
+    "title": "Événements",
+    "description": "Découvrez nos événements passés et à venir",
+    "upcoming": "À venir",
+    "past": "Passés",
+    "filters": {
+      "all": "Tous",
+      "anime": "Anime",
+      "manga": "Manga",
+      "cosplay": "Cosplay",
+      "gaming": "Jeux vidéo",
+      "culture": "Culture"
+    },
+    "noEvents": "Aucun événement trouvé pour cette catégorie.",
+    "loading": "Chargement des événements..."
+  },
+  "event": {
+    "register": "S'inscrire"
+  },
+  "schedule": {
+    "title": "Programme du Festival",
+    "description": "Découvrez les événements, ateliers, projections et performances prévus pendant les trois jours du festival",
+    "download": "Télécharger le programme complet (PDF)",
+    "categories": {
+      "panels": "Panels", 
+      "workshops": "Ateliers",
+      "competitions": "Compétitions",
+      "screenings": "Projections",
+      "performances": "Performances"
+    }
+  }
+}
