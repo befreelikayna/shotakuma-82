@@ -1,12 +1,17 @@
 
 import 'react-i18next';
-import { ReactNode } from 'react';
+import { ReactNode, ReactPortal } from 'react';
 
 declare module 'react-i18next' {
-  // This ensures ReactI18NextChildren is compatible with ReactNode
+  // Make ReactI18NextChildren properly extend ReactNode with all necessary properties
   interface ReactI18NextChildren extends ReactNode {
-    // Ensure it has all the properties needed to be assignable to ReactNode
-    // Adding explicit `type` property to match React internal typings
+    // Add specific properties from ReactPortal
+    type?: any;
+    props?: any;
+    key?: any;
+    children?: ReactNode;
+    
+    // Ensure compatibility with Record<string, unknown> format
     [key: string]: any;
   }
 }
