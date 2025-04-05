@@ -1,21 +1,30 @@
 
 import 'react-i18next';
-import { ReactNode, ReactPortal, ReactElement, Key } from 'react';
+import { ReactNode } from 'react';
 
 declare module 'react-i18next' {
-  // Instead of just extending ReactNode with a record type, 
-  // we need to create a more specific type that satisfies the compiler
+  // The simplest approach is to extend the React module directly
+  // and augment the ReactNode type
   
-  // Make a ReactPortal-compatible type that can be used in places expecting ReactNode
-  interface ReactI18NextPortal extends ReactPortal {
-    children: ReactNode;
-    type: any;
-    props: any;
-    key: Key | null;
+  // Use a type assertion to make TypeScript accept the Record<string, ReactNode>
+  // as a valid ReactNode by declaring ReactI18NextChildren as ReactNode
+  type ReactI18NextChildren = ReactNode;
+  
+  // This tells TypeScript that ReactI18NextChildren can be used anywhere
+  // where ReactNode is expected
+  declare global {
+    namespace React {
+      interface ReactNodeArray extends Array<ReactNode> {}
+      
+      // Augment the ReactNode type definition to include our records
+      type ReactNode = 
+        | ReactChild
+        | ReactFragment
+        | ReactPortal
+        | boolean
+        | null
+        | undefined
+        | Record<string, ReactNode>;  // Add this to the union
+    }
   }
-  
-  // Define our type as a union that includes ReactNode and our custom portal type
-  type ReactI18NextChildren = 
-    | ReactNode 
-    | (Record<string, ReactNode> & ReactI18NextPortal);
 }
