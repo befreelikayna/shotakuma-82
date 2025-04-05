@@ -3,9 +3,9 @@ import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import FestivalLink from "./FestivalLink";
 import { useTranslation } from "react-i18next";
 import LanguageSelector from "./LanguageSelector";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,14 +33,14 @@ const Navbar = () => {
       }`}
     >
       <div className="festival-container flex items-center justify-between">
-        <FestivalLink
+        <Link
           to="/"
           className={`text-xl sm:text-2xl font-bold ${
             isScrolled ? "text-festival-primary" : "text-white"
           }`}
         >
           <span className="text-festival-accent">Shotaku</span> Festival
-        </FestivalLink>
+        </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-2">
