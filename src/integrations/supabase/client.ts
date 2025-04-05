@@ -57,6 +57,14 @@ const channel = supabase.channel('admin-panel-changes')
   }, (payload) => {
     console.log('Change received on events!', payload);
   })
+  // Add realtime for tickets 
+  .on('postgres_changes', { 
+    event: '*', 
+    schema: 'public', 
+    table: 'tickets' 
+  }, (payload) => {
+    console.log('Change received on tickets!', payload);
+  })
   .subscribe();
 
 // Export the channel for potential cleanup
@@ -82,6 +90,18 @@ export interface Event {
   time?: string;
   image?: string;
   registrationLink?: string;
+}
+
+// Define a Ticket interface for the tickets table
+export interface Ticket {
+  id: string;
+  name: string;
+  price: number;
+  description: string | null;
+  available: boolean;
+  features?: string[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Define interfaces for the tables not included in the auto-generated types

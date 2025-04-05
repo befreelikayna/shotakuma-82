@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter, MessageSquare } from "lucide-react";
@@ -12,22 +11,17 @@ import TicketPackage from "@/components/TicketPackage";
 import { useGalleryItems } from "@/hooks/use-gallery-items";
 import { usePageContent } from "@/hooks/use-page-content";
 import PageContentSection from "@/components/PageContentSection";
-import { customSupabase, supabase } from "@/integrations/supabase/client";
+import { customSupabase, supabase, Ticket } from "@/integrations/supabase/client";
 
-interface Ticket {
-  id: string;
-  name: string;
-  price: number;
-  description: string | null;
-  available: boolean;
-  features?: string[]; // Added for ticket package display
+interface TicketWithFeatures extends Ticket {
+  features: string[];
 }
 
 const Index = () => {
   const [email, setEmail] = useState("");
   const { items: galleryItems, isLoading: galleryLoading } = useGalleryItems('event');
   const { content: pageContent, isLoading: contentLoading } = usePageContent('home');
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [tickets, setTickets] = useState<TicketWithFeatures[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(true);
   
   // Default features for ticket packages
@@ -60,7 +54,7 @@ const Index = () => {
   const fetchTickets = async () => {
     try {
       setTicketsLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await customSupabase
         .from('tickets')
         .select('*')
         .order('price');
@@ -74,7 +68,7 @@ const Index = () => {
         const enhancedTickets = data.map(ticket => ({
           ...ticket,
           features: (defaultFeatures as any)[ticket.name] || []
-        }));
+        })) as TicketWithFeatures[];
         
         setTickets(enhancedTickets);
       }

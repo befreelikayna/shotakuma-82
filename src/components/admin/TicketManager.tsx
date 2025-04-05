@@ -7,7 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Trash, Edit, Plus, DollarSign, RefreshCw } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, customSupabase, Ticket } from "@/integrations/supabase/client";
 
 interface TicketType {
   id: string;
@@ -41,7 +41,7 @@ const TicketManager = () => {
   const fetchTickets = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await customSupabase
         .from('tickets')
         .select('*')
         .order('created_at');
@@ -51,7 +51,7 @@ const TicketManager = () => {
       }
       
       if (data) {
-        setTickets(data);
+        setTickets(data as TicketType[]);
       }
     } catch (error) {
       console.error('Error fetching tickets:', error);
@@ -96,7 +96,7 @@ const TicketManager = () => {
 
     try {
       if (isEditing) {
-        const { error } = await supabase
+        const { error } = await customSupabase
           .from('tickets')
           .update({
             name: currentTicket.name,
@@ -110,7 +110,7 @@ const TicketManager = () => {
         
         toast({ title: "Succès", description: "Le billet a été mis à jour." });
       } else {
-        const { error } = await supabase
+        const { error } = await customSupabase
           .from('tickets')
           .insert({
             name: currentTicket.name,
@@ -143,7 +143,7 @@ const TicketManager = () => {
 
   const handleDeleteTicket = async (id: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await customSupabase
         .from('tickets')
         .delete()
         .eq('id', id);

@@ -8,3 +8,8 @@ declare module 'react' {
     [key: string]: unknown;
   }
 }
+
+// Make ReactNode also accept Record<string, unknown> to fix UI component type errors
+declare module 'react' {
+  type ReactNode = ReactNode | Record<string, unknown>;
+}
