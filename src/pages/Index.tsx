@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter, MessageSquare } from "lucide-react";
@@ -11,61 +12,97 @@ import TicketPackage from "@/components/TicketPackage";
 import { useGalleryItems } from "@/hooks/use-gallery-items";
 import { usePageContent } from "@/hooks/use-page-content";
 import PageContentSection from "@/components/PageContentSection";
-import { customSupabase } from "@/integrations/supabase/client";
+import { customSupabase, supabase } from "@/integrations/supabase/client";
+
+interface Ticket {
+  id: string;
+  name: string;
+  price: number;
+  description: string | null;
+  available: boolean;
+  features?: string[]; // Added for ticket package display
+}
 
 const Index = () => {
   const [email, setEmail] = useState("");
   const { items: galleryItems, isLoading: galleryLoading } = useGalleryItems('event');
   const { content: pageContent, isLoading: contentLoading } = usePageContent('home');
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(true);
   
-  const [ticketPackages, setTicketPackages] = useState([
-    {
-      id: "1",
-      name: "Pass 1 Jour",
-      price: 150,
-      description: "Accès à tous les événements pour une journée",
-      features: [
-        "Accès à toutes les expositions",
-        "Accès aux panels et discussions",
-        "Accès aux projections",
-        "Accès à la zone marchande"
-      ],
-      isPopular: false
-    },
-    {
-      id: "2",
-      name: "Pass 3 Jours",
-      price: 350,
-      description: "Accès à tous les événements pendant les trois jours du festival",
-      features: [
-        "Accès complet aux trois jours",
-        "Accès à toutes les expositions",
-        "Accès aux panels et discussions",
-        "Accès aux projections",
-        "Accès à la zone marchande",
-        "T-shirt exclusif du festival"
-      ],
-      isPopular: true
-    },
-    {
-      id: "3",
-      name: "Pass VIP",
-      price: 500,
-      description: "Accès prioritaire, cadeaux exclusifs et rencontres avec les invités spéciaux",
-      features: [
-        "Accès complet aux trois jours",
-        "Entrée prioritaire sans file d'attente",
-        "Accès aux zones VIP",
-        "Kit souvenir exclusif",
-        "Rencontre avec les invités spéciaux",
-        "Place réservée pour les événements principaux"
-      ],
-      isPopular: false
-    }
-  ]);
+  // Default features for ticket packages
+  const defaultFeatures = {
+    "Pass 1 Jour": [
+      "Accès à toutes les expositions",
+      "Accès aux panels et discussions",
+      "Accès aux projections",
+      "Accès à la zone marchande"
+    ],
+    "Pass 3 Jours": [
+      "Accès complet aux trois jours",
+      "Accès à toutes les expositions",
+      "Accès aux panels et discussions",
+      "Accès aux projections",
+      "Accès à la zone marchande",
+      "T-shirt exclusif du festival"
+    ],
+    "Pass VIP": [
+      "Accès complet aux trois jours",
+      "Entrée prioritaire sans file d'attente",
+      "Accès aux zones VIP",
+      "Kit souvenir exclusif",
+      "Rencontre avec les invités spéciaux",
+      "Place réservée pour les événements principaux"
+    ]
+  };
 
+  // Fetch tickets from Supabase
+  const fetchTickets = async () => {
+    try {
+      setTicketsLoading(true);
+      const { data, error } = await supabase
+        .from('tickets')
+        .select('*')
+        .order('price');
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
+        // Add default features based on ticket name
+        const enhancedTickets = data.map(ticket => ({
+          ...ticket,
+          features: (defaultFeatures as any)[ticket.name] || []
+        }));
+        
+        setTickets(enhancedTickets);
+      }
+    } catch (error) {
+      console.error('Error fetching tickets:', error);
+    } finally {
+      setTicketsLoading(false);
+    }
+  };
+  
   useEffect(() => {
     window.scrollTo(0, 0);
+    fetchTickets();
+    
+    // Set up realtime subscription for tickets
+    const channel = supabase
+      .channel('tickets-homepage-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'tickets' }, 
+        (payload) => {
+          console.log('Tickets changed (homepage):', payload);
+          fetchTickets();
+        })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const sectionVariants = {
@@ -139,18 +176,26 @@ const Index = () => {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {ticketPackages.map((pkg) => (
-              <TicketPackage 
-                key={pkg.id}
-                name={pkg.name}
-                price={pkg.price}
-                description={pkg.description}
-                features={pkg.features}
-                isPopular={pkg.isPopular}
-              />
-            ))}
-          </div>
+          {ticketsLoading ? (
+            <div className="flex justify-center py-10">
+              <div className="animate-spin h-10 w-10 border-2 border-festival-primary border-t-transparent rounded-full"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {tickets
+                .filter(ticket => ticket.available)
+                .map((ticket) => (
+                  <TicketPackage 
+                    key={ticket.id}
+                    name={ticket.name}
+                    price={ticket.price}
+                    description={ticket.description || ""}
+                    features={ticket.features || []}
+                    isPopular={ticket.name === "Pass 3 Jours"}
+                  />
+                ))}
+            </div>
+          )}
         </div>
       </section>
 

@@ -14,36 +14,42 @@ export type Database = {
           category: string | null
           created_at: string
           description: string | null
+          end_time: string | null
           event_date: string
           id: string
           image_url: string | null
           location: string | null
           name: string
           place: string
+          start_time: string | null
           updated_at: string
         }
         Insert: {
           category?: string | null
           created_at?: string
           description?: string | null
+          end_time?: string | null
           event_date: string
           id?: string
           image_url?: string | null
           location?: string | null
           name: string
           place: string
+          start_time?: string | null
           updated_at?: string
         }
         Update: {
           category?: string | null
           created_at?: string
           description?: string | null
+          end_time?: string | null
           event_date?: string
           id?: string
           image_url?: string | null
           location?: string | null
           name?: string
           place?: string
+          start_time?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -174,6 +180,36 @@ export type Database = {
           title?: string
           updated_at?: string
           url?: string
+        }
+        Relationships: []
+      }
+      tickets: {
+        Row: {
+          available: boolean
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          available?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          available?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          price?: number
+          updated_at?: string
         }
         Relationships: []
       }

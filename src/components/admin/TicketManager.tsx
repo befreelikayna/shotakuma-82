@@ -1,46 +1,25 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Trash, Edit, Plus, DollarSign } from "lucide-react";
+import { Trash, Edit, Plus, DollarSign, RefreshCw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TicketType {
   id: string;
   name: string;
   price: number;
-  description: string;
+  description: string | null;
   available: boolean;
 }
 
 const TicketManager = () => {
-  const [tickets, setTickets] = useState<TicketType[]>([
-    {
-      id: "1",
-      name: "Pass 1 Jour",
-      price: 150,
-      description: "Accès à tous les événements pour une journée",
-      available: true,
-    },
-    {
-      id: "2",
-      name: "Pass 3 Jours",
-      price: 350,
-      description: "Accès à tous les événements pendant les trois jours du festival",
-      available: true,
-    },
-    {
-      id: "3",
-      name: "Pass VIP",
-      price: 500,
-      description: "Accès prioritaire, cadeaux exclusifs et rencontres avec les invités spéciaux",
-      available: false,
-    },
-  ]);
-
+  const [tickets, setTickets] = useState<TicketType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [currentTicket, setCurrentTicket] = useState<TicketType>({
     id: "",
@@ -57,8 +36,55 @@ const TicketManager = () => {
   });
 
   const [isEditingPayPal, setIsEditingPayPal] = useState(false);
+
+  // Fetch tickets from Supabase
+  const fetchTickets = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('tickets')
+        .select('*')
+        .order('created_at');
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
+        setTickets(data);
+      }
+    } catch (error) {
+      console.error('Error fetching tickets:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les billets.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
-  const handleAddOrUpdateTicket = () => {
+  useEffect(() => {
+    fetchTickets();
+    
+    // Set up realtime subscription for tickets
+    const channel = supabase
+      .channel('tickets-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'tickets' }, 
+        (payload) => {
+          console.log('Tickets changed:', payload);
+          fetchTickets();
+        })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+  
+  const handleAddOrUpdateTicket = async () => {
     if (!currentTicket.name || currentTicket.price <= 0) {
       toast({
         title: "Erreur",
@@ -68,20 +94,46 @@ const TicketManager = () => {
       return;
     }
 
-    if (isEditing) {
-      setTickets(
-        tickets.map((ticket) =>
-          ticket.id === currentTicket.id ? currentTicket : ticket
-        )
-      );
-      toast({ title: "Succès", description: "Le billet a été mis à jour." });
-    } else {
-      const newId = Date.now().toString();
-      setTickets([...tickets, { ...currentTicket, id: newId }]);
-      toast({ title: "Succès", description: "Le nouveau billet a été ajouté." });
-    }
+    try {
+      if (isEditing) {
+        const { error } = await supabase
+          .from('tickets')
+          .update({
+            name: currentTicket.name,
+            price: currentTicket.price,
+            description: currentTicket.description,
+            available: currentTicket.available
+          })
+          .eq('id', currentTicket.id);
+        
+        if (error) throw error;
+        
+        toast({ title: "Succès", description: "Le billet a été mis à jour." });
+      } else {
+        const { error } = await supabase
+          .from('tickets')
+          .insert({
+            name: currentTicket.name,
+            price: currentTicket.price,
+            description: currentTicket.description,
+            available: currentTicket.available
+          });
+        
+        if (error) throw error;
+        
+        toast({ title: "Succès", description: "Le nouveau billet a été ajouté." });
+      }
 
-    resetForm();
+      resetForm();
+      fetchTickets();
+    } catch (error) {
+      console.error('Error saving ticket:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'enregistrement du billet.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditTicket = (ticket: TicketType) => {
@@ -89,12 +141,29 @@ const TicketManager = () => {
     setCurrentTicket(ticket);
   };
 
-  const handleDeleteTicket = (id: string) => {
-    setTickets(tickets.filter((ticket) => ticket.id !== id));
-    toast({
-      title: "Supprimé",
-      description: "Le billet a été supprimé.",
-    });
+  const handleDeleteTicket = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Supprimé",
+        description: "Le billet a été supprimé.",
+      });
+      
+      fetchTickets();
+    } catch (error) {
+      console.error('Error deleting ticket:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la suppression du billet.",
+        variant: "destructive",
+      });
+    }
   };
 
   const resetForm = () => {
@@ -116,9 +185,28 @@ const TicketManager = () => {
     setIsEditingPayPal(false);
   };
 
+  const handleRefreshTickets = () => {
+    fetchTickets();
+    toast({
+      title: "Actualisation",
+      description: "Liste des billets actualisée",
+    });
+  };
+
   return (
     <div>
-      <h2 className="text-2xl font-semibold text-festival-primary mb-6">Gestion des Billets</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold text-festival-primary">Gestion des Billets</h2>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefreshTickets}
+          className="flex items-center gap-1"
+        >
+          <RefreshCw size={16} />
+          Actualiser
+        </Button>
+      </div>
       
       {/* PayPal Settings */}
       <div className="bg-slate-50 p-6 rounded-lg mb-8">
@@ -207,7 +295,7 @@ const TicketManager = () => {
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
           <Textarea
-            value={currentTicket.description}
+            value={currentTicket.description || ""}
             onChange={(e) => setCurrentTicket({ ...currentTicket, description: e.target.value })}
             placeholder="Description du billet"
             rows={3}
@@ -241,59 +329,74 @@ const TicketManager = () => {
       
       {/* Tickets List */}
       <h3 className="text-lg font-medium text-festival-primary mb-4">Billets disponibles</h3>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nom</TableHead>
-            <TableHead>Prix</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {tickets.map((ticket) => (
-            <TableRow key={ticket.id}>
-              <TableCell>{ticket.name}</TableCell>
-              <TableCell>
-                <span className="flex items-center gap-1">
-                  <DollarSign size={14} /> {ticket.price} MAD
-                </span>
-              </TableCell>
-              <TableCell className="max-w-xs truncate">{ticket.description}</TableCell>
-              <TableCell>
-                <span 
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    ticket.available ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {ticket.available ? "Disponible" : "Indisponible"}
-                </span>
-              </TableCell>
-              <TableCell>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleEditTicket(ticket)}
-                    className="p-2 h-auto"
-                  >
-                    <Edit size={16} className="text-blue-500" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleDeleteTicket(ticket.id)}
-                    className="p-2 h-auto"
-                  >
-                    <Trash size={16} className="text-red-500" />
-                  </Button>
-                </div>
-              </TableCell>
+      
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <div className="animate-spin h-8 w-8 border-2 border-festival-primary border-t-transparent rounded-full"></div>
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nom</TableHead>
+              <TableHead>Prix</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {tickets.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-4 text-gray-500">
+                  Aucun billet trouvé
+                </TableCell>
+              </TableRow>
+            ) : (
+              tickets.map((ticket) => (
+                <TableRow key={ticket.id}>
+                  <TableCell>{ticket.name}</TableCell>
+                  <TableCell>
+                    <span className="flex items-center gap-1">
+                      <DollarSign size={14} /> {ticket.price} MAD
+                    </span>
+                  </TableCell>
+                  <TableCell className="max-w-xs truncate">{ticket.description}</TableCell>
+                  <TableCell>
+                    <span 
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        ticket.available ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {ticket.available ? "Disponible" : "Indisponible"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditTicket(ticket)}
+                        className="p-2 h-auto"
+                      >
+                        <Edit size={16} className="text-blue-500" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleDeleteTicket(ticket.id)}
+                        className="p-2 h-auto"
+                      >
+                        <Trash size={16} className="text-red-500" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 };
