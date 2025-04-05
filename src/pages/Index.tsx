@@ -64,11 +64,19 @@ const Index = () => {
       }
       
       if (data) {
+        // Type guard to ensure we have proper ticket shapes
+        const ticketData = Array.isArray(data) ? data.filter(item => 
+          typeof item === 'object' && item !== null && 'name' in item && 'price' in item
+        ) : [];
+        
         // Add default features based on ticket name
-        const enhancedTickets = data.map(ticket => ({
-          ...ticket,
-          features: (defaultFeatures as any)[ticket.name] || []
-        })) as TicketWithFeatures[];
+        const enhancedTickets = ticketData.map(ticket => {
+          const typedTicket = ticket as Ticket;
+          return {
+            ...typedTicket,
+            features: (defaultFeatures as any)[typedTicket.name] || []
+          } as TicketWithFeatures;
+        });
         
         setTickets(enhancedTickets);
       }

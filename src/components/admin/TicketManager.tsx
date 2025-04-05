@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +36,6 @@ const TicketManager = () => {
 
   const [isEditingPayPal, setIsEditingPayPal] = useState(false);
 
-  // Fetch tickets from Supabase
   const fetchTickets = async () => {
     try {
       setIsLoading(true);
@@ -51,7 +49,20 @@ const TicketManager = () => {
       }
       
       if (data) {
-        setTickets(data as TicketType[]);
+        const typedData = Array.isArray(data) ? data.map(item => {
+          if ('name' in item && 'price' in item) {
+            return item as TicketType;
+          }
+          return {
+            id: "unknown",
+            name: "Unknown",
+            price: 0,
+            description: null,
+            available: false
+          } as TicketType;
+        }) : [];
+        
+        setTickets(typedData);
       }
     } catch (error) {
       console.error('Error fetching tickets:', error);
@@ -68,7 +79,6 @@ const TicketManager = () => {
   useEffect(() => {
     fetchTickets();
     
-    // Set up realtime subscription for tickets
     const channel = supabase
       .channel('tickets-changes')
       .on('postgres_changes', 
@@ -208,7 +218,6 @@ const TicketManager = () => {
         </Button>
       </div>
       
-      {/* PayPal Settings */}
       <div className="bg-slate-50 p-6 rounded-lg mb-8">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium text-festival-primary">Configuration PayPal</h3>
@@ -267,7 +276,6 @@ const TicketManager = () => {
         )}
       </div>
       
-      {/* Ticket Form */}
       <div className="bg-slate-50 p-6 rounded-lg mb-8">
         <h3 className="text-lg font-medium text-festival-primary mb-4">
           {isEditing ? "Modifier un billet" : "Ajouter un nouveau billet"}
@@ -327,7 +335,6 @@ const TicketManager = () => {
         </div>
       </div>
       
-      {/* Tickets List */}
       <h3 className="text-lg font-medium text-festival-primary mb-4">Billets disponibles</h3>
       
       {isLoading ? (
