@@ -50,22 +50,28 @@ const TicketManager = () => {
       }
       
       if (data) {
-        // Type guard to ensure we have correct data shape
+        // Improved type handling
         const typedData = Array.isArray(data) 
           ? data
-              .filter((item): item is Record<string, any> => 
+              .filter((item): item is { 
+                  id: string; 
+                  name: string; 
+                  price: number | string; 
+                  description: string | null;
+                  available: boolean;
+                } => 
                 item !== null && 
                 typeof item === 'object' && 
+                'id' in item &&
                 'name' in item && 
                 'price' in item &&
-                'id' in item &&
                 'available' in item
               )
               .map(item => ({
-                id: item.id as string,
-                name: item.name as string,
+                id: item.id,
+                name: item.name,
                 price: typeof item.price === 'number' ? item.price : Number(item.price),
-                description: item.description as string | null,
+                description: item.description,
                 available: Boolean(item.available)
               }))
           : [];

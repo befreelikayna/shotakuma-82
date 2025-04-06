@@ -9,7 +9,6 @@ import { Slider } from "@/components/ui/slider";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import EventItem from "@/components/EventItem";
-import Gallery from "@/components/Gallery";
 import SliderComponent from "@/components/Slider";
 import TicketPackage from "@/components/TicketPackage";
 import { customSupabase, Event, Ticket } from "@/integrations/supabase/client";
@@ -62,28 +61,36 @@ const Home = () => {
         }
         
         if (data) {
-          // Type guard to ensure proper ticket shapes
+          // Improved type handling
           const ticketData = Array.isArray(data) 
-            ? data.filter((item): item is Record<string, any> => 
+            ? data.filter((item): item is { 
+                id: string; 
+                name: string; 
+                price: number | string; 
+                description: string | null;
+                available: boolean;
+              } => 
                 item !== null &&
                 typeof item === 'object' && 
+                'id' in item &&
                 'name' in item && 
                 'price' in item &&
-                'id' in item
+                'available' in item
               )
             : [];
           
           // Add default features based on ticket name
           const enhancedTickets = ticketData.map(item => {
-            // Use type assertion to help TypeScript understand the structure
+            // Create a properly typed ticket object
             const typedTicket = {
-              id: item.id as string,
-              name: item.name as string,
+              id: item.id,
+              name: item.name,
               price: typeof item.price === 'number' ? item.price : Number(item.price),
-              description: item.description as string | null,
+              description: item.description,
               available: Boolean(item.available)
             } as Ticket;
             
+            // Add features based on ticket name
             return {
               ...typedTicket,
               features: (defaultFeatures as any)[typedTicket.name] || []
@@ -123,27 +130,38 @@ const Home = () => {
         }
   
         if (data) {
-          // Type guard to ensure we have proper event shapes
+          // Improved type handling for events
           const eventData = Array.isArray(data) 
-            ? data.filter((item): item is Record<string, any> => 
+            ? data.filter((item): item is { 
+                id: string;
+                name: string;
+                description: string | null;
+                place: string;
+                location: string | null;
+                event_date: string;
+                image_url: string | null;
+                category: string;
+              } => 
                 item !== null &&
                 typeof item === 'object' && 
-                'name' in item && 
                 'id' in item &&
-                'event_date' in item
+                'name' in item &&
+                'place' in item &&
+                'event_date' in item &&
+                'category' in item
               )
             : [];
           
-          // Type assertion to help TypeScript understand the structure
+          // Convert to Event type
           const typedEvents = eventData.map(item => ({
-            id: item.id as string,
-            name: item.name as string,
-            description: item.description as string | null,
-            place: item.place as string,
-            location: item.location as string | null,
-            event_date: item.event_date as string,
-            image_url: item.image_url as string | null,
-            category: item.category as string,
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            place: item.place,
+            location: item.location,
+            event_date: item.event_date,
+            image_url: item.image_url,
+            category: item.category,
           } as Event));
           
           setEvents(typedEvents);
@@ -225,7 +243,7 @@ const Home = () => {
           ) : events.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {events.map((eventItem) => (
-                <EventItem key={eventItem.id} event={eventItem} />
+                <EventItem key={eventItem.id} {...eventItem} />
               ))}
             </div>
           ) : (
@@ -240,7 +258,12 @@ const Home = () => {
           <h2 className="text-3xl text-center md:text-4xl font-display font-bold text-festival-primary mb-8">
             Galerie
           </h2>
-          <Gallery />
+          {/* Placeholder for Gallery component */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gray-200 h-60 rounded"></div>
+            <div className="bg-gray-200 h-60 rounded"></div>
+            <div className="bg-gray-200 h-60 rounded"></div>
+          </div>
         </section>
 
         {/* Tickets Section */}
