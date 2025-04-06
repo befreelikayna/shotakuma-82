@@ -50,12 +50,12 @@ const TicketManager = () => {
       }
       
       if (data) {
-        // Type assertion with filtering to ensure we have correct data shape
+        // Type guard to ensure we have correct data shape
         const typedData = Array.isArray(data) 
           ? data
-              .filter(item => 
-                typeof item === 'object' && 
+              .filter((item): item is Record<string, any> => 
                 item !== null && 
+                typeof item === 'object' && 
                 'name' in item && 
                 'price' in item &&
                 'id' in item &&
@@ -237,6 +237,7 @@ const TicketManager = () => {
         </Button>
       </div>
       
+      {/* PayPal configuration section */}
       <div className="bg-slate-50 p-6 rounded-lg mb-8">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium text-festival-primary">Configuration PayPal</h3>
@@ -295,6 +296,7 @@ const TicketManager = () => {
         )}
       </div>
       
+      {/* Add/Edit ticket form */}
       <div className="bg-slate-50 p-6 rounded-lg mb-8">
         <h3 className="text-lg font-medium text-festival-primary mb-4">
           {isEditing ? "Modifier un billet" : "Ajouter un nouveau billet"}
@@ -354,6 +356,7 @@ const TicketManager = () => {
         </div>
       </div>
       
+      {/* Tickets list */}
       <h3 className="text-lg font-medium text-festival-primary mb-4">Billets disponibles</h3>
       
       {isLoading ? (
