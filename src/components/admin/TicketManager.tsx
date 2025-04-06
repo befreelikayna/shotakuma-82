@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,11 +52,11 @@ const TicketManager = () => {
           if (item && typeof item === 'object' && item !== null && 'name' in item && 'price' in item) {
             // Create a properly typed ticket object
             return {
-              id: String(item.id || ''),
-              name: String(item.name || ''),
-              price: typeof item.price === 'number' ? item.price : Number(item.price || 0),
-              description: item.description !== undefined ? String(item.description || '') : null,
-              available: Boolean(item.available)
+              id: String(item?.id || ''),
+              name: String(item?.name || ''),
+              price: typeof item?.price === 'number' ? item.price : Number(item?.price || 0),
+              description: item?.description !== undefined ? String(item?.description || '') : null,
+              available: Boolean(item?.available)
             } as TicketType;
           }
           // Return a default ticket if data doesn't match expected shape

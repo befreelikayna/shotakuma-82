@@ -42,11 +42,11 @@ const Slider = () => {
               'image_url' in item
             )
             .map(item => ({
-              id: String(item.id || ''),
-              image_url: String(item.image_url || ''),
-              order_number: typeof item.order_number === 'number' ? item.order_number : 0,
-              active: Boolean(item.active ?? true),
-              link: item.link ? String(item.link) : null
+              id: String(item?.id || ''),
+              image_url: String(item?.image_url || ''),
+              order_number: typeof item?.order_number === 'number' ? item.order_number : 0,
+              active: Boolean(item?.active ?? true),
+              link: item?.link ? String(item.link) : null
             }));
 
           setImages(sliderData);

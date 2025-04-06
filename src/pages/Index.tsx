@@ -24,7 +24,6 @@ const Index = () => {
   const [tickets, setTickets] = useState<TicketWithFeatures[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(true);
   
-  // Default features for ticket packages
   const defaultFeatures = {
     "Pass 1 Jour": [
       "Accès à toutes les expositions",
@@ -50,7 +49,6 @@ const Index = () => {
     ]
   };
 
-  // Fetch tickets from Supabase
   const fetchTickets = async () => {
     try {
       setTicketsLoading(true);
@@ -64,14 +62,19 @@ const Index = () => {
       }
       
       if (data) {
-        // Type guard to ensure we have proper ticket shapes
         const ticketData = Array.isArray(data) ? data.filter(item => 
-          typeof item === 'object' && item !== null && 'name' in item && 'price' in item
+          item && typeof item === 'object' && item !== null && 'name' in item && 'price' in item
         ) : [];
         
-        // Add default features based on ticket name
         const enhancedTickets = ticketData.map(ticket => {
-          const typedTicket = ticket as Ticket;
+          const typedTicket = {
+            id: String(ticket?.id || ''),
+            name: String(ticket?.name || ''),
+            price: typeof ticket?.price === 'number' ? ticket.price : Number(ticket?.price || 0),
+            description: ticket?.description !== undefined ? String(ticket?.description || '') : null,
+            available: Boolean(ticket?.available)
+          } as Ticket;
+          
           return {
             ...typedTicket,
             features: (defaultFeatures as any)[typedTicket.name] || []
@@ -91,7 +94,6 @@ const Index = () => {
     window.scrollTo(0, 0);
     fetchTickets();
     
-    // Set up realtime subscription for tickets
     const channel = supabase
       .channel('tickets-homepage-changes')
       .on('postgres_changes', 
@@ -159,10 +161,8 @@ const Index = () => {
       <Navbar />
       <HeroSection />
 
-      {/* Page content from CMS */}
       {pageContent && <PageContentSection pageContent={pageContent} isLoading={contentLoading} />}
 
-      {/* Ticket Packages Section */}
       <section className="py-20" id="tickets">
         <div className="festival-container">
           <motion.div
@@ -201,7 +201,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Features Section */}
       <section className="py-20" id="features">
         <div className="festival-container">
           <motion.div
@@ -261,7 +260,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Gallery Preview Section */}
       {!galleryLoading && galleryItems.length > 0 && (
         <section className="py-20 bg-slate-50" id="gallery-preview">
           <div className="festival-container">
@@ -319,7 +317,6 @@ const Index = () => {
         </section>
       )}
 
-      {/* Social Media Links */}
       <section className="py-20 bg-gradient-to-br from-slate-50 to-white">
         <div className="festival-container">
           <motion.div
@@ -382,7 +379,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Newsletter Section */}
       <section className="py-20 bg-festival-primary text-white">
         <div className="festival-container">
           <motion.div
