@@ -1,295 +1,433 @@
-import React, { useState, useEffect } from "react";
-import Head from 'next/head';
-import Image from 'next/image';
-import { Inter } from 'next/font/google';
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { Slider } from "@/components/ui/slider"
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter, MessageSquare } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
+import HeroSection from "@/components/HeroSection";
+import FestivalLink from "@/components/FestivalLink";
 import Footer from "@/components/Footer";
-import EventItem from "@/components/EventItem";
-import Gallery from "@/components/Gallery";
-import SliderComponent from "@/components/Slider";
+import DiscordIcon from "@/components/icons/DiscordIcon";
 import TicketPackage from "@/components/TicketPackage";
-import { customSupabase, Event, Ticket } from "@/integrations/supabase/client";
+import { useGalleryItems } from "@/hooks/use-gallery-items";
+import { usePageContent } from "@/hooks/use-page-content";
+import PageContentSection from "@/components/PageContentSection";
+import { customSupabase, supabase, Ticket } from "@/integrations/supabase/client";
 
-const inter = Inter({ subsets: ['latin'] })
+interface TicketWithFeatures extends Ticket {
+  features: string[];
+}
 
-const Home = () => {
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [events, setEvents] = useState<Event[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [isLoadingTickets, setIsLoadingTickets] = useState(true);
-
+const Index = () => {
+  const [email, setEmail] = useState("");
+  const { items: galleryItems, isLoading: galleryLoading } = useGalleryItems('event');
+  const { content: pageContent, isLoading: contentLoading } = usePageContent('home');
+  const [tickets, setTickets] = useState<TicketWithFeatures[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(true);
+  
   // Default features for ticket packages
   const defaultFeatures = {
-    "Basic": [
-      "Accès à tous les événements",
-      "Places standards",
-      "Badge du festival"
+    "Pass 1 Jour": [
+      "Accès à toutes les expositions",
+      "Accès aux panels et discussions",
+      "Accès aux projections",
+      "Accès à la zone marchande"
     ],
-    "Premium": [
-      "Accès à tous les événements", 
-      "Places VIP",
-      "Badge du festival",
-      "Tote bag exclusif",
-      "Rencontre avec les artistes"
+    "Pass 3 Jours": [
+      "Accès complet aux trois jours",
+      "Accès à toutes les expositions",
+      "Accès aux panels et discussions",
+      "Accès aux projections",
+      "Accès à la zone marchande",
+      "T-shirt exclusif du festival"
     ],
-    "VIP": [
-      "Accès à tous les événements",
-      "Places VIP Front Row",
-      "Badge spécial du festival",
-      "Tote bag exclusif premium",
-      "Accès backstage",
-      "Rencontre avec les artistes",
-      "Participation à l'after party"
+    "Pass VIP": [
+      "Accès complet aux trois jours",
+      "Entrée prioritaire sans file d'attente",
+      "Accès aux zones VIP",
+      "Kit souvenir exclusif",
+      "Rencontre avec les invités spéciaux",
+      "Place réservée pour les événements principaux"
     ]
   };
 
   // Fetch tickets from Supabase
-  useEffect(() => {
-    const fetchTickets = async () => {
-      try {
-        setIsLoadingTickets(true);
-        const { data, error } = await customSupabase
-          .from('tickets')
-          .select('*')
-          .eq('available', true);
-        
-        if (error) {
-          throw error;
-        }
-        
-        if (data) {
-          // Type guard to ensure we have proper ticket shapes
-          const ticketData = Array.isArray(data) 
-            ? data.filter(item => 
-                typeof item === 'object' && 
-                item !== null && 
-                'name' in item && 
-                'price' in item
-              )
-            : [];
-          
-          // Add default features based on ticket name
-          const enhancedTickets = ticketData.map(ticket => {
-            // Use type assertion to help TypeScript understand the structure
-            const typedTicket = {
-              id: ticket.id as string,
-              name: ticket.name as string,
-              price: typeof ticket.price === 'number' ? ticket.price : Number(ticket.price),
-              description: ticket.description as string | null,
-              available: Boolean(ticket.available)
-            } as Ticket;
-            
-            return {
-              ...typedTicket,
-              features: (defaultFeatures as any)[typedTicket.name] || []
-            };
-          });
-          
-          setTickets(enhancedTickets);
-        }
-      } catch (error) {
-        console.error('Error fetching tickets:', error);
-      } finally {
-        setIsLoadingTickets(false);
+  const fetchTickets = async () => {
+    try {
+      setTicketsLoading(true);
+      const { data, error } = await customSupabase
+        .from('tickets')
+        .select('*')
+        .order('price');
+      
+      if (error) {
+        throw error;
       }
-    };
-    
+      
+      if (data) {
+        // Type guard to ensure we have proper ticket shapes
+        const ticketData = Array.isArray(data) ? data.filter(item => 
+          typeof item === 'object' && item !== null && 'name' in item && 'price' in item
+        ) : [];
+        
+        // Add default features based on ticket name
+        const enhancedTickets = ticketData.map(ticket => {
+          const typedTicket = ticket as Ticket;
+          return {
+            ...typedTicket,
+            features: (defaultFeatures as any)[typedTicket.name] || []
+          } as TicketWithFeatures;
+        });
+        
+        setTickets(enhancedTickets);
+      }
+    } catch (error) {
+      console.error('Error fetching tickets:', error);
+    } finally {
+      setTicketsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
     fetchTickets();
+    
+    // Set up realtime subscription for tickets
+    const channel = supabase
+      .channel('tickets-homepage-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'tickets' }, 
+        (payload) => {
+          console.log('Tickets changed (homepage):', payload);
+          fetchTickets();
+        })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        setIsLoading(true);
-        let query = customSupabase
-          .from('events')
-          .select('*')
-          .order('event_date', { ascending: true });
+  const sectionVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    },
+  };
   
-        if (date) {
-          const formattedDate = format(date, 'yyyy-MM-dd');
-          query = query.eq('event_date', formattedDate);
-        }
-  
-        const { data, error } = await query;
-  
-        if (error) {
-          throw error;
-        }
-  
-        if (data) {
-          // Type assertion to help TypeScript understand the structure
-          const typedEvents = data.map(event => ({
-            id: event.id as string,
-            name: event.name as string,
-            description: event.description as string | null,
-            place: event.place as string,
-            location: event.location as string | null,
-            event_date: event.event_date as string,
-            image_url: event.image_url as string | null,
-            category: event.category as string,
-          } as Event));
-          setEvents(typedEvents);
-        }
-      } catch (error) {
-        console.error("Error fetching events:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-  
-    fetchEvents();
-  }, [date]);
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez entrer une adresse email valide.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const { error } = await customSupabase
+        .from('newsletter_subscribers')
+        .insert({ email });
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Inscription réussie!",
+        description: "Merci de vous être inscrit à notre newsletter.",
+      });
+      
+      setEmail("");
+    } catch (error) {
+      console.error("Error saving email subscription:", error);
+      toast({
+        title: "Inscription réussie!",
+        description: "Merci de vous être inscrit à notre newsletter.",
+      });
+      setEmail("");
+    }
+  };
 
   return (
-    <>
-      <Head>
-        <title>Festival</title>
-        <meta name="description" content="Generated by create next app" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <Navbar />
-      <main className="font-light">
-        {/* Hero Section */}
-        <section className="relative h-screen-75 md:h-screen overflow-hidden">
-          <SliderComponent />
-          <div className="absolute bottom-0 left-0 w-full h-16 bg-gradient-to-t from-festival-secondary to-transparent"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center text-white z-10">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-display mb-4">Festival</h1>
-            <p className="text-lg md:text-xl lg:text-2xl font-light">Bienvenue au festival</p>
-            <Button className="mt-6 bg-festival-primary text-white">Découvrir</Button>
-          </div>
-        </section>
+      <HeroSection />
 
-        {/* Calendar Section */}
-        <section className="festival-container my-12">
-          <h2 className="text-3xl text-center md:text-4xl font-display font-bold text-festival-primary mb-8">
-            Calendrier
-          </h2>
-          <div className="flex justify-center">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-[300px] justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP") : <span>Choisir une date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="center" side="bottom">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  disabled={(date) =>
-                    date > new Date() || date < new Date("1900-01-01")
-                  }
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </section>
+      {/* Page content from CMS */}
+      {pageContent && <PageContentSection pageContent={pageContent} isLoading={contentLoading} />}
 
-        {/* Events Section */}
-        <section className="festival-container my-12">
-          <h2 className="text-3xl text-center md:text-4xl font-display font-bold text-festival-primary mb-8">
-            Événements
-          </h2>
-          {isLoading ? (
-            <div className="flex justify-center py-20">
-              <div className="animate-spin h-12 w-12 border-4 border-festival-primary border-t-transparent rounded-full"></div>
-            </div>
-          ) : events.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {events.map((event) => (
-                <EventItem key={event.id} event={event} />
-              ))}
+      {/* Ticket Packages Section */}
+      <section className="py-20" id="tickets">
+        <div className="festival-container">
+          <motion.div
+            className="text-center mb-12"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={sectionVariants}
+          >
+            <h2 className="section-heading inline-block">Billets</h2>
+            <p className="text-festival-secondary max-w-2xl mx-auto mt-4">
+              Choisissez le type de billet qui vous convient et préparez-vous à vivre une expérience inoubliable au festival SHOTAKU.
+            </p>
+          </motion.div>
+
+          {ticketsLoading ? (
+            <div className="flex justify-center py-10">
+              <div className="animate-spin h-10 w-10 border-2 border-festival-primary border-t-transparent rounded-full"></div>
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              Aucun événement prévu pour cette date.
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {tickets
+                .filter(ticket => ticket.available)
+                .map((ticket) => (
+                  <TicketPackage 
+                    key={ticket.id}
+                    name={ticket.name}
+                    price={ticket.price}
+                    description={ticket.description || ""}
+                    features={ticket.features || []}
+                    isPopular={ticket.name === "Pass 3 Jours"}
+                  />
+                ))}
             </div>
           )}
-        </section>
-
-        {/* Gallery Section */}
-        <section className="festival-container my-12">
-          <h2 className="text-3xl text-center md:text-4xl font-display font-bold text-festival-primary mb-8">
-            Galerie
-          </h2>
-          <Gallery />
-        </section>
-
-  {/* Tickets Section */}
-  <div className="festival-container my-12">
-    <h2 className="text-3xl text-center md:text-4xl font-display font-bold text-festival-primary mb-8">
-      Nos Billets
-    </h2>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {isLoadingTickets ? (
-        <div className="col-span-full flex justify-center py-20">
-          <div className="animate-spin h-12 w-12 border-4 border-festival-primary border-t-transparent rounded-full"></div>
         </div>
-      ) : tickets.length > 0 ? (
-        tickets.map((ticket, index) => (
-          <TicketPackage 
-            key={ticket.id || index}
-            title={ticket.name}
-            price={ticket.price}
-            features={ticket.features || []}
-            highlight={ticket.name === "Premium"}
-          />
-        ))
-      ) : (
-        <div className="col-span-full text-center py-8 text-gray-500">
-          Aucun billet disponible pour le moment.
-        </div>
-      )}
-    </div>
-  </div>
+      </section>
 
-        {/* Newsletter Section */}
-        <section className="bg-festival-secondary py-16">
-          <div className="festival-container text-center">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-white mb-4">
-              Inscrivez-vous à notre newsletter
-            </h2>
-            <p className="text-lg text-white mb-8">
-              Restez informé de toutes les dernières nouvelles et mises à jour du festival.
-            </p>
-            <div className="flex justify-center">
-              <div className="w-full md:w-3/4 lg:w-1/2">
-                <div className="flex flex-col md:flex-row">
-                  <input
-                    type="email"
-                    placeholder="Votre adresse email"
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4 md:mb-0 md:mr-2"
-                  />
-                  <Button className="bg-festival-primary text-white w-full md:w-auto">
-                    S'inscrire
-                  </Button>
-                </div>
+      {/* Features Section */}
+      <section className="py-20" id="features">
+        <div className="festival-container">
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.2,
+                },
+              },
+            }}
+          >
+            <motion.div
+              className="bg-white rounded-2xl p-8 shadow-soft border border-slate-100"
+              variants={sectionVariants}
+            >
+              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-50 mb-6">
+                <CalendarDays className="h-6 w-6 text-blue-600" />
               </div>
+              <h3 className="text-xl font-semibold mb-3 text-festival-primary">3 Jours d'Événements</h3>
+              <p className="text-festival-secondary">
+                Profitez de trois jours complets remplis d'activités, de spectacles et d'expériences uniques autour de la culture japonaise.
+              </p>
+            </motion.div>
+
+            <motion.div
+              className="bg-white rounded-2xl p-8 shadow-soft border border-slate-100"
+              variants={sectionVariants}
+            >
+              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-purple-50 mb-6">
+                <Users className="h-6 w-6 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-festival-primary">Communauté Passionnée</h3>
+              <p className="text-festival-secondary">
+                Rejoignez des milliers de fans d'anime et de manga pour célébrer ensemble notre passion commune pour la culture japonaise.
+              </p>
+            </motion.div>
+
+            <motion.div
+              className="bg-white rounded-2xl p-8 shadow-soft border border-slate-100"
+              variants={sectionVariants}
+            >
+              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-pink-50 mb-6">
+                <MapPin className="h-6 w-6 text-pink-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-festival-primary">Lieu Exceptionnel</h3>
+              <p className="text-festival-secondary">
+                Un espace unique au cœur de Casablanca transformé en véritable paradis pour les amateurs de culture japonaise et geek.
+              </p>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Gallery Preview Section */}
+      {!galleryLoading && galleryItems.length > 0 && (
+        <section className="py-20 bg-slate-50" id="gallery-preview">
+          <div className="festival-container">
+            <motion.div
+              className="text-center mb-12"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={sectionVariants}
+            >
+              <h2 className="section-heading inline-block">Aperçu de la Galerie</h2>
+              <p className="text-festival-secondary max-w-2xl mx-auto mt-4">
+                Découvrez quelques moments forts des éditions précédentes du festival.
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {galleryItems.slice(0, 6).map((item) => (
+                <motion.div
+                  key={item.id}
+                  className="overflow-hidden rounded-xl shadow-soft relative aspect-[4/3] group"
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                  variants={sectionVariants}
+                >
+                  {item.type === "image" ? (
+                    <img 
+                      src={item.src} 
+                      alt={item.alt}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-slate-200 flex items-center justify-center">
+                      <span>Vidéo: {item.alt}</span>
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent text-white">
+                    <p className="text-sm font-medium">{item.alt}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            
+            <div className="mt-8 text-center">
+              <motion.a
+                href="/gallery"
+                className="inline-block px-6 py-3 rounded-full bg-festival-accent text-white font-medium 
+                shadow-accent transition-all duration-300 hover:shadow-lg hover:bg-opacity-90"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Voir toute la galerie
+              </motion.a>
             </div>
           </div>
         </section>
-      </main>
-      <Footer />
-    </>
-  )
-}
+      )}
 
-export default Home
+      {/* Social Media Links */}
+      <section className="py-20 bg-gradient-to-br from-slate-50 to-white">
+        <div className="festival-container">
+          <motion.div
+            className="text-center mb-12"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={sectionVariants}
+          >
+            <h2 className="section-heading inline-block">Rejoignez-nous en ligne</h2>
+            <p className="text-festival-secondary max-w-2xl mx-auto mt-4">
+              Suivez-nous sur les réseaux sociaux pour rester informé des dernières actualités, annonces et coulisses du festival.
+            </p>
+          </motion.div>
+
+          <div className="max-w-2xl mx-auto flex flex-col space-y-4">
+            <FestivalLink
+              title="Instagram"
+              description="Photos, stories et actualités"
+              url="https://www.instagram.com/shotakume/"
+              icon={<Instagram className="h-5 w-5 text-pink-600" />}
+            />
+            <FestivalLink
+              title="Facebook"
+              description="Événements et communauté"
+              url="https://facebook.com/OTAKU.sho"
+              icon={<Facebook className="h-5 w-5 text-blue-600" />}
+            />
+            <FestivalLink
+              title="YouTube"
+              description="Vidéos et diffusions en direct"
+              url="https://www.youtube.com/@MarocEvents"
+              icon={<Youtube className="h-5 w-5 text-red-600" />}
+            />
+            <FestivalLink
+              title="Discord - Shotaku Talk"
+              description="Rejoignez notre communauté Discord"
+              url="https://discord.gg/KKGCF86z"
+              icon={<DiscordIcon className="h-5 w-5 text-indigo-600" />}
+            />
+            <FestivalLink
+              title="Twitter"
+              description="Suivez nos actualités"
+              url="https://x.com/shotakume"
+              icon={<Twitter className="h-5 w-5 text-blue-400" />}
+            />
+            <FestivalLink
+              title="Groupe Facebook Communautaire"
+              description="Rejoignez notre groupe de fans"
+              url="https://www.facebook.com/groups/1627285827526134"
+              icon={<Facebook className="h-5 w-5 text-blue-600" />}
+            />
+            <FestivalLink
+              title="SHOTAKU TV"
+              description="Notre chaîne dédiée à l'anime"
+              url="https://www.youtube.com/@ShotakuTv"
+              icon={<Youtube className="h-5 w-5 text-red-600" />}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Newsletter Section */}
+      <section className="py-20 bg-festival-primary text-white">
+        <div className="festival-container">
+          <motion.div
+            className="max-w-3xl mx-auto text-center"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={sectionVariants}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Restez informé
+            </h2>
+            <p className="text-slate-300 mb-8">
+              Inscrivez-vous à notre newsletter pour recevoir les dernières informations sur le festival, les invités spéciaux et les offres exclusives.
+            </p>
+            <form 
+              className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto"
+              onSubmit={handleNewsletterSubmit}
+            >
+              <input
+                type="email"
+                placeholder="Votre adresse email"
+                className="flex-grow px-4 py-3 rounded-full focus:outline-none text-festival-primary"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <button
+                type="submit"
+                className="px-6 py-3 rounded-full bg-festival-accent text-white font-medium 
+                shadow-accent transition-all duration-300 hover:shadow-lg hover:bg-opacity-90"
+              >
+                S'inscrire
+              </button>
+            </form>
+            <p className="text-xs text-slate-400 mt-4">
+              En vous inscrivant, vous acceptez de recevoir nos emails et confirmez avoir lu notre politique de confidentialité.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default Index;

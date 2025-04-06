@@ -11,6 +11,6 @@ declare module 'react' {
 
 // Make ReactNode also accept Record<string, unknown> to fix UI component type errors
 declare module 'react' {
-  // Extend the ReactNode type without causing recursion
-  type ReactNode = ReactNode | Record<string, unknown>;
+  // This needs to be properly defined to avoid recursive type reference
+  type FixedReactNode = ReactNode | Record<string, unknown>;
 }
