@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,8 @@ import NewsletterSubscriptions from "@/components/admin/NewsletterSubscriptions"
 import SliderManager from "@/components/admin/SliderManager";
 import ContentManager from "@/components/admin/ContentManager";
 import EventManager from "@/components/admin/EventManager";
+import ThemeManager from "@/components/admin/ThemeManager";
+import GeneralContentEditor from "@/components/admin/GeneralContentEditor";
 import AdminLogin from "@/components/admin/AdminLogin";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,7 +22,6 @@ const Admin = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("slider");
 
-  // Check if user is already logged in
   useEffect(() => {
     const checkSession = async () => {
       setIsLoading(true);
@@ -40,7 +40,6 @@ const Admin = () => {
 
     checkSession();
     
-    // Subscribe to auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
     });
@@ -60,35 +59,28 @@ const Admin = () => {
     }
   };
   
-  // Check if there's a hash in the URL to set the active tab
   useEffect(() => {
     const hash = window.location.hash;
     if (hash) {
       const tab = hash.replace('#', '');
       setActiveTab(tab);
     } else {
-      // Default to slider tab if no hash is present
       setActiveTab('slider');
-      // Update URL hash using history API
       window.history.replaceState(null, '', `#slider`);
     }
   }, []);
 
-  // Update the URL hash when the active tab changes
   useEffect(() => {
     if (isAuthenticated && activeTab) {
       window.history.replaceState(null, '', `#${activeTab}`);
     }
   }, [activeTab, isAuthenticated]);
 
-  // Handle tab value change
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    // Update URL hash using history API to avoid full page reload
     window.history.replaceState(null, '', `#${value}`);
   };
 
-  // Handle logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setIsAuthenticated(false);
@@ -140,22 +132,25 @@ const Admin = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
-            <TabsList className="grid grid-cols-4 md:grid-cols-8 mb-6 md:mb-8 w-full overflow-x-auto">
+            <TabsList className="grid grid-cols-4 md:grid-cols-10 mb-6 md:mb-8 w-full overflow-x-auto">
               <TabsTrigger value="slider" className="whitespace-nowrap">Slider</TabsTrigger>
               <TabsTrigger value="gallery" className="whitespace-nowrap">Galerie</TabsTrigger>
               <TabsTrigger value="events" className="whitespace-nowrap">Événements</TabsTrigger>
               <TabsTrigger value="tickets" className="whitespace-nowrap">Billets</TabsTrigger>
               <TabsTrigger value="packages" className="whitespace-nowrap">Forfaits</TabsTrigger>
               <TabsTrigger value="content" className="whitespace-nowrap hidden md:block">Contenu</TabsTrigger>
+              <TabsTrigger value="general" className="whitespace-nowrap hidden md:block">Général</TabsTrigger>
               <TabsTrigger value="social" className="whitespace-nowrap hidden md:block">Liens</TabsTrigger>
               <TabsTrigger value="newsletter" className="whitespace-nowrap hidden md:block">Newsletter</TabsTrigger>
+              <TabsTrigger value="theme" className="whitespace-nowrap hidden md:block">Thème</TabsTrigger>
             </TabsList>
             
-            {/* Second row for small screens */}
-            <TabsList className="grid grid-cols-3 mb-6 w-full overflow-x-auto md:hidden">
+            <TabsList className="grid grid-cols-5 mb-6 w-full overflow-x-auto md:hidden">
               <TabsTrigger value="content" className="whitespace-nowrap">Contenu</TabsTrigger>
+              <TabsTrigger value="general" className="whitespace-nowrap">Général</TabsTrigger>
               <TabsTrigger value="social" className="whitespace-nowrap">Liens</TabsTrigger>
               <TabsTrigger value="newsletter" className="whitespace-nowrap">Newsletter</TabsTrigger>
+              <TabsTrigger value="theme" className="whitespace-nowrap">Thème</TabsTrigger>
             </TabsList>
 
             <TabsContent value="slider" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
@@ -180,6 +175,14 @@ const Admin = () => {
 
             <TabsContent value="content" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <ContentManager />
+            </TabsContent>
+
+            <TabsContent value="general" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
+              <GeneralContentEditor />
+            </TabsContent>
+
+            <TabsContent value="theme" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
+              <ThemeManager />
             </TabsContent>
 
             <TabsContent value="social" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">

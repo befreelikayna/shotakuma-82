@@ -1,38 +1,33 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Trash, Edit, Plus, DollarSign, RefreshCw } from "lucide-react";
-import { supabase, customSupabase, Ticket } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Loader2, RefreshCw, Plus, Settings, Edit, Trash } from "lucide-react";
+import { customSupabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
-interface TicketType {
+type TicketType = {
   id: string;
   name: string;
   price: number;
   description: string | null;
   available: boolean;
-}
+};
 
 const TicketManager = () => {
   const [tickets, setTickets] = useState<TicketType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentTicket, setCurrentTicket] = useState<TicketType>({
-    id: "",
-    name: "",
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingTicket, setEditingTicket] = useState<TicketType | null>(null);
+  const [newTicket, setNewTicket] = useState<Omit<TicketType, 'id'>>({
+    name: '',
     price: 0,
-    description: "",
-    available: true,
-  });
-  
-  const [paypalSettings, setPaypalSettings] = useState({
-    clientId: "YOUR_PAYPAL_CLIENT_ID",
-    secretKey: "YOUR_PAYPAL_SECRET_KEY",
-    isLive: false,
+    description: '',
+    available: true
   });
 
   const [isEditingPayPal, setIsEditingPayPal] = useState(false);
@@ -44,7 +39,7 @@ const TicketManager = () => {
       const { data, error } = await customSupabase
         .from('tickets')
         .select('*')
-        .order('created_at');
+        .order('price');
       
       if (error) {
         throw error;
@@ -53,7 +48,7 @@ const TicketManager = () => {
       if (data) {
         // Process tickets with proper type safety
         const typedData = Array.isArray(data) ? data.map(item => {
-          if (item && typeof item === 'object' && 'name' in item && 'price' in item) {
+          if (item && typeof item === 'object' && item !== null && 'name' in item && 'price' in item) {
             // Create a properly typed ticket object
             return {
               id: String(item.id || ''),
@@ -76,148 +71,128 @@ const TicketManager = () => {
         setTickets(typedData);
       }
     } catch (error) {
-      console.error('Error fetching tickets:', error);
+      console.error("Error fetching tickets:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de charger les billets.",
+        description: "Impossible de charger les billets",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   useEffect(() => {
     fetchTickets();
-    
-    const channel = supabase
+
+    // Set up real-time subscription
+    const channel = customSupabase
       .channel('tickets-changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'tickets' }, 
-        (payload) => {
-          console.log('Tickets changed:', payload);
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'tickets' },
+        () => {
           fetchTickets();
         })
       .subscribe();
-    
+
     return () => {
-      supabase.removeChannel(channel);
+      customSupabase.removeChannel(channel);
     };
   }, []);
-  
-  const handleAddOrUpdateTicket = async () => {
-    if (!currentTicket.name || currentTicket.price <= 0) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires correctement.",
-        variant: "destructive",
-      });
-      return;
-    }
 
+  const handleAdd = async () => {
     try {
-      if (isEditing) {
-        const { error } = await customSupabase
-          .from('tickets')
-          .update({
-            name: currentTicket.name,
-            price: currentTicket.price,
-            description: currentTicket.description,
-            available: currentTicket.available
-          })
-          .eq('id', currentTicket.id);
-        
-        if (error) throw error;
-        
-        toast({ title: "Succès", description: "Le billet a été mis à jour." });
-      } else {
-        const { error } = await customSupabase
-          .from('tickets')
-          .insert({
-            name: currentTicket.name,
-            price: currentTicket.price,
-            description: currentTicket.description,
-            available: currentTicket.available
-          });
-        
-        if (error) throw error;
-        
-        toast({ title: "Succès", description: "Le nouveau billet a été ajouté." });
+      const { error } = await customSupabase
+        .from('tickets')
+        .insert([newTicket]);
+
+      if (error) {
+        throw error;
       }
 
-      resetForm();
+      toast({
+        title: "Billet ajouté",
+        description: "Le billet a été ajouté avec succès",
+      });
+      setNewTicket({ name: '', price: 0, description: '', available: true });
+      setIsAddDialogOpen(false);
       fetchTickets();
     } catch (error) {
-      console.error('Error saving ticket:', error);
+      console.error("Error adding ticket:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'enregistrement du billet.",
+        description: "Impossible d'ajouter le billet",
         variant: "destructive",
       });
     }
   };
 
-  const handleEditTicket = (ticket: TicketType) => {
-    setIsEditing(true);
-    setCurrentTicket(ticket);
+  const handleEdit = async () => {
+    if (!editingTicket) return;
+
+    try {
+      setSavingItemId(editingTicket.id);
+      const { error } = await customSupabase
+        .from('tickets')
+        .update(editingTicket)
+        .eq('id', editingTicket.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Billet mis à jour",
+        description: "Le billet a été mis à jour avec succès",
+      });
+      setIsEditDialogOpen(false);
+      setEditingTicket(null);
+      fetchTickets();
+    } catch (error) {
+      console.error("Error updating ticket:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le billet",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingItemId(null);
+    }
   };
 
-  const handleDeleteTicket = async (id: string) => {
+  const handleDelete = async (id: string) => {
     try {
+      setSavingItemId(id);
       const { error } = await customSupabase
         .from('tickets')
         .delete()
         .eq('id', id);
-      
-      if (error) throw error;
-      
+
+      if (error) {
+        throw error;
+      }
+
       toast({
-        title: "Supprimé",
-        description: "Le billet a été supprimé.",
+        title: "Billet supprimé",
+        description: "Le billet a été supprimé avec succès",
       });
-      
       fetchTickets();
     } catch (error) {
-      console.error('Error deleting ticket:', error);
+      console.error("Error deleting ticket:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la suppression du billet.",
+        description: "Impossible de supprimer le billet",
         variant: "destructive",
       });
+    } finally {
+      setSavingItemId(null);
     }
   };
 
-  const resetForm = () => {
-    setIsEditing(false);
-    setCurrentTicket({
-      id: "",
-      name: "",
-      price: 0,
-      description: "",
-      available: true,
-    });
-  };
-
-  const handleSavePayPalSettings = () => {
-    toast({
-      title: "Paramètres sauvegardés",
-      description: "Les paramètres PayPal ont été mis à jour.",
-    });
-    setIsEditingPayPal(false);
-  };
-
-  const handleRefreshTickets = () => {
-    fetchTickets();
-    toast({
-      title: "Actualisation",
-      description: "Liste des billets actualisée",
-    });
-  };
-
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-festival-primary">Gestion des Billets</h2>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Gestion des Billets</h2>
         <Button
           variant="outline"
           size="sm"
@@ -228,193 +203,187 @@ const TicketManager = () => {
           Actualiser
         </Button>
       </div>
-      
-      <div className="bg-slate-50 p-6 rounded-lg mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-festival-primary">Configuration PayPal</h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditingPayPal(!isEditingPayPal)}
-          >
-            {isEditingPayPal ? "Annuler" : "Modifier"}
-          </Button>
-        </div>
-        
-        {isEditingPayPal ? (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
-              <Input
-                value={paypalSettings.clientId}
-                onChange={(e) => setPaypalSettings({ ...paypalSettings, clientId: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Secret Key</label>
-              <Input
-                type="password"
-                value={paypalSettings.secretKey}
-                onChange={(e) => setPaypalSettings({ ...paypalSettings, secretKey: e.target.value })}
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="paypal-mode"
-                checked={paypalSettings.isLive}
-                onCheckedChange={(checked) => setPaypalSettings({ ...paypalSettings, isLive: checked })}
-              />
-              <label htmlFor="paypal-mode" className="text-sm font-medium text-gray-700">
-                Mode Production (décochez pour le mode Sandbox)
-              </label>
-            </div>
-            <Button onClick={handleSavePayPalSettings} className="bg-festival-accent text-white">
-              Sauvegarder
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <p className="text-sm text-gray-600">
-              <strong>Mode:</strong> {paypalSettings.isLive ? "Production" : "Sandbox (Test)"}
-            </p>
-            <p className="text-sm text-gray-600">
-              <strong>Client ID:</strong> {paypalSettings.clientId.substring(0, 10)}...
-            </p>
-            <p className="text-sm text-gray-600">
-              <strong>Secret Key:</strong> {paypalSettings.secretKey.replace(/./g, "*")}
-            </p>
-          </div>
-        )}
-      </div>
-      
-      <div className="bg-slate-50 p-6 rounded-lg mb-8">
-        <h3 className="text-lg font-medium text-festival-primary mb-4">
-          {isEditing ? "Modifier un billet" : "Ajouter un nouveau billet"}
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
-            <Input
-              value={currentTicket.name}
-              onChange={(e) => setCurrentTicket({ ...currentTicket, name: e.target.value })}
-              placeholder="Nom du billet"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Prix (MAD)</label>
-            <Input
-              type="number"
-              value={currentTicket.price}
-              onChange={(e) => setCurrentTicket({ ...currentTicket, price: Number(e.target.value) })}
-              placeholder="Prix"
-              min={0}
-            />
-          </div>
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-          <Textarea
-            value={currentTicket.description || ""}
-            onChange={(e) => setCurrentTicket({ ...currentTicket, description: e.target.value })}
-            placeholder="Description du billet"
-            rows={3}
-          />
-        </div>
-        <div className="flex items-center space-x-2 mb-4">
-          <Switch
-            id="ticket-available"
-            checked={currentTicket.available}
-            onCheckedChange={(checked) => setCurrentTicket({ ...currentTicket, available: checked })}
-          />
-          <label htmlFor="ticket-available" className="text-sm font-medium text-gray-700">
-            Disponible à la vente
-          </label>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={handleAddOrUpdateTicket}
-            className="bg-festival-accent text-white flex items-center gap-2"
-          >
-            {isEditing ? <Edit size={16} /> : <Plus size={16} />}
-            {isEditing ? "Mettre à jour" : "Ajouter"}
-          </Button>
-          {isEditing && (
-            <Button onClick={resetForm} variant="outline">
-              Annuler
-            </Button>
-          )}
-        </div>
-      </div>
-      
-      <h3 className="text-lg font-medium text-festival-primary mb-4">Billets disponibles</h3>
-      
+      <Button onClick={() => setIsAddDialogOpen(true)}>
+        <Plus className="mr-2 h-4 w-4" />
+        Ajouter un billet
+      </Button>
+
       {isLoading ? (
-        <div className="flex justify-center py-8">
-          <div className="animate-spin h-8 w-8 border-2 border-festival-primary border-t-transparent rounded-full"></div>
+        <div className="flex justify-center">
+          <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nom</TableHead>
-              <TableHead>Prix</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {tickets.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-4 text-gray-500">
-                  Aucun billet trouvé
-                </TableCell>
-              </TableRow>
-            ) : (
-              tickets.map((ticket) => (
-                <TableRow key={ticket.id}>
-                  <TableCell>{ticket.name}</TableCell>
-                  <TableCell>
-                    <span className="flex items-center gap-1">
-                      <DollarSign size={14} /> {ticket.price} MAD
-                    </span>
-                  </TableCell>
-                  <TableCell className="max-w-xs truncate">{ticket.description}</TableCell>
-                  <TableCell>
-                    <span 
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        ticket.available ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {ticket.available ? "Disponible" : "Indisponible"}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEditTicket(ticket)}
-                        className="p-2 h-auto"
-                      >
-                        <Edit size={16} className="text-blue-500" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleDeleteTicket(ticket.id)}
-                        className="p-2 h-auto"
-                      >
-                        <Trash size={16} className="text-red-500" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <div className="grid gap-4">
+          {tickets.map((ticket) => (
+            <div key={ticket.id} className="border rounded-md p-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold">{ticket.name}</h3>
+                <p className="text-sm text-muted-foreground">Prix: {ticket.price} DH</p>
+                <p className="text-sm text-muted-foreground">Disponibilité: {ticket.available ? 'Oui' : 'Non'}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setEditingTicket(ticket);
+                    setIsEditDialogOpen(true);
+                  }}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Modifier
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDelete(ticket.id)}
+                  disabled={savingItemId === ticket.id}
+                >
+                  {savingItemId === ticket.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Trash className="h-4 w-4 mr-2" />
+                  )}
+                  Supprimer
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
+
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajouter un nouveau billet</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Nom
+              </Label>
+              <Input
+                id="name"
+                value={newTicket.name}
+                onChange={(e) => setNewTicket({ ...newTicket, name: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="price" className="text-right">
+                Prix
+              </Label>
+              <Input
+                type="number"
+                id="price"
+                value={newTicket.price}
+                onChange={(e) => setNewTicket({ ...newTicket, price: parseFloat(e.target.value) })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="description" className="text-right">
+                Description
+              </Label>
+              <Textarea
+                id="description"
+                value={newTicket.description || ''}
+                onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="available" className="text-right">
+                Disponible
+              </Label>
+              <Switch
+                id="available"
+                checked={newTicket.available}
+                onCheckedChange={(checked) => setNewTicket({ ...newTicket, available: checked })}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setIsAddDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button type="submit" onClick={handleAdd}>
+              Ajouter
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier le billet</DialogTitle>
+          </DialogHeader>
+          {editingTicket ? (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-name" className="text-right">
+                  Nom
+                </Label>
+                <Input
+                  id="edit-name"
+                  value={editingTicket.name}
+                  onChange={(e) => setEditingTicket({ ...editingTicket, name: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-price" className="text-right">
+                  Prix
+                </Label>
+                <Input
+                  type="number"
+                  id="edit-price"
+                  value={editingTicket.price}
+                  onChange={(e) => setEditingTicket({ ...editingTicket, price: parseFloat(e.target.value) })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="edit-description" className="text-right">
+                  Description
+                </Label>
+                <Textarea
+                  id="edit-description"
+                  value={editingTicket.description || ''}
+                  onChange={(e) => setEditingTicket({ ...editingTicket, description: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-available" className="text-right">
+                  Disponible
+                </Label>
+                <Switch
+                  id="edit-available"
+                  checked={editingTicket.available}
+                  onCheckedChange={(checked) => setEditingTicket({ ...editingTicket, available: checked })}
+                  className="col-span-3"
+                />
+              </div>
+            </div>
+          ) : (
+            <div>Chargement...</div>
+          )}
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setIsEditDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button type="submit" onClick={handleEdit} disabled={savingItemId === editingTicket?.id}>
+              {savingItemId === editingTicket?.id ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Mettre à jour
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

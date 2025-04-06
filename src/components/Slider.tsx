@@ -34,18 +34,20 @@ const Slider = () => {
 
         if (data && Array.isArray(data)) {
           // Safely convert data to SliderImage[] with proper type checking
-          const sliderData = data.filter((item): item is any => 
-            typeof item === 'object' && 
-            item !== null && 
-            'id' in item && 
-            'image_url' in item
-          ).map(item => ({
-            id: item.id,
-            image_url: item.image_url,
-            order_number: item.order_number || 0,
-            active: item.active ?? true,
-            link: item.link || null
-          }));
+          const sliderData = data
+            .filter((item): item is Record<string, any> => 
+              typeof item === 'object' && 
+              item !== null && 
+              'id' in item && 
+              'image_url' in item
+            )
+            .map(item => ({
+              id: String(item.id || ''),
+              image_url: String(item.image_url || ''),
+              order_number: typeof item.order_number === 'number' ? item.order_number : 0,
+              active: Boolean(item.active ?? true),
+              link: item.link ? String(item.link) : null
+            }));
 
           setImages(sliderData);
         }
