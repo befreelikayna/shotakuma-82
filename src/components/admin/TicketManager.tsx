@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,18 +50,25 @@ const TicketManager = () => {
       }
       
       if (data) {
-        const typedData = Array.isArray(data) ? data.map(item => {
-          if ('name' in item && 'price' in item) {
-            return item as TicketType;
-          }
-          return {
-            id: "unknown",
-            name: "Unknown",
-            price: 0,
-            description: null,
-            available: false
-          } as TicketType;
-        }) : [];
+        // Type assertion with filtering to ensure we have correct data shape
+        const typedData = Array.isArray(data) 
+          ? data
+              .filter(item => 
+                typeof item === 'object' && 
+                item !== null && 
+                'name' in item && 
+                'price' in item &&
+                'id' in item &&
+                'available' in item
+              )
+              .map(item => ({
+                id: item.id as string,
+                name: item.name as string,
+                price: typeof item.price === 'number' ? item.price : Number(item.price),
+                description: item.description as string | null,
+                available: Boolean(item.available)
+              }))
+          : [];
         
         setTickets(typedData);
       }
@@ -105,15 +113,22 @@ const TicketManager = () => {
     }
 
     try {
+      console.log("Saving ticket:", currentTicket);
+      
       if (isEditing) {
+        // Ensure price is sent as a number
+        const ticketData = {
+          name: currentTicket.name,
+          price: Number(currentTicket.price),
+          description: currentTicket.description,
+          available: currentTicket.available
+        };
+        
+        console.log("Updating ticket with data:", ticketData);
+        
         const { error } = await customSupabase
           .from('tickets')
-          .update({
-            name: currentTicket.name,
-            price: currentTicket.price,
-            description: currentTicket.description,
-            available: currentTicket.available
-          })
+          .update(ticketData)
           .eq('id', currentTicket.id);
         
         if (error) throw error;
@@ -124,7 +139,7 @@ const TicketManager = () => {
           .from('tickets')
           .insert({
             name: currentTicket.name,
-            price: currentTicket.price,
+            price: Number(currentTicket.price),
             description: currentTicket.description,
             available: currentTicket.available
           });
@@ -147,8 +162,12 @@ const TicketManager = () => {
   };
 
   const handleEditTicket = (ticket: TicketType) => {
+    // Ensure price is a number when editing
+    setCurrentTicket({
+      ...ticket,
+      price: typeof ticket.price === 'number' ? ticket.price : Number(ticket.price)
+    });
     setIsEditing(true);
-    setCurrentTicket(ticket);
   };
 
   const handleDeleteTicket = async (id: string) => {
