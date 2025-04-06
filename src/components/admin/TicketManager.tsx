@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,26 +15,6 @@ interface TicketType {
   price: number;
   description: string | null;
   available: boolean;
-}
-
-// Type guard for database items
-type TicketDataItem = {
-  id: string;
-  name: string;
-  price: number | string;
-  description: string | null;
-  available: boolean;
-};
-
-function isTicketDataItem(item: any): item is TicketDataItem {
-  return (
-    item !== null &&
-    typeof item === 'object' &&
-    'id' in item &&
-    'name' in item &&
-    'price' in item &&
-    'available' in item
-  );
 }
 
 const TicketManager = () => {
@@ -68,21 +49,28 @@ const TicketManager = () => {
         throw error;
       }
       
-      if (data && Array.isArray(data)) {
-        // Filter and map the data safely
-        const typedData = data
-          .filter(isTicketDataItem)
-          .map(item => ({
-            id: item.id,
-            name: item.name,
-            price: typeof item.price === 'number' ? item.price : Number(item.price),
-            description: item.description,
-            available: Boolean(item.available)
-          }));
+      if (data) {
+        // Type assertion with filtering to ensure we have correct data shape
+        const typedData = Array.isArray(data) 
+          ? data
+              .filter(item => 
+                typeof item === 'object' && 
+                item !== null && 
+                'name' in item && 
+                'price' in item &&
+                'id' in item &&
+                'available' in item
+              )
+              .map(item => ({
+                id: item.id as string,
+                name: item.name as string,
+                price: typeof item.price === 'number' ? item.price : Number(item.price),
+                description: item.description as string | null,
+                available: Boolean(item.available)
+              }))
+          : [];
         
         setTickets(typedData);
-      } else {
-        setTickets([]);
       }
     } catch (error) {
       console.error('Error fetching tickets:', error);
@@ -249,7 +237,6 @@ const TicketManager = () => {
         </Button>
       </div>
       
-      {/* PayPal configuration section */}
       <div className="bg-slate-50 p-6 rounded-lg mb-8">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium text-festival-primary">Configuration PayPal</h3>
@@ -308,7 +295,6 @@ const TicketManager = () => {
         )}
       </div>
       
-      {/* Add/Edit ticket form */}
       <div className="bg-slate-50 p-6 rounded-lg mb-8">
         <h3 className="text-lg font-medium text-festival-primary mb-4">
           {isEditing ? "Modifier un billet" : "Ajouter un nouveau billet"}
@@ -368,7 +354,6 @@ const TicketManager = () => {
         </div>
       </div>
       
-      {/* Tickets list */}
       <h3 className="text-lg font-medium text-festival-primary mb-4">Billets disponibles</h3>
       
       {isLoading ? (

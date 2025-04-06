@@ -1,60 +1,22 @@
 import React, { useState, useEffect } from "react";
+import Head from 'next/head';
+import Image from 'next/image';
+import { Inter } from 'next/font/google';
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Slider } from "@/components/ui/slider";
+import { Slider } from "@/components/ui/slider"
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import EventItem from "@/components/EventItem";
+import Gallery from "@/components/Gallery";
 import SliderComponent from "@/components/Slider";
 import TicketPackage from "@/components/TicketPackage";
 import { customSupabase, Event, Ticket } from "@/integrations/supabase/client";
-import { Helmet } from "react-helmet";
 
-// Type guards for database items
-type TicketDataItem = {
-  id: string;
-  name: string;
-  price: number | string;
-  description: string | null;
-  available: boolean;
-};
-
-function isTicketDataItem(item: any): item is TicketDataItem {
-  return (
-    item !== null &&
-    typeof item === 'object' &&
-    'id' in item &&
-    'name' in item &&
-    'price' in item &&
-    'available' in item
-  );
-}
-
-type EventDataItem = {
-  id: string;
-  name: string;
-  description: string | null;
-  place: string;
-  location: string | null;
-  event_date: string;
-  image_url: string | null;
-  category: string;
-};
-
-function isEventDataItem(item: any): item is EventDataItem {
-  return (
-    item !== null &&
-    typeof item === 'object' &&
-    'id' in item &&
-    'name' in item &&
-    'place' in item &&
-    'event_date' in item &&
-    'category' in item
-  );
-}
+const inter = Inter({ subsets: ['latin'] })
 
 const Home = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -102,35 +64,35 @@ const Home = () => {
           throw error;
         }
         
-        if (data && Array.isArray(data)) {
-          // Process tickets with type safety
-          const ticketData = data.filter(isTicketDataItem);
+        if (data) {
+          // Type guard to ensure we have proper ticket shapes
+          const ticketData = Array.isArray(data) 
+            ? data.filter(item => 
+                typeof item === 'object' && 
+                item !== null && 
+                'name' in item && 
+                'price' in item
+              )
+            : [];
           
           // Add default features based on ticket name
-          const enhancedTickets = ticketData.map(item => {
-            if (!item) return null;
-            
-            const ticketName = item.name as keyof typeof defaultFeatures;
-            
-            // Create a properly typed ticket object
+          const enhancedTickets = ticketData.map(ticket => {
+            // Use type assertion to help TypeScript understand the structure
             const typedTicket = {
-              id: item.id,
-              name: item.name,
-              price: typeof item.price === 'number' ? item.price : Number(item.price),
-              description: item.description || "",
-              available: Boolean(item.available)
+              id: ticket.id as string,
+              name: ticket.name as string,
+              price: typeof ticket.price === 'number' ? ticket.price : Number(ticket.price),
+              description: ticket.description as string | null,
+              available: Boolean(ticket.available)
             } as Ticket;
             
-            // Add features based on ticket name
             return {
               ...typedTicket,
               features: (defaultFeatures as any)[typedTicket.name] || []
             };
-          }).filter(Boolean) as Ticket[];
+          });
           
           setTickets(enhancedTickets);
-        } else {
-          setTickets([]);
         }
       } catch (error) {
         console.error('Error fetching tickets:', error);
@@ -162,36 +124,19 @@ const Home = () => {
           throw error;
         }
   
-        if (data && Array.isArray(data)) {
-          // Process events with type safety
-          const eventData = data.filter(isEventDataItem);
-          
-          // Convert to Event type
-          const typedEvents = eventData.map(item => {
-            if (!item) return null;
-            
-            return {
-              id: item.id,
-              name: item.name,
-              description: item.description || "",
-              place: item.place,
-              location: item.location || "",
-              event_date: item.event_date,
-              image_url: item.image_url || "",
-              category: item.category,
-              // Add title property to make it compatible with EventItem
-              title: item.name,
-              // Other properties EventItem might need
-              date: format(new Date(item.event_date), 'dd/MM/yyyy'),
-              time: "19:00", // Default time if not provided
-              image: item.image_url || "/placeholder.svg",
-              registrationLink: "#"
-            } as Event;
-          }).filter(Boolean) as Event[];
-          
+        if (data) {
+          // Type assertion to help TypeScript understand the structure
+          const typedEvents = data.map(event => ({
+            id: event.id as string,
+            name: event.name as string,
+            description: event.description as string | null,
+            place: event.place as string,
+            location: event.location as string | null,
+            event_date: event.event_date as string,
+            image_url: event.image_url as string | null,
+            category: event.category as string,
+          } as Event));
           setEvents(typedEvents);
-        } else {
-          setEvents([]);
         }
       } catch (error) {
         console.error("Error fetching events:", error);
@@ -205,12 +150,12 @@ const Home = () => {
 
   return (
     <>
-      <Helmet>
+      <Head>
         <title>Festival</title>
         <meta name="description" content="Generated by create next app" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
-      </Helmet>
+      </Head>
       <Navbar />
       <main className="font-light">
         {/* Hero Section */}
@@ -269,17 +214,8 @@ const Home = () => {
             </div>
           ) : events.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {events.map((eventItem) => (
-                <EventItem 
-                  key={eventItem.id} 
-                  title={eventItem.name}
-                  description={eventItem.description || ""}
-                  date={format(new Date(eventItem.event_date), 'dd/MM/yyyy')}
-                  time="19:00"
-                  location={eventItem.place}
-                  image={eventItem.image_url || "/placeholder.svg"}
-                  category={eventItem.category}
-                />
+              {events.map((event) => (
+                <EventItem key={event.id} event={event} />
               ))}
             </div>
           ) : (
@@ -294,41 +230,36 @@ const Home = () => {
           <h2 className="text-3xl text-center md:text-4xl font-display font-bold text-festival-primary mb-8">
             Galerie
           </h2>
-          {/* Placeholder for Gallery component */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gray-200 h-60 rounded"></div>
-            <div className="bg-gray-200 h-60 rounded"></div>
-            <div className="bg-gray-200 h-60 rounded"></div>
-          </div>
+          <Gallery />
         </section>
 
-        {/* Tickets Section */}
-        <div className="festival-container my-12">
-          <h2 className="text-3xl text-center md:text-4xl font-display font-bold text-festival-primary mb-8">
-            Nos Billets
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {isLoadingTickets ? (
-              <div className="col-span-full flex justify-center py-20">
-                <div className="animate-spin h-12 w-12 border-4 border-festival-primary border-t-transparent rounded-full"></div>
-              </div>
-            ) : tickets.length > 0 ? (
-              tickets.map((ticket, index) => (
-                <TicketPackage 
-                  key={ticket.id || index}
-                  name={ticket.name}
-                  price={ticket.price}
-                  description={ticket.description || ""}
-                  features={ticket.features || []}
-                />
-              ))
-            ) : (
-              <div className="col-span-full text-center py-8 text-gray-500">
-                Aucun billet disponible pour le moment.
-              </div>
-            )}
-          </div>
+  {/* Tickets Section */}
+  <div className="festival-container my-12">
+    <h2 className="text-3xl text-center md:text-4xl font-display font-bold text-festival-primary mb-8">
+      Nos Billets
+    </h2>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {isLoadingTickets ? (
+        <div className="col-span-full flex justify-center py-20">
+          <div className="animate-spin h-12 w-12 border-4 border-festival-primary border-t-transparent rounded-full"></div>
         </div>
+      ) : tickets.length > 0 ? (
+        tickets.map((ticket, index) => (
+          <TicketPackage 
+            key={ticket.id || index}
+            title={ticket.name}
+            price={ticket.price}
+            features={ticket.features || []}
+            highlight={ticket.name === "Premium"}
+          />
+        ))
+      ) : (
+        <div className="col-span-full text-center py-8 text-gray-500">
+          Aucun billet disponible pour le moment.
+        </div>
+      )}
+    </div>
+  </div>
 
         {/* Newsletter Section */}
         <section className="bg-festival-secondary py-16">
@@ -361,4 +292,4 @@ const Home = () => {
   )
 }
 
-export default Home;
+export default Home

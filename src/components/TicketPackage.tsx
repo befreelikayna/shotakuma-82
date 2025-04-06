@@ -3,30 +3,25 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 
-export interface TicketPackageProps {
+interface TicketPackageProps {
   name: string;
   price: number;
-  description?: string;
+  description: string;
   features: string[];
   isPopular?: boolean;
-  highlight?: boolean;
 }
 
 const TicketPackage: React.FC<TicketPackageProps> = ({
   name,
   price,
-  description = "", // Default empty string for description
+  description,
   features,
   isPopular = false,
-  highlight = false,
 }) => {
-  // Use either isPopular or highlight prop (for backward compatibility)
-  const showHighlight = isPopular || highlight;
-  
   return (
     <motion.div
       className={`rounded-2xl overflow-hidden border ${
-        showHighlight 
+        isPopular 
           ? "border-festival-accent bg-white shadow-accent" 
           : "border-slate-100 bg-white shadow-soft"
       }`}
@@ -37,7 +32,7 @@ const TicketPackage: React.FC<TicketPackageProps> = ({
       transition={{ duration: 0.5 }}
       viewport={{ once: true }}
     >
-      {showHighlight && (
+      {isPopular && (
         <div className="bg-festival-accent text-white text-center py-2 text-sm font-medium">
           Recommandé
         </div>
@@ -49,7 +44,7 @@ const TicketPackage: React.FC<TicketPackageProps> = ({
           <span className="text-3xl font-bold text-festival-primary">{price}</span>
           <span className="text-festival-secondary ml-1">MAD</span>
         </div>
-        {description && <p className="text-festival-secondary mb-6">{description}</p>}
+        <p className="text-festival-secondary mb-6">{description}</p>
         
         <ul className="space-y-3 mb-6">
           {features.map((feature, index) => (
@@ -65,7 +60,7 @@ const TicketPackage: React.FC<TicketPackageProps> = ({
         <a
           href="#buy"
           className={`w-full block text-center py-3 rounded-full transition-all duration-300 ${
-            showHighlight 
+            isPopular 
               ? "bg-festival-accent text-white hover:bg-opacity-90" 
               : "bg-white border border-slate-200 text-festival-primary hover:bg-slate-50"
           }`}

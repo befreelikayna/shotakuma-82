@@ -5,14 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 
 export type EventItemProps = {
-  id?: string;
+  id: string;
   title: string;
   description: string;
   date: string;
   time?: string | null;
   location: string;
   image: string;
-  category: "anime" | "manga" | "cosplay" | "gaming" | "culture" | string;
+  category: "anime" | "manga" | "cosplay" | "gaming" | "culture";
   registrationLink?: string;
   past?: boolean;
   onClick?: () => void;
@@ -30,8 +30,8 @@ const EventItem: React.FC<EventItemProps> = ({
   past,
   onClick
 }) => {
-  const getCategoryColor = (category: string) => {
-    switch (category.toLowerCase()) {
+  const getCategoryColor = (category: EventItemProps["category"]) => {
+    switch (category) {
       case "anime":
         return "bg-blue-100 text-blue-800";
       case "manga":
@@ -67,7 +67,7 @@ const EventItem: React.FC<EventItemProps> = ({
             category
           )}`}
         >
-          {typeof category === 'string' ? category.charAt(0).toUpperCase() + category.slice(1) : 'Other'}
+          {category.charAt(0).toUpperCase() + category.slice(1)}
         </span>
         {past && (
           <Badge
