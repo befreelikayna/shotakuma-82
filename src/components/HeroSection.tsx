@@ -192,7 +192,7 @@ const HeroSection = () => {
             variants={itemVariants}
           >
             <span className="text-white font-medium text-xs sm:text-sm">
-              26-28 MARS 2024 • CASABLANCA, MAROC
+              31 MAY 2025 • CASABLANCA, MAROC
             </span>
           </motion.div>
 
