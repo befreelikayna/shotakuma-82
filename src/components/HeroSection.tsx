@@ -192,7 +192,7 @@ const HeroSection = () => {
             variants={itemVariants}
           >
             <span className="text-white font-medium text-xs sm:text-sm">
-              31 MAY 2025 • CASABLANCA, MAROC
+              26-28 MARS 2024 • CASABLANCA, MAROC
             </span>
           </motion.div>
 
@@ -200,7 +200,10 @@ const HeroSection = () => {
             className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 md:mb-6 tracking-tight"
             variants={itemVariants}
           >
-            Festival Marocain d'Anime & Manga, Cosplay Gaming Geek Culture
+            Festival Marocain 
+            <span className="text-festival-accent"> d'Anime</span> 
+            <br />
+            <span className="text-festival-accent">&</span> Manga
           </motion.h1>
 
           <motion.p

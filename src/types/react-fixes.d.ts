@@ -1,19 +1,9 @@
 
-import React from 'react';
+import { ReactNode } from 'react';
 
-// This declaration file is used to fix TypeScript issues with ReactNode compatibility
+// Fix for ReactNode to include Record<string, unknown> to address UI component type errors
 declare module 'react' {
-  // Extend the ReactNode type to handle ReactI18NextChildren
-  interface ReactI18NextChildren extends Record<string, unknown> {}
-  
-  // Make ReactI18NextChildren assignable to ReactNode
-  type ReactNode = 
-    | ReactElement
-    | string
-    | number
-    | boolean
-    | null
-    | undefined
-    | ReactI18NextChildren
-    | Iterable<ReactNode>;
+  // Override the ReactNode type to include Record<string, unknown>
+  type ReactNodeOriginal = ReactNode;
+  type ReactNode = ReactNodeOriginal | Record<string, unknown>;
 }
