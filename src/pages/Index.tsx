@@ -108,6 +108,8 @@ const Home = () => {
           
           // Add default features based on ticket name
           const enhancedTickets = ticketData.map(item => {
+            if (!item) return null;
+            
             const ticketName = item.name as keyof typeof defaultFeatures;
             
             // Create a properly typed ticket object
@@ -115,7 +117,7 @@ const Home = () => {
               id: item.id,
               name: item.name,
               price: typeof item.price === 'number' ? item.price : Number(item.price),
-              description: item.description,
+              description: item.description || "",
               available: Boolean(item.available)
             } as Ticket;
             
@@ -124,7 +126,7 @@ const Home = () => {
               ...typedTicket,
               features: (defaultFeatures as any)[typedTicket.name] || []
             };
-          });
+          }).filter(Boolean) as Ticket[];
           
           setTickets(enhancedTickets);
         } else {
@@ -165,23 +167,27 @@ const Home = () => {
           const eventData = data.filter(isEventDataItem);
           
           // Convert to Event type
-          const typedEvents = eventData.map(item => ({
-            id: item.id,
-            name: item.name,
-            description: item.description,
-            place: item.place,
-            location: item.location,
-            event_date: item.event_date,
-            image_url: item.image_url,
-            category: item.category,
-            // Add title property to make it compatible with EventItem
-            title: item.name,
-            // Other properties EventItem might need
-            date: format(new Date(item.event_date), 'dd/MM/yyyy'),
-            time: "19:00", // Default time if not provided
-            image: item.image_url || "/placeholder.svg",
-            registrationLink: "#"
-          } as Event));
+          const typedEvents = eventData.map(item => {
+            if (!item) return null;
+            
+            return {
+              id: item.id,
+              name: item.name,
+              description: item.description || "",
+              place: item.place,
+              location: item.location || "",
+              event_date: item.event_date,
+              image_url: item.image_url || "",
+              category: item.category,
+              // Add title property to make it compatible with EventItem
+              title: item.name,
+              // Other properties EventItem might need
+              date: format(new Date(item.event_date), 'dd/MM/yyyy'),
+              time: "19:00", // Default time if not provided
+              image: item.image_url || "/placeholder.svg",
+              registrationLink: "#"
+            } as Event;
+          }).filter(Boolean) as Event[];
           
           setEvents(typedEvents);
         } else {
@@ -264,7 +270,8 @@ const Home = () => {
           ) : events.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {events.map((eventItem) => (
-                <EventItem key={eventItem.id} 
+                <EventItem 
+                  key={eventItem.id} 
                   title={eventItem.name}
                   description={eventItem.description || ""}
                   date={format(new Date(eventItem.event_date), 'dd/MM/yyyy')}
@@ -311,6 +318,7 @@ const Home = () => {
                   key={ticket.id || index}
                   name={ticket.name}
                   price={ticket.price}
+                  description={ticket.description || ""}
                   features={ticket.features || []}
                 />
               ))

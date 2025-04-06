@@ -3,9 +3,7 @@ import { ReactNode as OriginalReactNode, ReactElement, ReactFragment, ReactPorta
 
 // Fix for ReactI18NextChildren type issues
 declare module 'react' {
-  interface ReactI18NextChildren<T = any> extends Record<string, T> {}
-  
-  // Make ReactNode also accept Record<string, unknown>
+  // Enhanced ReactNode type to accept Record<string, unknown>
   type ReactNode = 
     | OriginalReactNode 
     | ReactElement
@@ -16,10 +14,10 @@ declare module 'react' {
     | undefined
     | Record<string, unknown>;
     
-  // SlotProps type needs to accept ReactI18NextChildren
+  // Extend SlotProps to accept any children
   namespace Slot {
     interface SlotProps {
-      children?: ReactNode;
+      children?: any;
     }
   }
 }

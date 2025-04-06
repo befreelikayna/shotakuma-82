@@ -10,6 +10,18 @@ interface SliderImage {
   active: boolean;
 }
 
+// Type guard to check if an item conforms to the SliderImage interface
+function isSliderImage(item: any): item is SliderImage {
+  return (
+    item !== null &&
+    typeof item === 'object' &&
+    'id' in item &&
+    'image_url' in item &&
+    'order_number' in item &&
+    'active' in item
+  );
+}
+
 const SliderComponent = () => {
   const [images, setImages] = useState<SliderImage[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -29,9 +41,11 @@ const SliderComponent = () => {
           throw error;
         }
 
-        if (data) {
-          setImages(data as SliderImage[]);
-          console.info('Slider images loaded:', data);
+        if (data && Array.isArray(data)) {
+          // Filter data to ensure type safety
+          const validImages = data.filter(isSliderImage);
+          setImages(validImages);
+          console.info('Slider images loaded:', validImages);
         }
       } catch (error) {
         console.error('Error loading slider images:', error);
