@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -13,6 +12,49 @@ import SliderComponent from "@/components/Slider";
 import TicketPackage from "@/components/TicketPackage";
 import { customSupabase, Event, Ticket } from "@/integrations/supabase/client";
 import { Helmet } from "react-helmet";
+
+// Type guards for database items
+type TicketDataItem = {
+  id: string;
+  name: string;
+  price: number | string;
+  description: string | null;
+  available: boolean;
+};
+
+function isTicketDataItem(item: any): item is TicketDataItem {
+  return (
+    item !== null &&
+    typeof item === 'object' &&
+    'id' in item &&
+    'name' in item &&
+    'price' in item &&
+    'available' in item
+  );
+}
+
+type EventDataItem = {
+  id: string;
+  name: string;
+  description: string | null;
+  place: string;
+  location: string | null;
+  event_date: string;
+  image_url: string | null;
+  category: string;
+};
+
+function isEventDataItem(item: any): item is EventDataItem {
+  return (
+    item !== null &&
+    typeof item === 'object' &&
+    'id' in item &&
+    'name' in item &&
+    'place' in item &&
+    'event_date' in item &&
+    'category' in item
+  );
+}
 
 const Home = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -60,27 +102,14 @@ const Home = () => {
           throw error;
         }
         
-        if (data) {
-          // Improved type handling
-          const ticketData = Array.isArray(data) 
-            ? data.filter((item): item is { 
-                id: string; 
-                name: string; 
-                price: number | string; 
-                description: string | null;
-                available: boolean;
-              } => 
-                item !== null &&
-                typeof item === 'object' && 
-                'id' in item &&
-                'name' in item && 
-                'price' in item &&
-                'available' in item
-              )
-            : [];
+        if (data && Array.isArray(data)) {
+          // Process tickets with type safety
+          const ticketData = data.filter(isTicketDataItem);
           
           // Add default features based on ticket name
           const enhancedTickets = ticketData.map(item => {
+            const ticketName = item.name as keyof typeof defaultFeatures;
+            
             // Create a properly typed ticket object
             const typedTicket = {
               id: item.id,
@@ -98,6 +127,8 @@ const Home = () => {
           });
           
           setTickets(enhancedTickets);
+        } else {
+          setTickets([]);
         }
       } catch (error) {
         console.error('Error fetching tickets:', error);
@@ -129,28 +160,9 @@ const Home = () => {
           throw error;
         }
   
-        if (data) {
-          // Improved type handling for events
-          const eventData = Array.isArray(data) 
-            ? data.filter((item): item is { 
-                id: string;
-                name: string;
-                description: string | null;
-                place: string;
-                location: string | null;
-                event_date: string;
-                image_url: string | null;
-                category: string;
-              } => 
-                item !== null &&
-                typeof item === 'object' && 
-                'id' in item &&
-                'name' in item &&
-                'place' in item &&
-                'event_date' in item &&
-                'category' in item
-              )
-            : [];
+        if (data && Array.isArray(data)) {
+          // Process events with type safety
+          const eventData = data.filter(isEventDataItem);
           
           // Convert to Event type
           const typedEvents = eventData.map(item => ({
@@ -162,9 +174,18 @@ const Home = () => {
             event_date: item.event_date,
             image_url: item.image_url,
             category: item.category,
+            // Add title property to make it compatible with EventItem
+            title: item.name,
+            // Other properties EventItem might need
+            date: format(new Date(item.event_date), 'dd/MM/yyyy'),
+            time: "19:00", // Default time if not provided
+            image: item.image_url || "/placeholder.svg",
+            registrationLink: "#"
           } as Event));
           
           setEvents(typedEvents);
+        } else {
+          setEvents([]);
         }
       } catch (error) {
         console.error("Error fetching events:", error);
@@ -243,7 +264,15 @@ const Home = () => {
           ) : events.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {events.map((eventItem) => (
-                <EventItem key={eventItem.id} {...eventItem} />
+                <EventItem key={eventItem.id} 
+                  title={eventItem.name}
+                  description={eventItem.description || ""}
+                  date={format(new Date(eventItem.event_date), 'dd/MM/yyyy')}
+                  time="19:00"
+                  location={eventItem.place}
+                  image={eventItem.image_url || "/placeholder.svg"}
+                  category={eventItem.category}
+                />
               ))}
             </div>
           ) : (
@@ -283,7 +312,6 @@ const Home = () => {
                   name={ticket.name}
                   price={ticket.price}
                   features={ticket.features || []}
-                  highlight={ticket.name === "Premium"}
                 />
               ))
             ) : (
