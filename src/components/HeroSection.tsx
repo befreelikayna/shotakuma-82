@@ -200,7 +200,7 @@ const HeroSection = () => {
             className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 md:mb-6 tracking-tight"
             variants={itemVariants}
           >
-            Morocco's biggest festival for Manga, Anime, Shotakers, Cosplay, Gaming and Geek Culture
+            Festival Marocain d'Anime & Manga, Cosplay Gaming Geek Culture
           </motion.h1>
 
           <motion.p
