@@ -32,7 +32,17 @@ export const useGeneralContent = (sectionKey: string) => {
         }
         
         if (data) {
-          setContent(data as GeneralContent);
+          // Safely cast the data to our expected type
+          const typedData = data as any;
+          const content: GeneralContent = {
+            id: typedData.id || '',
+            section_key: typedData.section_key || '',
+            title: typedData.title || null,
+            subtitle: typedData.subtitle || null,
+            content: typedData.content || null,
+            image_url: typedData.image_url || null
+          };
+          setContent(content);
         }
       } catch (err) {
         console.error(`Error fetching content for section "${sectionKey}":`, err);

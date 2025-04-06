@@ -70,12 +70,23 @@ export const usePageContent = (pageId: string) => {
         if (data) {
           try {
             // Cast data to the correct type
-            const pageContentData = data as unknown as PageContentType;
-            const parsedContent = typeof pageContentData.content === 'string' 
-              ? JSON.parse(pageContentData.content) 
-              : pageContentData.content;
+            const typedData = data as any;
+            let parsedContent: PageContent;
             
-            setContent(parsedContent as unknown as PageContent);
+            if (typeof typedData.content === 'string') {
+              parsedContent = JSON.parse(typedData.content);
+            } else {
+              parsedContent = typedData.content as unknown as PageContent;
+            }
+            
+            // Ensure the content has the expected structure
+            if (!parsedContent.header) parsedContent.header = defaultContent.home.header;
+            if (!parsedContent.sections || !Array.isArray(parsedContent.sections)) {
+              parsedContent.sections = defaultContent.home.sections;
+            }
+            if (!parsedContent.footer) parsedContent.footer = defaultContent.home.footer;
+            
+            setContent(parsedContent);
           } catch (e) {
             console.error(`Error parsing content for page ${pageId}:`, e);
             setError(new Error(`Error parsing content for page ${pageId}`));

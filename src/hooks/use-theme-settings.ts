@@ -35,7 +35,19 @@ export const useThemeSettings = () => {
         }
         
         if (data) {
-          setSettings(data as ThemeSettings);
+          // Safely cast the data to our expected type
+          const typedData = data as any;
+          const settings: ThemeSettings = {
+            id: typedData.id || '',
+            primary_color: typedData.primary_color || '#3b82f6',
+            secondary_color: typedData.secondary_color || '#6b7280',
+            accent_color: typedData.accent_color || '#f97316',
+            background_color: typedData.background_color || '#ffffff',
+            text_color: typedData.text_color || '#111827',
+            font_heading: typedData.font_heading || 'Inter',
+            font_body: typedData.font_body || 'Inter'
+          };
+          setSettings(settings);
         }
       } catch (err) {
         console.error('Error fetching theme settings:', err);

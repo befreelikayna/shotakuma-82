@@ -30,21 +30,17 @@ const Gallery = () => {
         
         if (data && Array.isArray(data)) {
           // Type-safe conversion of data
-          const galleryItems = data
-            .filter((item): item is Record<string, any> => 
-              typeof item === 'object' && 
-              item !== null &&
-              'id' in item &&
-              'src' in item &&
-              'alt' in item
-            )
-            .map(item => ({
-              id: String(item.id || ''),
-              src: String(item.src || ''),
-              alt: String(item.alt || ''),
-              type: String(item.type || 'image'),
-              category: String(item.category || 'general')
-            }));
+          const galleryItems: GalleryItem[] = data.map(item => {
+            // Handle potential null values safely
+            const typedItem = item as any;
+            return {
+              id: String(typedItem?.id || ''),
+              src: String(typedItem?.src || ''),
+              alt: String(typedItem?.alt || ''),
+              type: String(typedItem?.type || 'image'),
+              category: String(typedItem?.category || 'general')
+            };
+          });
           
           setItems(galleryItems);
         }

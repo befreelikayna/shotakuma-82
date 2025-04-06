@@ -27,8 +27,21 @@ const GeneralContentEditor = () => {
       
       if (error) throw error;
       
-      if (data) {
-        setContentItems(data as GeneralContent[]);
+      if (data && Array.isArray(data)) {
+        // Type-safe conversion of data
+        const typedContent: GeneralContent[] = data.map(item => {
+          const typedItem = item as any;
+          return {
+            id: typedItem.id || '',
+            section_key: typedItem.section_key || '',
+            title: typedItem.title || null,
+            subtitle: typedItem.subtitle || null,
+            content: typedItem.content || null,
+            image_url: typedItem.image_url || null
+          };
+        });
+        
+        setContentItems(typedContent);
       }
     } catch (error) {
       console.error('Error fetching content:', error);
