@@ -9,6 +9,7 @@ interface SliderImage {
   image_url: string;
   order_number: number;
   active: boolean;
+  link?: string | null;
 }
 
 const Slider = () => {
@@ -32,13 +33,19 @@ const Slider = () => {
         }
 
         if (data && Array.isArray(data)) {
-          // Type guard to ensure we have proper image data
-          const sliderData = data.filter((item): item is SliderImage => 
+          // Safely convert data to SliderImage[] with proper type checking
+          const sliderData = data.filter((item): item is any => 
             typeof item === 'object' && 
             item !== null && 
             'id' in item && 
             'image_url' in item
-          );
+          ).map(item => ({
+            id: item.id,
+            image_url: item.image_url,
+            order_number: item.order_number || 0,
+            active: item.active ?? true,
+            link: item.link || null
+          }));
 
           setImages(sliderData);
         }

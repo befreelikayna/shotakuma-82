@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ const TicketManager = () => {
   });
 
   const [isEditingPayPal, setIsEditingPayPal] = useState(false);
+  const [savingItemId, setSavingItemId] = useState<string | null>(null);
 
   const fetchTickets = async () => {
     try {
@@ -49,10 +51,19 @@ const TicketManager = () => {
       }
       
       if (data) {
+        // Process tickets with proper type safety
         const typedData = Array.isArray(data) ? data.map(item => {
-          if ('name' in item && 'price' in item) {
-            return item as TicketType;
+          if (item && typeof item === 'object' && 'name' in item && 'price' in item) {
+            // Create a properly typed ticket object
+            return {
+              id: String(item.id || ''),
+              name: String(item.name || ''),
+              price: typeof item.price === 'number' ? item.price : Number(item.price || 0),
+              description: item.description !== undefined ? String(item.description || '') : null,
+              available: Boolean(item.available)
+            } as TicketType;
           }
+          // Return a default ticket if data doesn't match expected shape
           return {
             id: "unknown",
             name: "Unknown",
@@ -210,7 +221,7 @@ const TicketManager = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={handleRefreshTickets}
+          onClick={fetchTickets}
           className="flex items-center gap-1"
         >
           <RefreshCw size={16} />
