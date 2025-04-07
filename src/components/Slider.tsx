@@ -33,18 +33,22 @@ const Slider = () => {
         }
 
         if (data && Array.isArray(data)) {
-          // Process the data into SliderImage[] with proper typing
-          const sliderData: SliderImage[] = data
-            .filter((item): item is any => item !== null && typeof item === 'object')
-            .map(item => ({
-              id: String(item.id || ''),
-              image_url: String(item.image_url || ''),
-              order_number: Number(item.order_number || 0),
-              active: Boolean(item.active ?? true),
-              link: item.link ? String(item.link) : null
-            }));
+          // First, filter to make sure we're only working with non-null objects
+          const validItems = data.filter((item): item is Record<string, any> => 
+            item !== null && typeof item === 'object'
+          );
+          
+          // Then safely map to our typed SliderImage objects
+          const sliderData: SliderImage[] = validItems.map(item => ({
+            id: String(item.id || ''),
+            image_url: String(item.image_url || ''),
+            order_number: Number(item.order_number || 0),
+            active: Boolean(item.active ?? true),
+            link: item.link ? String(item.link) : null
+          }));
 
           setImages(sliderData);
+          console.log('Slider images loaded:', sliderData);
         }
       } catch (error) {
         console.error('Error fetching slider images:', error);
