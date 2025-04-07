@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,10 +46,8 @@ const TicketManager = () => {
       }
       
       if (data) {
-        // Process tickets with proper type safety
         const typedData = Array.isArray(data) ? data.map(item => {
-          if (item && typeof item === 'object' && item !== null) {
-            // Create a properly typed ticket object
+          if (item && typeof item === 'object') {
             return {
               id: String(item.id || ''),
               name: String(item.name || ''),
@@ -59,7 +56,6 @@ const TicketManager = () => {
               available: Boolean(item.available)
             } as TicketType;
           }
-          // Return a default ticket if data doesn't match expected shape
           return {
             id: "unknown",
             name: "Unknown",
@@ -86,7 +82,6 @@ const TicketManager = () => {
   useEffect(() => {
     fetchTickets();
 
-    // Set up real-time subscription
     const channel = customSupabase
       .channel('tickets-changes')
       .on('postgres_changes',

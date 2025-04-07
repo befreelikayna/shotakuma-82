@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -32,18 +33,15 @@ const Slider = () => {
         }
 
         if (data && Array.isArray(data)) {
-          // Safely convert data to SliderImage[] with proper type checking
+          // Process the data into SliderImage[] with proper typing
           const sliderData: SliderImage[] = data
-            .filter((item): item is Record<string, any> => 
-              typeof item === 'object' && 
-              item !== null
-            )
+            .filter((item): item is any => item !== null && typeof item === 'object')
             .map(item => ({
-              id: String(item?.id || ''),
-              image_url: String(item?.image_url || ''),
-              order_number: typeof item?.order_number === 'number' ? item.order_number : 0,
-              active: Boolean(item?.active ?? true),
-              link: item?.link ? String(item.link) : null
+              id: String(item.id || ''),
+              image_url: String(item.image_url || ''),
+              order_number: Number(item.order_number || 0),
+              active: Boolean(item.active ?? true),
+              link: item.link ? String(item.link) : null
             }));
 
           setImages(sliderData);

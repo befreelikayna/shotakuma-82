@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter } from "lucide-react";
@@ -62,10 +61,8 @@ const Index = () => {
         throw error;
       }
       
-      if (data) {
-        const ticketData = Array.isArray(data) ? data.filter(item => 
-          item && typeof item === 'object' && item !== null
-        ) : [];
+      if (data && Array.isArray(data)) {
+        const ticketData = data.filter(item => item !== null && typeof item === 'object');
         
         const enhancedTickets = ticketData.map(ticket => {
           // Create a properly typed ticket object
