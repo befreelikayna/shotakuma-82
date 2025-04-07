@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Loader2, RefreshCw, Plus, Settings, Edit, Trash } from "lucide-react";
+import { Loader2, RefreshCw, Plus, Edit, Trash } from "lucide-react";
 import { customSupabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -49,14 +49,14 @@ const TicketManager = () => {
       if (data) {
         // Process tickets with proper type safety
         const typedData = Array.isArray(data) ? data.map(item => {
-          if (item && typeof item === 'object' && item !== null && 'name' in item && 'price' in item) {
+          if (item && typeof item === 'object' && item !== null) {
             // Create a properly typed ticket object
             return {
-              id: String(item?.id || ''),
-              name: String(item?.name || ''),
-              price: typeof item?.price === 'number' ? item.price : Number(item?.price || 0),
-              description: item?.description !== undefined ? String(item?.description || '') : null,
-              available: Boolean(item?.available)
+              id: String(item.id || ''),
+              name: String(item.name || ''),
+              price: typeof item.price === 'number' ? item.price : Number(item.price || 0),
+              description: item.description !== undefined ? String(item.description || '') : null,
+              available: Boolean(item.available)
             } as TicketType;
           }
           // Return a default ticket if data doesn't match expected shape

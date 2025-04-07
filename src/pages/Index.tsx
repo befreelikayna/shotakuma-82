@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter, MessageSquare } from "lucide-react";
+import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
@@ -63,16 +64,17 @@ const Index = () => {
       
       if (data) {
         const ticketData = Array.isArray(data) ? data.filter(item => 
-          item && typeof item === 'object' && item !== null && 'name' in item && 'price' in item
+          item && typeof item === 'object' && item !== null
         ) : [];
         
         const enhancedTickets = ticketData.map(ticket => {
+          // Create a properly typed ticket object
           const typedTicket = {
-            id: String(ticket?.id || ''),
-            name: String(ticket?.name || ''),
-            price: typeof ticket?.price === 'number' ? ticket.price : Number(ticket?.price || 0),
-            description: ticket?.description !== undefined ? String(ticket?.description || '') : null,
-            available: Boolean(ticket?.available)
+            id: String(ticket.id || ''),
+            name: String(ticket.name || ''),
+            price: typeof ticket.price === 'number' ? ticket.price : Number(ticket.price || 0),
+            description: ticket.description !== undefined ? String(ticket.description || '') : null,
+            available: Boolean(ticket.available)
           } as Ticket;
           
           return {
