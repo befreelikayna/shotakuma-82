@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter } from "lucide-react";
@@ -63,20 +62,13 @@ const Index = () => {
       }
       
       if (data && Array.isArray(data)) {
-        // First filter null or non-object items
-        const ticketData = data.filter((item): item is Record<string, any> => 
-          item !== null && typeof item === 'object'
-        );
-        
-        // Then safely process them with proper type assertions
-        const enhancedTickets = ticketData.map(ticket => {
-          // Create a properly typed ticket object
+        const enhancedTickets = data.map(ticket => {
           const typedTicket = {
-            id: String(ticket.id || ''),
-            name: String(ticket.name || ''),
-            price: typeof ticket.price === 'number' ? ticket.price : Number(ticket.price || 0),
-            description: ticket.description !== undefined ? String(ticket.description || '') : null,
-            available: Boolean(ticket.available)
+            id: String(ticket?.id || ''),
+            name: String(ticket?.name || ''),
+            price: typeof ticket?.price === 'number' ? ticket.price : Number(ticket?.price || 0),
+            description: ticket?.description !== undefined ? String(ticket.description || '') : null,
+            available: Boolean(ticket?.available)
           } as Ticket;
           
           return {

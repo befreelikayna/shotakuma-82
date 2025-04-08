@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,24 +47,12 @@ const TicketManager = () => {
       
       if (data) {
         const typedData = Array.isArray(data) ? data.map(item => {
-          // Make sure item is a valid object before accessing its properties
-          if (item && typeof item === 'object') {
-            // Since we've verified item is an object, we can safely assert it with a non-null assertion
-            const safeItem = item as Record<string, any>;
-            return {
-              id: String(safeItem.id || ''),
-              name: String(safeItem.name || ''),
-              price: typeof safeItem.price === 'number' ? safeItem.price : Number(safeItem.price || 0),
-              description: safeItem.description !== undefined ? String(safeItem.description || '') : null,
-              available: Boolean(safeItem.available)
-            } as TicketType;
-          }
           return {
-            id: "unknown",
-            name: "Unknown",
-            price: 0,
-            description: null,
-            available: false
+            id: String(item?.id || ''),
+            name: String(item?.name || ''),
+            price: typeof item?.price === 'number' ? item.price : Number(item?.price || 0),
+            description: item?.description !== undefined ? String(item.description || '') : null,
+            available: Boolean(item?.available)
           } as TicketType;
         }) : [];
         

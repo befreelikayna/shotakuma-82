@@ -159,6 +159,42 @@ export type Database = {
         }
         Relationships: []
       }
+      partners: {
+        Row: {
+          active: boolean
+          category: string | null
+          created_at: string
+          id: string
+          logo_url: string
+          name: string
+          order_number: number
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          active?: boolean
+          category?: string | null
+          created_at?: string
+          id?: string
+          logo_url: string
+          name: string
+          order_number?: number
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          active?: boolean
+          category?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string
+          name?: string
+          order_number?: number
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       slider_images: {
         Row: {
           active: boolean
