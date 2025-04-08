@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { customSupabase } from '@/integrations/supabase/client';
+import { customSupabase, safeDataAccess } from '@/integrations/supabase/client';
 
 interface SliderImage {
   id: string;
@@ -35,10 +35,10 @@ const Slider = () => {
         if (data && Array.isArray(data)) {
           // Create properly typed SliderImage objects with safety checks
           const sliderData: SliderImage[] = data.map(item => ({
-            id: typeof item?.id === 'string' ? item.id : String(item?.id || ''),
-            image_url: typeof item?.image_url === 'string' ? item.image_url : String(item?.image_url || ''),
-            order_number: typeof item?.order_number === 'number' ? item.order_number : Number(item?.order_number || 0),
-            active: typeof item?.active === 'boolean' ? item.active : Boolean(item?.active ?? true),
+            id: safeDataAccess(item?.id, ''),
+            image_url: safeDataAccess(item?.image_url, ''),
+            order_number: safeDataAccess(item?.order_number, 0),
+            active: safeDataAccess(item?.active, true),
             link: item?.link ? String(item.link) : null
           }));
 

@@ -12,7 +12,8 @@ import TicketPackage from "@/components/TicketPackage";
 import { useGalleryItems } from "@/hooks/use-gallery-items";
 import { usePageContent } from "@/hooks/use-page-content";
 import PageContentSection from "@/components/PageContentSection";
-import { customSupabase, supabase, Ticket } from "@/integrations/supabase/client";
+import PartnerLogosSlider from "@/components/PartnerLogosSlider";
+import { customSupabase, supabase, Ticket, safeDataAccess } from "@/integrations/supabase/client";
 
 interface TicketWithFeatures extends Ticket {
   features: string[];
@@ -66,12 +67,12 @@ const Index = () => {
         // Create properly typed ticket objects with explicit type checking and safety
         const enhancedTickets = data.map(ticket => {
           const typedTicket = {
-            id: typeof ticket?.id === 'string' ? ticket.id : String(ticket?.id || ''),
-            name: typeof ticket?.name === 'string' ? ticket.name : String(ticket?.name || ''),
-            price: typeof ticket?.price === 'number' ? ticket.price : Number(ticket?.price || 0),
+            id: safeDataAccess(ticket?.id, ''),
+            name: safeDataAccess(ticket?.name, ''),
+            price: safeDataAccess(ticket?.price, 0),
             description: ticket?.description !== undefined ? 
-              (typeof ticket.description === 'string' ? ticket.description : String(ticket.description || '')) : null,
-            available: typeof ticket?.available === 'boolean' ? ticket.available : Boolean(ticket?.available)
+              safeDataAccess(ticket.description, '') : null,
+            available: safeDataAccess(ticket?.available, true)
           } as Ticket;
           
           return {
@@ -258,6 +259,9 @@ const Index = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* Partner Logos Slider - Added before Gallery Preview */}
+      <PartnerLogosSlider />
 
       {!galleryLoading && galleryItems.length > 0 && (
         <section className="py-20 bg-slate-50" id="gallery-preview">

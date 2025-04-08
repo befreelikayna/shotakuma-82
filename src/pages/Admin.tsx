@@ -15,6 +15,7 @@ import ContentManager from "@/components/admin/ContentManager";
 import EventManager from "@/components/admin/EventManager";
 import ThemeManager from "@/components/admin/ThemeManager";
 import GeneralContentEditor from "@/components/admin/GeneralContentEditor";
+import PartnersManager from "@/components/admin/PartnersManager";
 import AdminLogin from "@/components/admin/AdminLogin";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -133,12 +134,13 @@ const Admin = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
-            <TabsList className="grid grid-cols-4 md:grid-cols-10 mb-6 md:mb-8 w-full overflow-x-auto">
+            <TabsList className="grid grid-cols-4 md:grid-cols-11 mb-6 md:mb-8 w-full overflow-x-auto">
               <TabsTrigger value="slider" className="whitespace-nowrap">Slider</TabsTrigger>
               <TabsTrigger value="gallery" className="whitespace-nowrap">Galerie</TabsTrigger>
               <TabsTrigger value="events" className="whitespace-nowrap">Événements</TabsTrigger>
               <TabsTrigger value="tickets" className="whitespace-nowrap">Billets</TabsTrigger>
               <TabsTrigger value="packages" className="whitespace-nowrap">Forfaits</TabsTrigger>
+              <TabsTrigger value="partners" className="whitespace-nowrap">Partenaires</TabsTrigger>
               <TabsTrigger value="content" className="whitespace-nowrap hidden md:block">Contenu</TabsTrigger>
               <TabsTrigger value="general" className="whitespace-nowrap hidden md:block">Général</TabsTrigger>
               <TabsTrigger value="social" className="whitespace-nowrap hidden md:block">Liens</TabsTrigger>
@@ -172,6 +174,10 @@ const Admin = () => {
 
             <TabsContent value="packages" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <TicketPackageManager />
+            </TabsContent>
+
+            <TabsContent value="partners" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
+              <PartnersManager />
             </TabsContent>
 
             <TabsContent value="content" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">

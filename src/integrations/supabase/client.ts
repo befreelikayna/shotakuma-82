@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
@@ -63,6 +64,14 @@ const channel = supabase.channel('admin-panel-changes')
   }, (payload) => {
     console.log('Change received on tickets!', payload);
   })
+  // Add realtime for partners
+  .on('postgres_changes', { 
+    event: '*', 
+    schema: 'public', 
+    table: 'partners' 
+  }, (payload) => {
+    console.log('Change received on partners!', payload);
+  })
   .subscribe();
 
 // Export the channel for potential cleanup
@@ -102,6 +111,19 @@ export interface Ticket {
   updated_at?: string;
 }
 
+// Define a Partner interface for the partners table
+export interface Partner {
+  id: string;
+  name: string;
+  logo_url: string;
+  website_url: string | null;
+  order_number: number;
+  active: boolean;
+  category: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // Define interfaces for the tables not included in the auto-generated types
 export interface PageContent {
   id: string;
@@ -125,6 +147,11 @@ export type Json =
   | null
   | { [key: string]: Json }
   | Json[];
+
+// Create a helper function to safely handle Supabase data
+export function safeDataAccess<T>(item: any, defaultValue: T): T {
+  return item !== undefined && item !== null ? item as T : defaultValue;
+}
 
 // Create a typed version of supabase client that includes better type safety
 export const customSupabase = {
