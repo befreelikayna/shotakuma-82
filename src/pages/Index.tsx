@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter } from "lucide-react";
@@ -62,13 +63,15 @@ const Index = () => {
       }
       
       if (data && Array.isArray(data)) {
+        // Create properly typed ticket objects with explicit type checking and safety
         const enhancedTickets = data.map(ticket => {
           const typedTicket = {
-            id: String(ticket?.id || ''),
-            name: String(ticket?.name || ''),
+            id: typeof ticket?.id === 'string' ? ticket.id : String(ticket?.id || ''),
+            name: typeof ticket?.name === 'string' ? ticket.name : String(ticket?.name || ''),
             price: typeof ticket?.price === 'number' ? ticket.price : Number(ticket?.price || 0),
-            description: ticket?.description !== undefined ? String(ticket.description || '') : null,
-            available: Boolean(ticket?.available)
+            description: ticket?.description !== undefined ? 
+              (typeof ticket.description === 'string' ? ticket.description : String(ticket.description || '')) : null,
+            available: typeof ticket?.available === 'boolean' ? ticket.available : Boolean(ticket?.available)
           } as Ticket;
           
           return {

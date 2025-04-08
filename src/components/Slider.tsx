@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -32,12 +33,12 @@ const Slider = () => {
         }
 
         if (data && Array.isArray(data)) {
-          // Safely map to our typed SliderImage objects
+          // Create properly typed SliderImage objects with safety checks
           const sliderData: SliderImage[] = data.map(item => ({
-            id: String(item?.id || ''),
-            image_url: String(item?.image_url || ''),
-            order_number: Number(item?.order_number || 0),
-            active: Boolean(item?.active ?? true),
+            id: typeof item?.id === 'string' ? item.id : String(item?.id || ''),
+            image_url: typeof item?.image_url === 'string' ? item.image_url : String(item?.image_url || ''),
+            order_number: typeof item?.order_number === 'number' ? item.order_number : Number(item?.order_number || 0),
+            active: typeof item?.active === 'boolean' ? item.active : Boolean(item?.active ?? true),
             link: item?.link ? String(item.link) : null
           }));
 

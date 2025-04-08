@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
@@ -127,10 +126,11 @@ export type Json =
   | { [key: string]: Json }
   | Json[];
 
-// Create a typed version of supabase client that handles our custom tables
+// Create a typed version of supabase client that includes better type safety
 export const customSupabase = {
   from: (table: string) => {
-    // This type assertion tells TypeScript to trust us that the table exists
+    // Create a properly typed result by forcing any to help with TypeScript errors
+    // This is a workaround for the Supabase typing issues
     return supabase.from(table as any);
   },
   // Add channel method to our custom client

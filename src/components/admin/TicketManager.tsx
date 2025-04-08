@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,16 +46,18 @@ const TicketManager = () => {
         throw error;
       }
       
-      if (data) {
-        const typedData = Array.isArray(data) ? data.map(item => {
+      if (data && Array.isArray(data)) {
+        // Safely create typed TicketType objects with explicit type checking
+        const typedData = data.map(item => {
           return {
-            id: String(item?.id || ''),
-            name: String(item?.name || ''),
+            id: typeof item?.id === 'string' ? item.id : String(item?.id || ''),
+            name: typeof item?.name === 'string' ? item.name : String(item?.name || ''),
             price: typeof item?.price === 'number' ? item.price : Number(item?.price || 0),
-            description: item?.description !== undefined ? String(item.description || '') : null,
-            available: Boolean(item?.available)
+            description: item?.description !== undefined ? 
+              (typeof item.description === 'string' ? item.description : String(item.description || '')) : null,
+            available: typeof item?.available === 'boolean' ? item.available : Boolean(item?.available)
           } as TicketType;
-        }) : [];
+        });
         
         setTickets(typedData);
       }
