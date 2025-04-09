@@ -78,29 +78,7 @@ const channel = supabase.channel('admin-panel-changes')
 // Export the channel for potential cleanup
 export const realtimeChannel = channel;
 
-// Define explicit interfaces for each table to avoid deep type unions
-export interface SliderImage {
-  id: string;
-  image_url: string;
-  order_number: number;
-  active: boolean;
-  link?: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface Partner {
-  id: string;
-  name: string;
-  logo_url: string;
-  website_url: string | null;
-  order_number: number;
-  active: boolean;
-  category: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
+// Define a base event interface that all components can use
 export interface Event {
   id: string;
   name: string;
@@ -122,6 +100,7 @@ export interface Event {
   registrationLink?: string;
 }
 
+// Define a Ticket interface for the tickets table
 export interface Ticket {
   id: string;
   name: string;
@@ -133,10 +112,24 @@ export interface Ticket {
   updated_at?: string;
 }
 
+// Define a Partner interface for the partners table
+export interface Partner {
+  id: string;
+  name: string;
+  logo_url: string;
+  website_url: string | null;
+  order_number: number;
+  active: boolean;
+  category: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Define interfaces for the tables not included in the auto-generated types
 export interface PageContent {
   id: string;
   page_id: string;
-  content: any;
+  content: Json;
   created_at: string;
   updated_at: string;
 }
@@ -145,36 +138,6 @@ export interface NewsletterSubscriber {
   id: string;
   email: string;
   subscribed_at: string;
-}
-
-export interface GalleryItem {
-  id: string;
-  src: string;
-  alt: string;
-  type: string;
-  category: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface GeneralContent {
-  id: string;
-  section_key: string;
-  title: string | null;
-  subtitle: string | null;
-  content: string | null;
-  image_url: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface SocialLink {
-  id: string;
-  title: string;
-  url: string;
-  icon: string;
-  created_at?: string;
-  updated_at?: string;
 }
 
 // Define a Json type to match Supabase's Json type
@@ -191,57 +154,54 @@ export function safeDataAccess<T>(item: any, defaultValue: T): T {
   return item !== undefined && item !== null ? item as T : defaultValue;
 }
 
-// Define table names as a union type with literal values for better type checking
-export type TableName = 
-  | 'events' 
-  | 'gallery_items' 
-  | 'general_content' 
-  | 'newsletter_subscribers' 
-  | 'page_content' 
-  | 'partners' 
-  | 'slider_images' 
-  | 'social_links' 
-  | 'theme_settings' 
-  | 'tickets';
-
-// Map table names to their respective types
-export interface TableTypes {
-  'partners': Partner;
-  'slider_images': SliderImage;
-  'events': Event;
-  'tickets': Ticket;
-  'gallery_items': GalleryItem;
-  'general_content': GeneralContent;
-  'newsletter_subscribers': NewsletterSubscriber;
-  'page_content': PageContent;
-  'social_links': SocialLink;
-  'theme_settings': any; // Define a proper type if needed
-}
-
-// Create a strongly-typed wrapper for Supabase functions
+// Create a typed version of supabase client that includes better type safety
 export const customSupabase = {
-  from: <T extends TableName>(table: T) => {
+  from: (table: string) => {
     const query = supabase.from(table);
     
-    // Add custom type-safe methods to improve type checking
+    // Return an enhanced object with type-safe methods
     return {
       ...query,
+      // Override select method to ensure proper typing of returned data
       select: (columns?: string) => {
-        return query.select(columns);
+        const selectQuery = columns ? query.select(columns) : query.select();
+        
+        return {
+          ...selectQuery,
+          eq: (column: string, value: any) => {
+            const filteredQuery = selectQuery.eq(column, value);
+            return filteredQuery;
+          },
+          order: (column: string, options?: { ascending?: boolean }) => {
+            const orderedQuery = selectQuery.order(column, options);
+            return orderedQuery;
+          },
+          limit: (count: number) => {
+            const limitedQuery = selectQuery.limit(count);
+            return limitedQuery;
+          }
+        };
       },
-      insert: <D extends Record<string, any>>(values: D | D[]) => {
+      // Provide type-safe insert
+      insert: (values: any) => {
         return query.insert(values);
       },
-      update: <D extends Record<string, any>>(values: D) => {
+      // Provide type-safe update
+      update: (values: any) => {
         return query.update(values);
       },
-      delete: () => query.delete(),
-      eq: (column: string, value: any) => query.eq(column, value),
-      order: (column: string, options?: { ascending?: boolean }) => query.order(column, options),
-      limit: (count: number) => query.limit(count),
-      single: () => query.single()
+      // Provide type-safe delete
+      delete: () => {
+        return query.delete();
+      }
     };
   },
-  channel: (name: string) => supabase.channel(name),
-  removeChannel: (channel: any) => supabase.removeChannel(channel)
+  // Add channel method to our custom client
+  channel: (name: string) => {
+    return supabase.channel(name);
+  },
+  // Add removeChannel method to our custom client
+  removeChannel: (channel: any) => {
+    return supabase.removeChannel(channel);
+  }
 };

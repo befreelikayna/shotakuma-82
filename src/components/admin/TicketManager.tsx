@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,16 +7,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Loader2, RefreshCw, Plus, Edit, Trash } from "lucide-react";
-import { customSupabase, Ticket, safeDataAccess } from '@/integrations/supabase/client';
+import { customSupabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
+type TicketType = {
+  id: string;
+  name: string;
+  price: number;
+  description: string | null;
+  available: boolean;
+};
+
 const TicketManager = () => {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [tickets, setTickets] = useState<TicketType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
-  const [newTicket, setNewTicket] = useState<Omit<Ticket, 'id'>>({
+  const [editingTicket, setEditingTicket] = useState<TicketType | null>(null);
+  const [newTicket, setNewTicket] = useState<Omit<TicketType, 'id'>>({
     name: '',
     price: 0,
     description: '',
@@ -38,16 +47,16 @@ const TicketManager = () => {
       }
       
       if (data && Array.isArray(data)) {
+        // Safely create typed TicketType objects with explicit type checking
         const typedData = data.map(item => {
-          const ticketItem = item as any;
           return {
-            id: typeof ticketItem?.id === 'string' ? ticketItem.id : String(ticketItem?.id || ''),
-            name: typeof ticketItem?.name === 'string' ? ticketItem.name : String(ticketItem?.name || ''),
-            price: typeof ticketItem?.price === 'number' ? ticketItem.price : Number(ticketItem?.price || 0),
-            description: ticketItem?.description !== undefined ? 
-              (typeof ticketItem.description === 'string' ? ticketItem.description : String(ticketItem.description || '')) : null,
-            available: typeof ticketItem?.available === 'boolean' ? ticketItem.available : Boolean(ticketItem?.available)
-          } as Ticket;
+            id: typeof item?.id === 'string' ? item.id : String(item?.id || ''),
+            name: typeof item?.name === 'string' ? item.name : String(item?.name || ''),
+            price: typeof item?.price === 'number' ? item.price : Number(item?.price || 0),
+            description: item?.description !== undefined ? 
+              (typeof item.description === 'string' ? item.description : String(item.description || '')) : null,
+            available: typeof item?.available === 'boolean' ? item.available : Boolean(item?.available)
+          } as TicketType;
         });
         
         setTickets(typedData);

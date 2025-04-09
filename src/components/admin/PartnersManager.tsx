@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { Pencil, Trash2, Plus, MoveUp, MoveDown, ExternalLink } from "lucide-react";
-import { customSupabase, Partner, safeDataAccess } from '@/integrations/supabase/client';
+import { customSupabase, Partner, safeDataAccess } from "@/integrations/supabase/client";
 
 type PartnerFormData = {
   id?: string;
@@ -44,18 +45,16 @@ const PartnersManager = () => {
       if (error) throw error;
       
       if (data && Array.isArray(data)) {
-        const partnersData: Partner[] = data.map(item => {
-          const partnerItem = item as any;
-          return {
-            id: safeDataAccess(partnerItem.id, ''),
-            name: safeDataAccess(partnerItem.name, ''),
-            logo_url: safeDataAccess(partnerItem.logo_url, ''),
-            website_url: partnerItem.website_url ? String(partnerItem.website_url) : null,
-            order_number: safeDataAccess(partnerItem.order_number, 0),
-            active: safeDataAccess(partnerItem.active, true),
-            category: partnerItem.category ? String(partnerItem.category) : null,
-          };
-        });
+        // Create properly typed partners
+        const partnersData: Partner[] = data.map(item => ({
+          id: safeDataAccess(item?.id, ''),
+          name: safeDataAccess(item?.name, ''),
+          logo_url: safeDataAccess(item?.logo_url, ''),
+          website_url: item?.website_url ? String(item.website_url) : null,
+          order_number: safeDataAccess(item?.order_number, 0),
+          active: safeDataAccess(item?.active, true),
+          category: item?.category ? String(item.category) : null,
+        }));
         
         setPartners(partnersData);
       }
@@ -143,6 +142,7 @@ const PartnersManager = () => {
         description: "Le partenaire a été supprimé avec succès",
       });
       
+      // Fetch updated list
       fetchPartners();
     } catch (error) {
       console.error("Error deleting partner:", error);
@@ -160,6 +160,7 @@ const PartnersManager = () => {
     e.preventDefault();
     
     try {
+      // Make sure name and logo_url are provided
       if (!currentPartner.name.trim() || !currentPartner.logo_url.trim()) {
         toast({
           title: "Erreur",
@@ -169,6 +170,7 @@ const PartnersManager = () => {
         return;
       }
       
+      // Prepare data for submission, making sure to handle null values correctly
       const partnerData = {
         name: currentPartner.name.trim(),
         logo_url: currentPartner.logo_url.trim(),
@@ -181,11 +183,13 @@ const PartnersManager = () => {
       let result;
       
       if (currentPartner.id) {
+        // Update existing partner
         result = await customSupabase
           .from('partners')
           .update(partnerData)
           .eq('id', currentPartner.id);
       } else {
+        // Add new partner
         result = await customSupabase
           .from('partners')
           .insert(partnerData);
@@ -215,6 +219,7 @@ const PartnersManager = () => {
   const movePartner = async (partner: Partner, direction: 'up' | 'down') => {
     const currentIndex = partners.findIndex(p => p.id === partner.id);
     
+    // Ensure the move is valid
     if ((direction === 'up' && currentIndex === 0) || 
         (direction === 'down' && currentIndex === partners.length - 1)) {
       return;
@@ -223,6 +228,7 @@ const PartnersManager = () => {
     const swapWith = partners[direction === 'up' ? currentIndex - 1 : currentIndex + 1];
     
     try {
+      // Update the current partner's order
       const { error: error1 } = await customSupabase
         .from('partners')
         .update({ order_number: swapWith.order_number })
@@ -230,6 +236,7 @@ const PartnersManager = () => {
       
       if (error1) throw error1;
       
+      // Update the other partner's order
       const { error: error2 } = await customSupabase
         .from('partners')
         .update({ order_number: partner.order_number })
@@ -237,6 +244,7 @@ const PartnersManager = () => {
       
       if (error2) throw error2;
       
+      // Fetch updated list
       fetchPartners();
     } catch (error) {
       console.error(`Error moving partner ${direction}:`, error);
@@ -367,6 +375,7 @@ const PartnersManager = () => {
         </div>
       )}
       
+      {/* Partner Form Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -452,6 +461,7 @@ const PartnersManager = () => {
         </DialogContent>
       </Dialog>
       
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

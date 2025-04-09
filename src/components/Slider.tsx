@@ -1,7 +1,16 @@
+
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { customSupabase, SliderImage, safeDataAccess } from '@/integrations/supabase/client';
+import { customSupabase, safeDataAccess } from '@/integrations/supabase/client';
+
+interface SliderImage {
+  id: string;
+  image_url: string;
+  order_number: number;
+  active: boolean;
+  link?: string | null;
+}
 
 const Slider = () => {
   const [images, setImages] = useState<SliderImage[]>([]);
@@ -24,17 +33,14 @@ const Slider = () => {
         }
 
         if (data && Array.isArray(data)) {
-          // Create properly typed SliderImage objects with explicit type assertions
-          const sliderData: SliderImage[] = data.map(item => {
-            const sliderItem = item as any;
-            return {
-              id: safeDataAccess(sliderItem.id, ''),
-              image_url: safeDataAccess(sliderItem.image_url, ''),
-              order_number: safeDataAccess(sliderItem.order_number, 0),
-              active: safeDataAccess(sliderItem.active, true),
-              link: sliderItem.link ? String(sliderItem.link) : null
-            };
-          });
+          // Create properly typed SliderImage objects with safety checks
+          const sliderData: SliderImage[] = data.map(item => ({
+            id: safeDataAccess(item?.id, ''),
+            image_url: safeDataAccess(item?.image_url, ''),
+            order_number: safeDataAccess(item?.order_number, 0),
+            active: safeDataAccess(item?.active, true),
+            link: item?.link ? String(item.link) : null
+          }));
 
           setImages(sliderData);
           console.log('Slider images loaded:', sliderData);
