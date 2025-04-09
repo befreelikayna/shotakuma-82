@@ -157,44 +157,9 @@ export function safeDataAccess<T>(item: any, defaultValue: T): T {
 // Create a typed version of supabase client that includes better type safety
 export const customSupabase = {
   from: (table: string) => {
-    const query = supabase.from(table);
-    
-    // Return an enhanced object with type-safe methods
-    return {
-      ...query,
-      // Override select method to ensure proper typing of returned data
-      select: (columns?: string) => {
-        const selectQuery = columns ? query.select(columns) : query.select();
-        
-        return {
-          ...selectQuery,
-          eq: (column: string, value: any) => {
-            const filteredQuery = selectQuery.eq(column, value);
-            return filteredQuery;
-          },
-          order: (column: string, options?: { ascending?: boolean }) => {
-            const orderedQuery = selectQuery.order(column, options);
-            return orderedQuery;
-          },
-          limit: (count: number) => {
-            const limitedQuery = selectQuery.limit(count);
-            return limitedQuery;
-          }
-        };
-      },
-      // Provide type-safe insert
-      insert: (values: any) => {
-        return query.insert(values);
-      },
-      // Provide type-safe update
-      update: (values: any) => {
-        return query.update(values);
-      },
-      // Provide type-safe delete
-      delete: () => {
-        return query.delete();
-      }
-    };
+    // Create a properly typed result by forcing any to help with TypeScript errors
+    // This is a workaround for the Supabase typing issues
+    return supabase.from(table as any);
   },
   // Add channel method to our custom client
   channel: (name: string) => {
