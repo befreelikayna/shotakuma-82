@@ -1,15 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { customSupabase } from '@/integrations/supabase/client';
-
-export interface GeneralContent {
-  id: string;
-  section_key: string;
-  title: string | null;
-  subtitle: string | null;
-  content: string | null;
-  image_url: string | null;
-}
+import { customSupabase, GeneralContent } from '@/integrations/supabase/client';
 
 export const useGeneralContent = (sectionKey: string) => {
   const [content, setContent] = useState<GeneralContent | null>(null);
@@ -32,7 +23,7 @@ export const useGeneralContent = (sectionKey: string) => {
         }
         
         if (data) {
-          // Safely cast the data to our expected type
+          // Safely cast the data to our expected type using explicit type assertion
           const typedData = data as any;
           const content: GeneralContent = {
             id: typedData.id || '',
@@ -40,7 +31,9 @@ export const useGeneralContent = (sectionKey: string) => {
             title: typedData.title || null,
             subtitle: typedData.subtitle || null,
             content: typedData.content || null,
-            image_url: typedData.image_url || null
+            image_url: typedData.image_url || null,
+            created_at: typedData.created_at,
+            updated_at: typedData.updated_at
           };
           setContent(content);
         }

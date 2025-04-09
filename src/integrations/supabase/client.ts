@@ -136,7 +136,7 @@ export interface Ticket {
 export interface PageContent {
   id: string;
   page_id: string;
-  content: Json;
+  content: any;
   created_at: string;
   updated_at: string;
 }
@@ -145,6 +145,36 @@ export interface NewsletterSubscriber {
   id: string;
   email: string;
   subscribed_at: string;
+}
+
+export interface GalleryItem {
+  id: string;
+  src: string;
+  alt: string;
+  type: string;
+  category: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface GeneralContent {
+  id: string;
+  section_key: string;
+  title: string | null;
+  subtitle: string | null;
+  content: string | null;
+  image_url: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SocialLink {
+  id: string;
+  title: string;
+  url: string;
+  icon: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Define a Json type to match Supabase's Json type
@@ -174,9 +204,45 @@ export type TableName =
   | 'theme_settings' 
   | 'tickets';
 
+// Map table names to their respective types
+export interface TableTypes {
+  'partners': Partner;
+  'slider_images': SliderImage;
+  'events': Event;
+  'tickets': Ticket;
+  'gallery_items': GalleryItem;
+  'general_content': GeneralContent;
+  'newsletter_subscribers': NewsletterSubscriber;
+  'page_content': PageContent;
+  'social_links': SocialLink;
+  'theme_settings': any; // Define a proper type if needed
+}
+
 // Create a strongly-typed wrapper for Supabase functions
 export const customSupabase = {
-  from: (table: TableName) => supabase.from(table),
+  from: <T extends TableName>(table: T) => {
+    const query = supabase.from(table);
+    
+    // Add custom type-safe methods to improve type checking
+    return {
+      ...query,
+      select: (columns?: string) => {
+        const result = query.select(columns);
+        return result;
+      },
+      insert: (values: Partial<TableTypes[T]> | Partial<TableTypes[T]>[]) => {
+        return query.insert(values);
+      },
+      update: (values: Partial<TableTypes[T]>) => {
+        return query.update(values);
+      },
+      delete: () => query.delete(),
+      eq: (column: string, value: any) => query.eq(column, value),
+      order: (column: string, options?: { ascending?: boolean }) => query.order(column, options),
+      limit: (count: number) => query.limit(count),
+      single: () => query.single()
+    };
+  },
   channel: (name: string) => supabase.channel(name),
   removeChannel: (channel: any) => supabase.removeChannel(channel)
 };

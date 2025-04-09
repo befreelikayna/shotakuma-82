@@ -22,16 +22,19 @@ const AutoScrollLogoSlider = () => {
       }
       
       if (data && Array.isArray(data)) {
-        // Create properly typed partner objects
-        const partnersData: Partner[] = data.map(item => ({
-          id: safeDataAccess(item?.id, ''),
-          name: safeDataAccess(item?.name, ''),
-          logo_url: safeDataAccess(item?.logo_url, ''),
-          website_url: item?.website_url ? String(item.website_url) : null,
-          order_number: safeDataAccess(item?.order_number, 0),
-          active: safeDataAccess(item?.active, true),
-          category: item?.category ? String(item.category) : null,
-        }));
+        // Create properly typed partner objects with explicit type assertions
+        const partnersData: Partner[] = data.map(item => {
+          const partnerItem = item as any;
+          return {
+            id: safeDataAccess(partnerItem.id, ''),
+            name: safeDataAccess(partnerItem.name, ''),
+            logo_url: safeDataAccess(partnerItem.logo_url, ''),
+            website_url: partnerItem.website_url ? String(partnerItem.website_url) : null,
+            order_number: safeDataAccess(partnerItem.order_number, 0),
+            active: safeDataAccess(partnerItem.active, true),
+            category: partnerItem.category ? String(partnerItem.category) : null,
+          };
+        });
         
         setPartners(partnersData);
       }
