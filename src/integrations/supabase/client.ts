@@ -154,54 +154,9 @@ export function safeDataAccess<T>(item: any, defaultValue: T): T {
   return item !== undefined && item !== null ? item as T : defaultValue;
 }
 
-// Create a typed version of supabase client that includes better type safety
+// Export a simple typed wrapper for basic supabase operations
 export const customSupabase = {
-  from: (table: string) => {
-    const query = supabase.from(table);
-    
-    // Return an enhanced object with type-safe methods
-    return {
-      ...query,
-      // Override select method to ensure proper typing of returned data
-      select: (columns?: string) => {
-        const selectQuery = columns ? query.select(columns) : query.select();
-        
-        return {
-          ...selectQuery,
-          eq: (column: string, value: any) => {
-            const filteredQuery = selectQuery.eq(column, value);
-            return filteredQuery;
-          },
-          order: (column: string, options?: { ascending?: boolean }) => {
-            const orderedQuery = selectQuery.order(column, options);
-            return orderedQuery;
-          },
-          limit: (count: number) => {
-            const limitedQuery = selectQuery.limit(count);
-            return limitedQuery;
-          }
-        };
-      },
-      // Provide type-safe insert
-      insert: (values: any) => {
-        return query.insert(values);
-      },
-      // Provide type-safe update
-      update: (values: any) => {
-        return query.update(values);
-      },
-      // Provide type-safe delete
-      delete: () => {
-        return query.delete();
-      }
-    };
-  },
-  // Add channel method to our custom client
-  channel: (name: string) => {
-    return supabase.channel(name);
-  },
-  // Add removeChannel method to our custom client
-  removeChannel: (channel: any) => {
-    return supabase.removeChannel(channel);
-  }
+  from: (table: string) => supabase.from(table),
+  channel: (name: string) => supabase.channel(name),
+  removeChannel: (channel: any) => supabase.removeChannel(channel)
 };

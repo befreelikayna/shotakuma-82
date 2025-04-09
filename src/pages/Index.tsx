@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter } from "lucide-react";
@@ -13,7 +12,8 @@ import { useGalleryItems } from "@/hooks/use-gallery-items";
 import { usePageContent } from "@/hooks/use-page-content";
 import PageContentSection from "@/components/PageContentSection";
 import PartnerLogosSlider from "@/components/PartnerLogosSlider";
-import { customSupabase, supabase, Ticket, safeDataAccess } from "@/integrations/supabase/client";
+import AutoScrollLogoSlider from "@/components/AutoScrollLogoSlider";
+import { supabase, Ticket, safeDataAccess } from "@/integrations/supabase/client";
 
 interface TicketWithFeatures extends Ticket {
   features: string[];
@@ -54,7 +54,7 @@ const Index = () => {
   const fetchTickets = async () => {
     try {
       setTicketsLoading(true);
-      const { data, error } = await customSupabase
+      const { data, error } = await supabase
         .from('tickets')
         .select('*')
         .order('price');
@@ -64,7 +64,6 @@ const Index = () => {
       }
       
       if (data && Array.isArray(data)) {
-        // Create properly typed ticket objects with explicit type checking and safety
         const enhancedTickets = data.map(ticket => {
           const typedTicket = {
             id: safeDataAccess(ticket?.id, ''),
@@ -134,7 +133,7 @@ const Index = () => {
     }
     
     try {
-      const { error } = await customSupabase
+      const { error } = await supabase
         .from('newsletter_subscribers')
         .insert({ email });
         
@@ -262,6 +261,9 @@ const Index = () => {
 
       {/* Partner Logos Slider - Added before Gallery Preview */}
       <PartnerLogosSlider />
+
+      {/* New Auto-Scrolling Logo Slider - Added before Gallery Preview */}
+      <AutoScrollLogoSlider />
 
       {!galleryLoading && galleryItems.length > 0 && (
         <section className="py-20 bg-slate-50" id="gallery-preview">
