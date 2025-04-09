@@ -78,7 +78,29 @@ const channel = supabase.channel('admin-panel-changes')
 // Export the channel for potential cleanup
 export const realtimeChannel = channel;
 
-// Define a base event interface that all components can use
+// Define explicit interfaces for each table to avoid deep type unions
+export interface SliderImage {
+  id: string;
+  image_url: string;
+  order_number: number;
+  active: boolean;
+  link?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Partner {
+  id: string;
+  name: string;
+  logo_url: string;
+  website_url: string | null;
+  order_number: number;
+  active: boolean;
+  category: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Event {
   id: string;
   name: string;
@@ -100,7 +122,6 @@ export interface Event {
   registrationLink?: string;
 }
 
-// Define a Ticket interface for the tickets table
 export interface Ticket {
   id: string;
   name: string;
@@ -112,20 +133,6 @@ export interface Ticket {
   updated_at?: string;
 }
 
-// Define a Partner interface for the partners table
-export interface Partner {
-  id: string;
-  name: string;
-  logo_url: string;
-  website_url: string | null;
-  order_number: number;
-  active: boolean;
-  category: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// Define interfaces for the tables not included in the auto-generated types
 export interface PageContent {
   id: string;
   page_id: string;
@@ -154,9 +161,22 @@ export function safeDataAccess<T>(item: any, defaultValue: T): T {
   return item !== undefined && item !== null ? item as T : defaultValue;
 }
 
-// Export a simple typed wrapper for basic supabase operations
+// Define table names as a union type with literal values for better type checking
+export type TableName = 
+  | 'events' 
+  | 'gallery_items' 
+  | 'general_content' 
+  | 'newsletter_subscribers' 
+  | 'page_content' 
+  | 'partners' 
+  | 'slider_images' 
+  | 'social_links' 
+  | 'theme_settings' 
+  | 'tickets';
+
+// Create a strongly-typed wrapper for Supabase functions
 export const customSupabase = {
-  from: (table: string) => supabase.from(table),
+  from: (table: TableName) => supabase.from(table),
   channel: (name: string) => supabase.channel(name),
   removeChannel: (channel: any) => supabase.removeChannel(channel)
 };
