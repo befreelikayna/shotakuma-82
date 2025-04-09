@@ -227,13 +227,12 @@ export const customSupabase = {
     return {
       ...query,
       select: (columns?: string) => {
-        const result = query.select(columns);
-        return result;
+        return query.select(columns);
       },
-      insert: (values: Partial<TableTypes[T]> | Partial<TableTypes[T]>[]) => {
+      insert: <D extends Record<string, any>>(values: D | D[]) => {
         return query.insert(values);
       },
-      update: (values: Partial<TableTypes[T]>) => {
+      update: <D extends Record<string, any>>(values: D) => {
         return query.update(values);
       },
       delete: () => query.delete(),

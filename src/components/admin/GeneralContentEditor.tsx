@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, RefreshCw, Save, Plus } from 'lucide-react';
 import { customSupabase } from '@/integrations/supabase/client';
-import { GeneralContent } from '@/hooks/use-general-content';
+import { GeneralContent, useGeneralContent } from '@/hooks/use-general-content';
 
 const GeneralContentEditor = () => {
   const [contentItems, setContentItems] = useState<GeneralContent[]>([]);

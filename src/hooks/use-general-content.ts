@@ -1,6 +1,18 @@
 
 import { useState, useEffect } from 'react';
-import { customSupabase, GeneralContent } from '@/integrations/supabase/client';
+import { customSupabase } from '@/integrations/supabase/client';
+
+// Define the GeneralContent interface here so it's exported from this file
+export interface GeneralContent {
+  id: string;
+  section_key: string;
+  title: string | null;
+  subtitle: string | null;
+  content: string | null;
+  image_url: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
 
 export const useGeneralContent = (sectionKey: string) => {
   const [content, setContent] = useState<GeneralContent | null>(null);
