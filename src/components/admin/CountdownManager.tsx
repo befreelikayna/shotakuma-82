@@ -11,6 +11,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import CountdownPopup from "../CountdownPopup";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 
 const CountdownManager: React.FC = () => {
   const { settings, loading, fetchSettings, saveSettings } = useCountdownSettings();
@@ -177,6 +179,18 @@ const CountdownManager: React.FC = () => {
                     </div>
                   </div>
                   
+                  <div className="space-y-2">
+                    <Label htmlFor="backgroundImageUrl">Background Image URL</Label>
+                    <Input 
+                      id="backgroundImageUrl"
+                      type="text"
+                      value={editSettings.backgroundImageUrl || ''}
+                      onChange={(e) => setEditSettings({...editSettings, backgroundImageUrl: e.target.value})}
+                      placeholder="https://example.com/image.jpg"
+                    />
+                    <p className="text-sm text-gray-500">Optional: Add a background image URL to display behind the countdown</p>
+                  </div>
+                  
                   <div className="pt-4">
                     <Button type="button" onClick={handlePreviewClick}>
                       Preview Countdown
@@ -203,6 +217,7 @@ const CountdownManager: React.FC = () => {
               title={editSettings.title}
               backgroundColor={editSettings.backgroundColor}
               textColor={editSettings.textColor}
+              backgroundImageUrl={editSettings.backgroundImageUrl}
               showPopup={true}
               onClose={() => setPreviewVisible(false)}
             />

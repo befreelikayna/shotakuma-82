@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      countdown_settings: {
+        Row: {
+          background_color: string
+          background_image_url: string | null
+          created_at: string
+          display_duration: number
+          enabled: boolean
+          id: string
+          show_on_load: boolean
+          target_date: string
+          text_color: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          background_color?: string
+          background_image_url?: string | null
+          created_at?: string
+          display_duration?: number
+          enabled?: boolean
+          id?: string
+          show_on_load?: boolean
+          target_date?: string
+          text_color?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          background_color?: string
+          background_image_url?: string | null
+          created_at?: string
+          display_duration?: number
+          enabled?: boolean
+          id?: string
+          show_on_load?: boolean
+          target_date?: string
+          text_color?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           category: string | null

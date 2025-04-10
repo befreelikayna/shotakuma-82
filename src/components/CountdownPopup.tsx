@@ -10,6 +10,7 @@ interface CountdownProps {
   title: string;
   backgroundColor: string;
   textColor: string;
+  backgroundImageUrl?: string | null;
   showPopup: boolean;
   onClose: () => void;
 }
@@ -26,6 +27,7 @@ const CountdownPopup: React.FC<CountdownProps> = ({
   title,
   backgroundColor,
   textColor,
+  backgroundImageUrl,
   showPopup,
   onClose,
 }) => {
@@ -109,18 +111,32 @@ const CountdownPopup: React.FC<CountdownProps> = ({
                 className="rounded-lg p-6 relative overflow-hidden"
                 style={{
                   backgroundColor: bgColor,
+                  backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
                   boxShadow: `0 0 15px rgba(0, 255, 185, 0.2)`,
                   border: "1px solid rgba(0, 255, 185, 0.3)",
                 }}
               >
+                {/* Add a semi-transparent overlay if background image is used */}
+                {backgroundImageUrl && (
+                  <div 
+                    className="absolute inset-0" 
+                    style={{ 
+                      backgroundColor: `${bgColor}CC`, // Add transparency 
+                      backdropFilter: "blur(2px)" 
+                    }} 
+                  />
+                )}
+                
                 <button
                   onClick={onClose}
-                  className="absolute top-2 right-2 text-gray-300 hover:text-white bg-gray-800/50 rounded-full p-1"
+                  className="absolute top-2 right-2 text-gray-300 hover:text-white bg-gray-800/50 rounded-full p-1 z-10"
                 >
                   <X size={18} />
                 </button>
 
-                <div className="text-center mb-4">
+                <div className="text-center mb-4 relative z-10">
                   <h2
                     className="text-xl font-bold tracking-wider"
                     style={{ color: txtColor }}
@@ -129,7 +145,7 @@ const CountdownPopup: React.FC<CountdownProps> = ({
                   </h2>
                 </div>
 
-                <div className="flex justify-center items-center space-x-3 md:space-x-4 py-2">
+                <div className="flex justify-center items-center space-x-3 md:space-x-4 py-2 relative z-10">
                   <CountdownUnit
                     value={formatTime(timeLeft.days)}
                     label="DAYS"

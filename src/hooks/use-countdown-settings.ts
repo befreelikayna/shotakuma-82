@@ -8,6 +8,7 @@ export interface CountdownSettings {
   targetDate: string;
   backgroundColor: string;
   textColor: string;
+  backgroundImageUrl?: string | null;
   enabled: boolean;
   showOnLoad: boolean;
   displayDuration?: number;
@@ -18,6 +19,7 @@ const defaultSettings: CountdownSettings = {
   targetDate: "2025-05-08T00:00:00", // May 8, 2025
   backgroundColor: "#1F1F3F",
   textColor: "#00FFB9",
+  backgroundImageUrl: null,
   enabled: true,
   showOnLoad: true,
   displayDuration: 0 // 0 means display until manually closed
@@ -42,7 +44,18 @@ export const useCountdownSettings = () => {
       }
       
       if (data) {
-        setSettings(data);
+        // Map DB column names to our interface names
+        setSettings({
+          id: data.id,
+          title: data.title,
+          targetDate: data.target_date,
+          backgroundColor: data.background_color,
+          textColor: data.text_color,
+          backgroundImageUrl: data.background_image_url,
+          enabled: data.enabled,
+          showOnLoad: data.show_on_load,
+          displayDuration: data.display_duration
+        });
       }
     } catch (error) {
       console.error('Error fetching countdown settings:', error);
@@ -60,12 +73,13 @@ export const useCountdownSettings = () => {
           .from('countdown_settings')
           .update({ 
             title: newSettings.title,
-            targetDate: newSettings.targetDate,
-            backgroundColor: newSettings.backgroundColor,
-            textColor: newSettings.textColor,
+            target_date: newSettings.targetDate,
+            background_color: newSettings.backgroundColor,
+            text_color: newSettings.textColor,
+            background_image_url: newSettings.backgroundImageUrl,
             enabled: newSettings.enabled,
-            showOnLoad: newSettings.showOnLoad,
-            displayDuration: newSettings.displayDuration,
+            show_on_load: newSettings.showOnLoad,
+            display_duration: newSettings.displayDuration,
           })
           .eq('id', newSettings.id);
       } else {
@@ -73,12 +87,13 @@ export const useCountdownSettings = () => {
           .from('countdown_settings')
           .insert({ 
             title: newSettings.title,
-            targetDate: newSettings.targetDate,
-            backgroundColor: newSettings.backgroundColor,
-            textColor: newSettings.textColor,
+            target_date: newSettings.targetDate,
+            background_color: newSettings.backgroundColor,
+            text_color: newSettings.textColor,
+            background_image_url: newSettings.backgroundImageUrl,
             enabled: newSettings.enabled,
-            showOnLoad: newSettings.showOnLoad,
-            displayDuration: newSettings.displayDuration,
+            show_on_load: newSettings.showOnLoad,
+            display_duration: newSettings.displayDuration,
           });
       }
 

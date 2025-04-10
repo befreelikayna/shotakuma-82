@@ -48,6 +48,7 @@ const CountdownProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           title={settings.title}
           backgroundColor={settings.backgroundColor}
           textColor={settings.textColor}
+          backgroundImageUrl={settings.backgroundImageUrl}
           showPopup={showPopup}
           onClose={handleClose}
         />
