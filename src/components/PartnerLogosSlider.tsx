@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { customSupabase, Partner, safeDataAccess } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import {

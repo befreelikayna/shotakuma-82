@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "@/hooks/use-toast";
 import { Pencil, Trash2, Plus, MoveUp, MoveDown, ExternalLink } from "lucide-react";
 import { customSupabase, Partner, safeDataAccess } from "@/integrations/supabase/client";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type PartnerFormData = {
   id?: string;
@@ -245,12 +247,14 @@ const PartnersManager = () => {
     }
   };
   
+  // Improved URL validation function
   const getDisplayUrl = (websiteUrl: string | null): { hostname: string, isValid: boolean } => {
     if (!websiteUrl || websiteUrl.trim() === '') {
       return { hostname: '-', isValid: false };
     }
     
     try {
+      // Make sure the URL has a protocol
       const urlString = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
       const url = new URL(urlString);
       return { hostname: url.hostname, isValid: true };
@@ -290,25 +294,25 @@ const PartnersManager = () => {
         </div>
       ) : (
         <div className="border rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-left">Logo</th>
-                <th className="px-4 py-3 text-left">Nom</th>
-                <th className="px-4 py-3 text-left">Catégorie</th>
-                <th className="px-4 py-3 text-left">Site Web</th>
-                <th className="px-4 py-3 text-center">Actif</th>
-                <th className="px-4 py-3 text-center">Ordre</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
+          <Table>
+            <TableHeader className="bg-slate-50">
+              <TableRow>
+                <TableHead className="w-24">Logo</TableHead>
+                <TableHead>Nom</TableHead>
+                <TableHead>Catégorie</TableHead>
+                <TableHead>Site Web</TableHead>
+                <TableHead className="text-center">Actif</TableHead>
+                <TableHead className="text-center">Ordre</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {partners.map((partner, index) => {
                 const { hostname, isValid } = getDisplayUrl(partner.website_url);
                 
                 return (
-                  <tr key={partner.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3">
+                  <TableRow key={partner.id} className="hover:bg-slate-50">
+                    <TableCell>
                       <div className="h-12 w-20 bg-white flex items-center justify-center rounded border">
                         <img 
                           src={partner.logo_url} 
@@ -316,13 +320,13 @@ const PartnersManager = () => {
                           className="max-h-10 max-w-16 object-contain"
                         />
                       </div>
-                    </td>
-                    <td className="px-4 py-3 font-medium">{partner.name}</td>
-                    <td className="px-4 py-3 text-slate-500">{partner.category || '-'}</td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="font-medium">{partner.name}</TableCell>
+                    <TableCell className="text-slate-500">{partner.category || '-'}</TableCell>
+                    <TableCell>
                       {isValid ? (
                         <a 
-                          href={partner.website_url} 
+                          href={partner.website_url!} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="flex items-center text-blue-600 hover:underline"
@@ -333,11 +337,11 @@ const PartnersManager = () => {
                       ) : (
                         <span className="text-slate-400">{hostname}</span>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-center">
+                    </TableCell>
+                    <TableCell className="text-center">
                       <div className={`h-2 w-2 rounded-full mx-auto ${partner.active ? 'bg-green-500' : 'bg-slate-300'}`}></div>
-                    </td>
-                    <td className="px-4 py-3 text-center space-x-1">
+                    </TableCell>
+                    <TableCell className="text-center space-x-1">
                       <Button 
                         variant="ghost" 
                         size="icon"
@@ -356,8 +360,8 @@ const PartnersManager = () => {
                       >
                         <MoveDown className="h-4 w-4" />
                       </Button>
-                    </td>
-                    <td className="px-4 py-3 text-right">
+                    </TableCell>
+                    <TableCell className="text-right">
                       <Button 
                         variant="ghost" 
                         size="icon"
@@ -374,12 +378,12 @@ const PartnersManager = () => {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
       
