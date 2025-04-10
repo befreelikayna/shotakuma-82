@@ -180,5 +180,6 @@ export function safeDataAccess<T>(item: any, defaultValue: T): T {
 export const customSupabase = {
   from: (table: string) => supabase.from(table),
   channel: (name: string) => supabase.channel(name),
-  removeChannel: (channel: any) => supabase.removeChannel(channel)
+  removeChannel: (channel: any) => supabase.removeChannel(channel),
+  storage: supabase.storage
 };

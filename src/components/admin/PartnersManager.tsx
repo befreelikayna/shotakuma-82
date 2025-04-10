@@ -156,6 +156,32 @@ const PartnersManager = () => {
     }
   };
   
+  const uploadFileToSupabase = async (file: File): Promise<string> => {
+    try {
+      const filePath = `partners/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+      
+      const { data, error } = await customSupabase
+        .storage
+        .from('logos')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (error) throw error;
+      
+      const { data: urlData } = customSupabase
+        .storage
+        .from('logos')
+        .getPublicUrl(data?.path || '');
+      
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  };
+  
   const handleBulkUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -177,23 +203,7 @@ const PartnersManager = () => {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        const response = await fetch('https://api.upload.io/v2/accounts/W142hXk/uploads/binary', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'Authorization': 'Bearer public_W142hXkAHfubxhfvKdYXB6RfWzKQ',
-          },
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to upload ${file.name}`);
-        }
-        
-        const data = await response.json();
-        const logoUrl = data.fileUrl;
+        const logoUrl = await uploadFileToSupabase(file);
         
         const fileName = file.name.replace(/\.[^/.]+$/, "");
         
