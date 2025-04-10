@@ -176,10 +176,50 @@ export function safeDataAccess<T>(item: any, defaultValue: T): T {
   return item !== undefined && item !== null ? item as T : defaultValue;
 }
 
+/**
+ * Helper function to upload a file to Supabase storage
+ * @param file - The file to upload
+ * @param bucket - The bucket to upload to
+ * @param path - Optional path within the bucket
+ * @returns URL of the uploaded file or null if upload failed
+ */
+export async function uploadFileToSupabase(
+  file: File, 
+  bucket: string = 'logos',
+  path?: string
+): Promise<string | null> {
+  try {
+    const fileName = path ? `${path}/${file.name}` : file.name;
+    
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: true,
+      });
+
+    if (error) {
+      console.error('Error uploading file:', error);
+      return null;
+    }
+
+    // Get the public URL
+    const { data: urlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
+
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('Exception when uploading file:', error);
+    return null;
+  }
+}
+
 // Create a typed version of supabase client that includes better type safety
 export const customSupabase = {
   from: (table: string) => supabase.from(table),
   channel: (name: string) => supabase.channel(name),
   removeChannel: (channel: any) => supabase.removeChannel(channel),
-  storage: supabase.storage
+  storage: supabase.storage,
+  auth: supabase.auth
 };

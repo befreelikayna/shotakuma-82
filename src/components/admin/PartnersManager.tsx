@@ -1,73 +1,74 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, MoveUp, MoveDown, ExternalLink, Upload } from "lucide-react";
-import { customSupabase, Partner, safeDataAccess } from "@/integrations/supabase/client";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-
-type PartnerFormData = {
-  id?: string;
-  name: string;
-  logo_url: string;
-  website_url: string;
-  order_number: number;
-  active: boolean;
-  category: string;
-};
+import { RefreshCw, PencilIcon, Trash2Icon, ExternalLink } from "lucide-react";
+import { customSupabase, Partner, safeDataAccess, uploadFileToSupabase } from "@/integrations/supabase/client";
+import PartnersBulkUpload from "./PartnersBulkUpload";
 
 const PartnersManager = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [formOpen, setFormOpen] = useState(false);
-  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [currentPartner, setCurrentPartner] = useState<PartnerFormData>({
-    name: '',
-    logo_url: '',
-    website_url: '',
-    order_number: 0,
-    active: true,
-    category: 'sponsor'
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingPartnerId, setEditingPartnerId] = useState<string | null>(null);
   
+  // Partner form state
+  const [name, setName] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [orderNumber, setOrderNumber] = useState<number>(0);
+  const [isActive, setIsActive] = useState(true);
+  const [category, setCategory] = useState<string>("sponsor");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  
+  // Fetch partners from Supabase
   const fetchPartners = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
+      
       const { data, error } = await customSupabase
         .from('partners')
         .select('*')
-        .order('order_number', { ascending: true });
+        .order('order_number');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching partners:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les partenaires",
+          variant: "destructive",
+        });
+        return;
+      }
       
-      if (data && Array.isArray(data)) {
-        const partnersData: Partner[] = data.map(item => ({
-          id: safeDataAccess(item?.id, ''),
-          name: safeDataAccess(item?.name, ''),
-          logo_url: safeDataAccess(item?.logo_url, ''),
-          website_url: item?.website_url ? String(item.website_url) : null,
-          order_number: safeDataAccess(item?.order_number, 0),
-          active: safeDataAccess(item?.active, true),
-          category: item?.category ? String(item.category) : null,
-        }));
-        
-        setPartners(partnersData);
+      if (data) {
+        setPartners(data as Partner[]);
       }
     } catch (error) {
-      console.error("Error fetching partners:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les partenaires",
-        variant: "destructive",
-      });
+      console.error('Error fetching partners:', error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
   
@@ -75,11 +76,11 @@ const PartnersManager = () => {
     fetchPartners();
     
     const channel = customSupabase
-      .channel('admin-partners-changes')
+      .channel('admin:partners')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'partners' }, 
-        (payload) => {
-          console.log('Partners changed:', payload);
+        () => {
+          console.log('Partners changed, refreshing...');
           fetchPartners();
         })
       .subscribe();
@@ -89,552 +90,424 @@ const PartnersManager = () => {
     };
   }, []);
   
-  const handleAddPartner = () => {
-    setCurrentPartner({
-      name: '',
-      logo_url: '',
-      website_url: '',
-      order_number: partners.length > 0 ? Math.max(...partners.map(p => p.order_number)) + 1 : 1,
-      active: true,
-      category: 'sponsor'
-    });
-    setFormOpen(true);
+  const resetForm = () => {
+    setName("");
+    setLogoUrl("");
+    setWebsiteUrl("");
+    setOrderNumber(partners.length);
+    setIsActive(true);
+    setCategory("sponsor");
+    setLogoFile(null);
+    setIsEditing(false);
+    setEditingPartnerId(null);
   };
   
-  const handleEditPartner = (partner: Partner) => {
-    setCurrentPartner({
-      id: partner.id,
-      name: partner.name,
-      logo_url: partner.logo_url,
-      website_url: partner.website_url || '',
-      order_number: partner.order_number,
-      active: partner.active,
-      category: partner.category || ''
-    });
-    setFormOpen(true);
+  const handleOpenSheet = () => {
+    resetForm();
+    setIsSheetOpen(true);
   };
   
-  const handleDeletePartner = (partner: Partner) => {
-    setCurrentPartner({
-      id: partner.id,
-      name: partner.name,
-      logo_url: partner.logo_url,
-      website_url: partner.website_url || '',
-      order_number: partner.order_number,
-      active: partner.active,
-      category: partner.category || ''
-    });
-    setDeleteDialogOpen(true);
+  const handleCloseSheet = () => {
+    resetForm();
+    setIsSheetOpen(false);
   };
   
-  const confirmDelete = async () => {
-    if (!currentPartner.id) return;
-    
-    try {
-      const { error } = await customSupabase
-        .from('partners')
-        .delete()
-        .eq('id', currentPartner.id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Supprimé",
-        description: "Le partenaire a été supprimé avec succès",
-      });
-      
-      fetchPartners();
-    } catch (error) {
-      console.error("Error deleting partner:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer le partenaire",
-        variant: "destructive",
-      });
-    } finally {
-      setDeleteDialogOpen(false);
+  const handleEdit = (partner: Partner) => {
+    setName(partner.name);
+    setLogoUrl(partner.logo_url);
+    setWebsiteUrl(partner.website_url || "");
+    setOrderNumber(partner.order_number);
+    setIsActive(partner.active);
+    setCategory(partner.category || "sponsor");
+    setIsEditing(true);
+    setEditingPartnerId(partner.id);
+    setIsSheetOpen(true);
+  };
+  
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setLogoFile(e.target.files[0]);
     }
   };
   
-  const uploadFileToSupabase = async (file: File): Promise<string> => {
+  const handleSave = async () => {
     try {
-      const filePath = `partners/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-      
-      const { data, error } = await customSupabase
-        .storage
-        .from('logos')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (error) throw error;
-      
-      const { data: urlData } = customSupabase
-        .storage
-        .from('logos')
-        .getPublicUrl(data?.path || '');
-      
-      return urlData.publicUrl;
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      throw error;
-    }
-  };
-  
-  const handleBulkUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const fileInput = document.getElementById('bulk-logo-upload') as HTMLInputElement;
-    const files = fileInput?.files;
-    
-    if (!files || files.length === 0) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez sélectionner au moins un fichier",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setUploading(true);
-    
-    try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        
-        const logoUrl = await uploadFileToSupabase(file);
-        
-        const fileName = file.name.replace(/\.[^/.]+$/, "");
-        
-        const partnerData = {
-          name: fileName,
-          logo_url: logoUrl,
-          website_url: null,
-          order_number: partners.length + i + 1,
-          active: true,
-          category: 'sponsor'
-        };
-        
-        const { error } = await customSupabase
-          .from('partners')
-          .insert(partnerData);
-          
-        if (error) {
-          throw error;
-        }
-      }
-      
-      toast({
-        title: "Import réussi",
-        description: `${files.length} logo(s) ont été importé(s) avec succès`,
-      });
-      
-      setBulkUploadOpen(false);
-      fetchPartners();
-    } catch (error) {
-      console.error("Error bulk uploading logos:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur s'est produite lors de l'importation des logos",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      if (!currentPartner.name.trim() || !currentPartner.logo_url.trim()) {
+      // Validate form
+      if (!name.trim()) {
         toast({
           title: "Erreur",
-          description: "Le nom et l'URL du logo sont requis",
+          description: "Le nom du partenaire est requis",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // URL validation regex
+      const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+      
+      if (websiteUrl && !urlRegex.test(websiteUrl)) {
+        toast({
+          title: "Erreur",
+          description: "L'URL du site web n'est pas valide",
           variant: "destructive",
         });
         return;
       }
       
-      const partnerData = {
-        name: currentPartner.name.trim(),
-        logo_url: currentPartner.logo_url.trim(),
-        website_url: currentPartner.website_url.trim() || null,
-        order_number: currentPartner.order_number,
-        active: currentPartner.active,
-        category: currentPartner.category.trim() || null
-      };
-      
-      let result;
-      
-      if (currentPartner.id) {
-        result = await customSupabase
-          .from('partners')
-          .update(partnerData)
-          .eq('id', currentPartner.id);
-      } else {
-        result = await customSupabase
-          .from('partners')
-          .insert(partnerData);
+      // If a new logo file is selected, upload it
+      let finalLogoUrl = logoUrl;
+      if (logoFile) {
+        const uploadedUrl = await uploadFileToSupabase(logoFile);
+        if (!uploadedUrl) {
+          toast({
+            title: "Erreur",
+            description: "Impossible de télécharger le logo",
+            variant: "destructive",
+          });
+          return;
+        }
+        finalLogoUrl = uploadedUrl;
+      } else if (!logoUrl) {
+        toast({
+          title: "Erreur",
+          description: "Une URL ou un fichier de logo est requis",
+          variant: "destructive",
+        });
+        return;
       }
       
-      if (result.error) throw result.error;
+      const partnerData: Partial<Partner> = {
+        name,
+        logo_url: finalLogoUrl,
+        website_url: websiteUrl || null,
+        order_number: orderNumber,
+        active: isActive,
+        category
+      };
       
-      toast({
-        title: currentPartner.id ? "Mise à jour réussie" : "Ajout réussi",
-        description: currentPartner.id 
-          ? "Le partenaire a été mis à jour avec succès" 
-          : "Le nouveau partenaire a été ajouté avec succès",
-      });
+      if (isEditing && editingPartnerId) {
+        // Update existing partner
+        const { error } = await customSupabase
+          .from('partners')
+          .update(partnerData)
+          .eq('id', editingPartnerId);
+          
+        if (error) {
+          console.error('Error updating partner:', error);
+          toast({
+            title: "Erreur",
+            description: "Impossible de mettre à jour le partenaire",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        toast({
+          title: "Succès",
+          description: "Partenaire mis à jour avec succès",
+        });
+      } else {
+        // Create new partner
+        const { error } = await customSupabase
+          .from('partners')
+          .insert(partnerData);
+          
+        if (error) {
+          console.error('Error creating partner:', error);
+          toast({
+            title: "Erreur",
+            description: "Impossible de créer le partenaire",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        toast({
+          title: "Succès",
+          description: "Partenaire créé avec succès",
+        });
+      }
       
-      setFormOpen(false);
+      // Close sheet and refresh partners
+      handleCloseSheet();
       fetchPartners();
     } catch (error) {
-      console.error("Error saving partner:", error);
+      console.error('Error saving partner:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de sauvegarder le partenaire",
+        description: "Une erreur est survenue lors de l'enregistrement",
         variant: "destructive",
       });
     }
   };
   
-  const movePartner = async (partner: Partner, direction: 'up' | 'down') => {
-    const currentIndex = partners.findIndex(p => p.id === partner.id);
-    
-    if ((direction === 'up' && currentIndex === 0) || 
-        (direction === 'down' && currentIndex === partners.length - 1)) {
-      return;
-    }
-    
-    const swapWith = partners[direction === 'up' ? currentIndex - 1 : currentIndex + 1];
-    
-    try {
-      const { error: error1 } = await customSupabase
-        .from('partners')
-        .update({ order_number: swapWith.order_number })
-        .eq('id', partner.id);
-      
-      if (error1) throw error1;
-      
-      const { error: error2 } = await customSupabase
-        .from('partners')
-        .update({ order_number: partner.order_number })
-        .eq('id', swapWith.id);
-      
-      if (error2) throw error2;
-      
-      fetchPartners();
-    } catch (error) {
-      console.error(`Error moving partner ${direction}:`, error);
-      toast({
-        title: "Erreur",
-        description: `Impossible de déplacer le partenaire ${direction === 'up' ? 'vers le haut' : 'vers le bas'}`,
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const getDisplayUrl = (websiteUrl: string | null): { hostname: string, isValid: boolean } => {
-    if (!websiteUrl || websiteUrl.trim() === '') {
-      return { hostname: '-', isValid: false };
-    }
-    
-    try {
-      const urlString = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
-      const url = new URL(urlString);
-      return { hostname: url.hostname, isValid: true };
-    } catch (e) {
-      console.warn('Invalid URL:', websiteUrl);
-      return { hostname: websiteUrl, isValid: false };
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer ce partenaire ?")) {
+      try {
+        const { error } = await customSupabase
+          .from('partners')
+          .delete()
+          .eq('id', id);
+          
+        if (error) {
+          console.error('Error deleting partner:', error);
+          toast({
+            title: "Erreur",
+            description: "Impossible de supprimer le partenaire",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        toast({
+          title: "Succès",
+          description: "Partenaire supprimé avec succès",
+        });
+        
+        // Refresh partners
+        fetchPartners();
+      } catch (error) {
+        console.error('Error deleting partner:', error);
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de la suppression",
+          variant: "destructive",
+        });
+      }
     }
   };
   
-  if (loading) {
-    return (
-      <div className="flex justify-center py-10">
-        <div className="animate-spin h-8 w-8 border-2 border-festival-primary border-t-transparent rounded-full"></div>
-      </div>
-    );
-  }
+  const handleRefresh = () => {
+    fetchPartners();
+    toast({
+      title: "Actualisé",
+      description: "Les données ont été actualisées"
+    });
+  };
   
   return (
     <div>
+      <h2 className="text-2xl font-semibold text-festival-primary mb-6">Gestion des Partenaires</h2>
+      
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Gestion des Partenaires</h2>
-        <div className="flex space-x-2">
-          <Button onClick={() => setBulkUploadOpen(true)} variant="outline">
-            <Upload className="h-4 w-4 mr-2" /> Import en masse
+        <div className="flex items-center gap-2">
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetTrigger asChild>
+              <Button onClick={handleOpenSheet}>
+                Ajouter un Partenaire
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="sm:max-w-md overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>{isEditing ? "Modifier le partenaire" : "Ajouter un partenaire"}</SheetTitle>
+                <SheetDescription>
+                  {isEditing 
+                    ? "Modifiez les détails du partenaire existant" 
+                    : "Ajoutez un nouveau partenaire au festival"}
+                </SheetDescription>
+              </SheetHeader>
+              
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nom du partenaire</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Entrez le nom"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="category">Catégorie</Label>
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionnez une catégorie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sponsor">Sponsor</SelectItem>
+                      <SelectItem value="partner">Partenaire</SelectItem>
+                      <SelectItem value="media">Média</SelectItem>
+                      <SelectItem value="institutional">Institutionnel</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="logo">Logo</Label>
+                  {logoUrl && (
+                    <div className="mb-2">
+                      <img 
+                        src={logoUrl} 
+                        alt="Logo prévisualisé" 
+                        className="max-h-24 max-w-full object-contain rounded-md border border-slate-200"
+                      />
+                    </div>
+                  )}
+                  <Input
+                    id="logo"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    className="mb-2"
+                  />
+                  <div className="text-xs text-gray-500">ou</div>
+                  <Input
+                    id="logoUrl"
+                    value={logoUrl}
+                    onChange={(e) => setLogoUrl(e.target.value)}
+                    placeholder="URL du logo"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="websiteUrl">URL du site web (optionnel)</Label>
+                  <Input
+                    id="websiteUrl"
+                    value={websiteUrl}
+                    onChange={(e) => setWebsiteUrl(e.target.value)}
+                    placeholder="https://exemple.com"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="orderNumber">Ordre d'affichage</Label>
+                  <Input
+                    id="orderNumber"
+                    type="number"
+                    min={0}
+                    value={orderNumber}
+                    onChange={(e) => setOrderNumber(parseInt(e.target.value) || 0)}
+                  />
+                </div>
+                
+                <div className="flex items-center space-x-2 pt-2">
+                  <Switch
+                    id="active"
+                    checked={isActive}
+                    onCheckedChange={setIsActive}
+                  />
+                  <Label htmlFor="active">Actif</Label>
+                </div>
+                
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={handleCloseSheet}>
+                    Annuler
+                  </Button>
+                  <Button onClick={handleSave}>
+                    {isEditing ? "Mettre à jour" : "Ajouter"}
+                  </Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+          
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={handleRefresh}
+            title="Actualiser"
+          >
+            <RefreshCw className="h-4 w-4" />
           </Button>
-          <Button onClick={handleAddPartner}>
-            <Plus className="h-4 w-4 mr-2" /> Ajouter un partenaire
-          </Button>
+        </div>
+        
+        <div className="text-sm text-gray-500">
+          {partners.length} partenaire(s)
         </div>
       </div>
       
-      {partners.length === 0 ? (
-        <div className="text-center py-8 bg-slate-50 rounded-lg">
-          <p className="text-festival-secondary">Aucun partenaire ajouté pour le moment.</p>
-          <div className="flex justify-center space-x-4 mt-4">
-            <Button 
-              onClick={() => setBulkUploadOpen(true)} 
-              variant="outline"
-            >
-              <Upload className="h-4 w-4 mr-2" /> Import en masse
-            </Button>
-            <Button 
-              onClick={handleAddPartner} 
-              variant="outline"
-            >
-              Ajouter un partenaire
-            </Button>
-          </div>
+      <PartnersBulkUpload onComplete={fetchPartners} />
+      
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <div className="animate-spin h-8 w-8 border-2 border-festival-primary border-t-transparent rounded-full"></div>
         </div>
       ) : (
         <div className="border rounded-lg overflow-hidden">
           <Table>
-            <TableHeader className="bg-slate-50">
+            <TableHeader>
               <TableRow>
-                <TableHead className="w-24">Logo</TableHead>
+                <TableHead style={{ width: "64px" }}>Logo</TableHead>
                 <TableHead>Nom</TableHead>
                 <TableHead>Catégorie</TableHead>
                 <TableHead>Site Web</TableHead>
-                <TableHead className="text-center">Actif</TableHead>
                 <TableHead className="text-center">Ordre</TableHead>
+                <TableHead className="text-center">Actif</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {partners.map((partner, index) => {
-                const { hostname, isValid } = getDisplayUrl(partner.website_url);
-                
-                return (
-                  <TableRow key={partner.id} className="hover:bg-slate-50">
+              {partners.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                    Aucun partenaire trouvé
+                  </TableCell>
+                </TableRow>
+              ) : (
+                partners.map((partner) => (
+                  <TableRow key={partner.id}>
                     <TableCell>
-                      <div className="h-12 w-20 bg-white flex items-center justify-center rounded border">
+                      {partner.logo_url && (
                         <img 
                           src={partner.logo_url} 
-                          alt={partner.name} 
-                          className="max-h-10 max-w-16 object-contain"
+                          alt={`Logo de ${partner.name}`} 
+                          className="h-8 w-auto object-contain"
                         />
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">{partner.name}</TableCell>
-                    <TableCell className="text-slate-500">{partner.category || '-'}</TableCell>
-                    <TableCell>
-                      {isValid ? (
-                        <a 
-                          href={partner.website_url!} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center text-blue-600 hover:underline"
-                        >
-                          {hostname}
-                          <ExternalLink className="h-3 w-3 ml-1" />
-                        </a>
-                      ) : (
-                        <span className="text-slate-400">{hostname}</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-center">
-                      <div className={`h-2 w-2 rounded-full mx-auto ${partner.active ? 'bg-green-500' : 'bg-slate-300'}`}></div>
+                    <TableCell>{partner.name}</TableCell>
+                    <TableCell>
+                      <span className="px-2 py-1 rounded-full text-xs capitalize bg-gray-100">
+                        {partner.category || "sponsor"}
+                      </span>
                     </TableCell>
-                    <TableCell className="text-center space-x-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => movePartner(partner, 'up')}
-                        disabled={index === 0}
-                      >
-                        <MoveUp className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => movePartner(partner, 'down')}
-                        disabled={index === partners.length - 1}
-                      >
-                        <MoveDown className="h-4 w-4" />
-                      </Button>
+                    <TableCell>
+                      {partner.website_url && (
+                        <a 
+                          href={partner.website_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-blue-600 hover:underline"
+                        >
+                          {new URL(partner.website_url).hostname}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">{partner.order_number}</TableCell>
+                    <TableCell className="text-center">
+                      {partner.active ? (
+                        <span className="inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                      ) : (
+                        <span className="inline-flex h-2 w-2 rounded-full bg-gray-300"></span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleEditPartner(partner)}
-                        className="h-8 w-8 text-slate-500 hover:text-festival-primary"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleDeletePartner(partner)}
-                        className="h-8 w-8 text-slate-500 hover:text-red-500"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(partner)}
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(partner.id)}
+                        >
+                          <Trash2Icon className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
-                );
-              })}
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
       )}
-      
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              {currentPartner.id ? "Modifier le partenaire" : "Ajouter un partenaire"}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nom du partenaire *</Label>
-                <Input 
-                  id="name" 
-                  value={currentPartner.name} 
-                  onChange={(e) => setCurrentPartner({...currentPartner, name: e.target.value})}
-                  placeholder="Ex: Nom de l'entreprise"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="logo_url">URL du logo *</Label>
-                <Input 
-                  id="logo_url" 
-                  value={currentPartner.logo_url} 
-                  onChange={(e) => setCurrentPartner({...currentPartner, logo_url: e.target.value})}
-                  placeholder="https://exemple.com/logo.png"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="website_url">Site web</Label>
-                <Input 
-                  id="website_url" 
-                  value={currentPartner.website_url} 
-                  onChange={(e) => setCurrentPartner({...currentPartner, website_url: e.target.value})}
-                  placeholder="https://exemple.com"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="category">Catégorie</Label>
-                <Input 
-                  id="category" 
-                  value={currentPartner.category} 
-                  onChange={(e) => setCurrentPartner({...currentPartner, category: e.target.value})}
-                  placeholder="Ex: Sponsor, Média, Partenaire technique"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="order_number">Ordre d'affichage</Label>
-                <Input 
-                  id="order_number" 
-                  type="number"
-                  min="0"
-                  value={currentPartner.order_number} 
-                  onChange={(e) => setCurrentPartner({...currentPartner, order_number: parseInt(e.target.value) || 0})}
-                />
-              </div>
-              
-              <div className="flex items-center space-x-2 pt-2">
-                <Switch 
-                  id="active" 
-                  checked={currentPartner.active}
-                  onCheckedChange={(checked) => setCurrentPartner({...currentPartner, active: checked})}
-                />
-                <Label htmlFor="active">Actif</Label>
-              </div>
-            </div>
-            
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>
-                Annuler
-              </Button>
-              <Button type="submit">
-                {currentPartner.id ? "Mettre à jour" : "Ajouter"}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-      
-      <Dialog open={bulkUploadOpen} onOpenChange={setBulkUploadOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              Importer plusieurs logos de partenaires
-            </DialogTitle>
-          </DialogHeader>
-          
-          <form onSubmit={handleBulkUpload} className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label htmlFor="bulk-logo-upload">Sélectionner des fichiers</Label>
-              <Input 
-                id="bulk-logo-upload" 
-                type="file"
-                accept="image/*"
-                multiple
-                className="cursor-pointer"
-              />
-              <p className="text-sm text-slate-500 mt-2">
-                Le nom du fichier sera utilisé comme nom du partenaire. 
-                Tous les logos importés seront ajoutés avec la catégorie "sponsor".
-              </p>
-            </div>
-            
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setBulkUploadOpen(false)}
-                disabled={uploading}
-              >
-                Annuler
-              </Button>
-              <Button type="submit" disabled={uploading}>
-                {uploading ? (
-                  <>
-                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Importation...
-                  </>
-                ) : (
-                  "Importer"
-                )}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-      
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer ce partenaire ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action est irréversible. Le partenaire "{currentPartner.name}" sera définitivement supprimé.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-500 hover:bg-red-600">
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
