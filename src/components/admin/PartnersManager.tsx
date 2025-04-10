@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, MoveUp, MoveDown, ExternalLink } from "lucide-react";
+import { Pencil, Trash2, Plus, MoveUp, MoveDown, ExternalLink, Upload } from "lucide-react";
 import { customSupabase, Partner, safeDataAccess } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -25,7 +24,9 @@ const PartnersManager = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [currentPartner, setCurrentPartner] = useState<PartnerFormData>({
     name: '',
     logo_url: '',
@@ -155,6 +156,84 @@ const PartnersManager = () => {
     }
   };
   
+  const handleBulkUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const fileInput = document.getElementById('bulk-logo-upload') as HTMLInputElement;
+    const files = fileInput?.files;
+    
+    if (!files || files.length === 0) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner au moins un fichier",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setUploading(true);
+    
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch('https://api.upload.io/v2/accounts/W142hXk/uploads/binary', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Authorization': 'Bearer public_W142hXkAHfubxhfvKdYXB6RfWzKQ',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to upload ${file.name}`);
+        }
+        
+        const data = await response.json();
+        const logoUrl = data.fileUrl;
+        
+        const fileName = file.name.replace(/\.[^/.]+$/, "");
+        
+        const partnerData = {
+          name: fileName,
+          logo_url: logoUrl,
+          website_url: null,
+          order_number: partners.length + i + 1,
+          active: true,
+          category: 'sponsor'
+        };
+        
+        const { error } = await customSupabase
+          .from('partners')
+          .insert(partnerData);
+          
+        if (error) {
+          throw error;
+        }
+      }
+      
+      toast({
+        title: "Import réussi",
+        description: `${files.length} logo(s) ont été importé(s) avec succès`,
+      });
+      
+      setBulkUploadOpen(false);
+      fetchPartners();
+    } catch (error) {
+      console.error("Error bulk uploading logos:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de l'importation des logos",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -247,14 +326,12 @@ const PartnersManager = () => {
     }
   };
   
-  // Improved URL validation function
   const getDisplayUrl = (websiteUrl: string | null): { hostname: string, isValid: boolean } => {
     if (!websiteUrl || websiteUrl.trim() === '') {
       return { hostname: '-', isValid: false };
     }
     
     try {
-      // Make sure the URL has a protocol
       const urlString = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
       const url = new URL(urlString);
       return { hostname: url.hostname, isValid: true };
@@ -276,21 +353,33 @@ const PartnersManager = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Gestion des Partenaires</h2>
-        <Button onClick={handleAddPartner}>
-          <Plus className="h-4 w-4 mr-2" /> Ajouter un partenaire
-        </Button>
+        <div className="flex space-x-2">
+          <Button onClick={() => setBulkUploadOpen(true)} variant="outline">
+            <Upload className="h-4 w-4 mr-2" /> Import en masse
+          </Button>
+          <Button onClick={handleAddPartner}>
+            <Plus className="h-4 w-4 mr-2" /> Ajouter un partenaire
+          </Button>
+        </div>
       </div>
       
       {partners.length === 0 ? (
         <div className="text-center py-8 bg-slate-50 rounded-lg">
           <p className="text-festival-secondary">Aucun partenaire ajouté pour le moment.</p>
-          <Button 
-            onClick={handleAddPartner} 
-            variant="outline" 
-            className="mt-4"
-          >
-            Ajouter votre premier partenaire
-          </Button>
+          <div className="flex justify-center space-x-4 mt-4">
+            <Button 
+              onClick={() => setBulkUploadOpen(true)} 
+              variant="outline"
+            >
+              <Upload className="h-4 w-4 mr-2" /> Import en masse
+            </Button>
+            <Button 
+              onClick={handleAddPartner} 
+              variant="outline"
+            >
+              Ajouter un partenaire
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="border rounded-lg overflow-hidden">
@@ -466,6 +555,54 @@ const PartnersManager = () => {
               </Button>
               <Button type="submit">
                 {currentPartner.id ? "Mettre à jour" : "Ajouter"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={bulkUploadOpen} onOpenChange={setBulkUploadOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              Importer plusieurs logos de partenaires
+            </DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleBulkUpload} className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="bulk-logo-upload">Sélectionner des fichiers</Label>
+              <Input 
+                id="bulk-logo-upload" 
+                type="file"
+                accept="image/*"
+                multiple
+                className="cursor-pointer"
+              />
+              <p className="text-sm text-slate-500 mt-2">
+                Le nom du fichier sera utilisé comme nom du partenaire. 
+                Tous les logos importés seront ajoutés avec la catégorie "sponsor".
+              </p>
+            </div>
+            
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setBulkUploadOpen(false)}
+                disabled={uploading}
+              >
+                Annuler
+              </Button>
+              <Button type="submit" disabled={uploading}>
+                {uploading ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Importation...
+                  </>
+                ) : (
+                  "Importer"
+                )}
               </Button>
             </div>
           </form>
