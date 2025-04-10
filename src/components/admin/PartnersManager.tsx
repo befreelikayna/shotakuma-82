@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +44,6 @@ const PartnersManager = () => {
       if (error) throw error;
       
       if (data && Array.isArray(data)) {
-        // Create properly typed partners
         const partnersData: Partner[] = data.map(item => ({
           id: safeDataAccess(item?.id, ''),
           name: safeDataAccess(item?.name, ''),
@@ -142,7 +140,6 @@ const PartnersManager = () => {
         description: "Le partenaire a été supprimé avec succès",
       });
       
-      // Fetch updated list
       fetchPartners();
     } catch (error) {
       console.error("Error deleting partner:", error);
@@ -160,7 +157,6 @@ const PartnersManager = () => {
     e.preventDefault();
     
     try {
-      // Make sure name and logo_url are provided
       if (!currentPartner.name.trim() || !currentPartner.logo_url.trim()) {
         toast({
           title: "Erreur",
@@ -170,7 +166,6 @@ const PartnersManager = () => {
         return;
       }
       
-      // Prepare data for submission, making sure to handle null values correctly
       const partnerData = {
         name: currentPartner.name.trim(),
         logo_url: currentPartner.logo_url.trim(),
@@ -183,13 +178,11 @@ const PartnersManager = () => {
       let result;
       
       if (currentPartner.id) {
-        // Update existing partner
         result = await customSupabase
           .from('partners')
           .update(partnerData)
           .eq('id', currentPartner.id);
       } else {
-        // Add new partner
         result = await customSupabase
           .from('partners')
           .insert(partnerData);
@@ -219,7 +212,6 @@ const PartnersManager = () => {
   const movePartner = async (partner: Partner, direction: 'up' | 'down') => {
     const currentIndex = partners.findIndex(p => p.id === partner.id);
     
-    // Ensure the move is valid
     if ((direction === 'up' && currentIndex === 0) || 
         (direction === 'down' && currentIndex === partners.length - 1)) {
       return;
@@ -228,7 +220,6 @@ const PartnersManager = () => {
     const swapWith = partners[direction === 'up' ? currentIndex - 1 : currentIndex + 1];
     
     try {
-      // Update the current partner's order
       const { error: error1 } = await customSupabase
         .from('partners')
         .update({ order_number: swapWith.order_number })
@@ -236,7 +227,6 @@ const PartnersManager = () => {
       
       if (error1) throw error1;
       
-      // Update the other partner's order
       const { error: error2 } = await customSupabase
         .from('partners')
         .update({ order_number: partner.order_number })
@@ -244,7 +234,6 @@ const PartnersManager = () => {
       
       if (error2) throw error2;
       
-      // Fetch updated list
       fetchPartners();
     } catch (error) {
       console.error(`Error moving partner ${direction}:`, error);
@@ -253,6 +242,21 @@ const PartnersManager = () => {
         description: `Impossible de déplacer le partenaire ${direction === 'up' ? 'vers le haut' : 'vers le bas'}`,
         variant: "destructive",
       });
+    }
+  };
+  
+  const getDisplayUrl = (websiteUrl: string | null): { hostname: string, isValid: boolean } => {
+    if (!websiteUrl || websiteUrl.trim() === '') {
+      return { hostname: '-', isValid: false };
+    }
+    
+    try {
+      const urlString = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
+      const url = new URL(urlString);
+      return { hostname: url.hostname, isValid: true };
+    } catch (e) {
+      console.warn('Invalid URL:', websiteUrl);
+      return { hostname: websiteUrl, isValid: false };
     }
   };
   
@@ -299,83 +303,86 @@ const PartnersManager = () => {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {partners.map((partner, index) => (
-                <tr key={partner.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    <div className="h-12 w-20 bg-white flex items-center justify-center rounded border">
-                      <img 
-                        src={partner.logo_url} 
-                        alt={partner.name} 
-                        className="max-h-10 max-w-16 object-contain"
-                      />
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 font-medium">{partner.name}</td>
-                  <td className="px-4 py-3 text-slate-500">{partner.category || '-'}</td>
-                  <td className="px-4 py-3">
-                    {partner.website_url ? (
-                      <a 
-                        href={partner.website_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center text-blue-600 hover:underline"
+              {partners.map((partner, index) => {
+                const { hostname, isValid } = getDisplayUrl(partner.website_url);
+                
+                return (
+                  <tr key={partner.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <div className="h-12 w-20 bg-white flex items-center justify-center rounded border">
+                        <img 
+                          src={partner.logo_url} 
+                          alt={partner.name} 
+                          className="max-h-10 max-w-16 object-contain"
+                        />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 font-medium">{partner.name}</td>
+                    <td className="px-4 py-3 text-slate-500">{partner.category || '-'}</td>
+                    <td className="px-4 py-3">
+                      {isValid ? (
+                        <a 
+                          href={partner.website_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center text-blue-600 hover:underline"
+                        >
+                          {hostname}
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      ) : (
+                        <span className="text-slate-400">{hostname}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <div className={`h-2 w-2 rounded-full mx-auto ${partner.active ? 'bg-green-500' : 'bg-slate-300'}`}></div>
+                    </td>
+                    <td className="px-4 py-3 text-center space-x-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => movePartner(partner, 'up')}
+                        disabled={index === 0}
                       >
-                        {new URL(partner.website_url).hostname}
-                        <ExternalLink className="h-3 w-3 ml-1" />
-                      </a>
-                    ) : (
-                      <span className="text-slate-400">-</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <div className={`h-2 w-2 rounded-full mx-auto ${partner.active ? 'bg-green-500' : 'bg-slate-300'}`}></div>
-                  </td>
-                  <td className="px-4 py-3 text-center space-x-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => movePartner(partner, 'up')}
-                      disabled={index === 0}
-                    >
-                      <MoveUp className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => movePartner(partner, 'down')}
-                      disabled={index === partners.length - 1}
-                    >
-                      <MoveDown className="h-4 w-4" />
-                    </Button>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => handleEditPartner(partner)}
-                      className="h-8 w-8 text-slate-500 hover:text-festival-primary"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => handleDeletePartner(partner)}
-                      className="h-8 w-8 text-slate-500 hover:text-red-500"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+                        <MoveUp className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => movePartner(partner, 'down')}
+                        disabled={index === partners.length - 1}
+                      >
+                        <MoveDown className="h-4 w-4" />
+                      </Button>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleEditPartner(partner)}
+                        className="h-8 w-8 text-slate-500 hover:text-festival-primary"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleDeletePartner(partner)}
+                        className="h-8 w-8 text-slate-500 hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
       
-      {/* Partner Form Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -461,7 +468,6 @@ const PartnersManager = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
