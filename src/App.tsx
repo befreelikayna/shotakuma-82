@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import CustomCursor from "./components/CustomCursor";
 import ParticleEffect from "./components/ParticleEffect";
+import CountdownProvider from "./components/CountdownProvider";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Schedule from "./pages/Schedule";
@@ -25,18 +26,20 @@ const App = () => (
       <BrowserRouter>
         <CustomCursor />
         <ParticleEffect />
-        <AnimatePresence mode="wait">
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/schedule" element={<Schedule />} />
-            <Route path="/gallery" element={<Gallery />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/admin" element={<Admin />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AnimatePresence>
+        <CountdownProvider>
+          <AnimatePresence mode="wait">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/schedule" element={<Schedule />} />
+              <Route path="/gallery" element={<Gallery />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="/admin" element={<Admin />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AnimatePresence>
+        </CountdownProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

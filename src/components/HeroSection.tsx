@@ -1,8 +1,11 @@
+
 import { motion } from "framer-motion";
 import { ChevronDown, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import CountdownTrigger from "./CountdownTrigger";
+
 interface SliderImage {
   id: string;
   image_url: string;
@@ -10,6 +13,7 @@ interface SliderImage {
   order_number: number;
   active: boolean;
 }
+
 const HeroSection = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [sliderImages, setSliderImages] = useState<SliderImage[]>([]);
@@ -44,6 +48,7 @@ const HeroSection = () => {
       setIsLoading(false);
     }
   };
+  
   useEffect(() => {
     fetchSliderImages();
 
@@ -69,6 +74,7 @@ const HeroSection = () => {
     }, 5000);
     return () => clearInterval(interval);
   }, [sliderImages]);
+  
   const containerVariants = {
     hidden: {
       opacity: 0
@@ -81,6 +87,7 @@ const HeroSection = () => {
       }
     }
   };
+  
   const itemVariants = {
     hidden: {
       opacity: 0,
@@ -95,6 +102,7 @@ const HeroSection = () => {
       }
     }
   };
+  
   const handleScrollDown = () => {
     window.scrollTo({
       top: window.innerHeight,
@@ -104,6 +112,7 @@ const HeroSection = () => {
 
   // Default background while loading
   const defaultBackground = "bg-gradient-to-br from-slate-900 to-gray-800";
+  
   const handleRefresh = () => {
     fetchSliderImages();
     toast({
@@ -111,6 +120,7 @@ const HeroSection = () => {
       description: "Images du slider actualisées"
     });
   };
+  
   return <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 md:pt-20">
       {/* Slider Background */}
       <div className={`absolute inset-0 z-0 ${isLoading ? defaultBackground : ''}`}>
@@ -141,7 +151,7 @@ const HeroSection = () => {
         
         <motion.div className="flex flex-col items-center text-center" variants={containerVariants} initial="hidden" animate="visible">
           <motion.div className="inline-block mb-4 px-3 sm:px-4 py-1 sm:py-1.5 bg-white/50 backdrop-blur-sm rounded-full shadow-soft" variants={itemVariants}>
-            <span className="text-white font-medium text-xs sm:text-sm">ÉVENT LE 8.9.10.11 MAY 2025 • CASABLANCA, MAROC</span>
+            <span className="text-white font-medium text-xs sm:text-sm">ÉVENT LE 8.9.10.11 MAY 2025 • CASABLANCA, MAROC</span>
           </motion.div>
 
           <motion.h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 md:mb-6 tracking-tight" variants={itemVariants}>
@@ -156,7 +166,7 @@ const HeroSection = () => {
             Rejoignez-nous pour trois jours inoubliables d'expositions, de compétitions et de performances.
           </motion.p>
 
-          <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-12 sm:mb-16 w-full sm:w-auto" variants={itemVariants}>
+          <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-10 w-full sm:w-auto" variants={itemVariants}>
             <a href="#tickets" className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-festival-accent text-white font-medium 
               shadow-accent transition-all duration-300 hover:shadow-lg hover:bg-opacity-90 hover:translate-y-[-2px] text-center">
               Obtenir des Billets
@@ -166,6 +176,11 @@ const HeroSection = () => {
               hover:shadow-lg hover:bg-slate-50 hover:translate-y-[-2px] text-center">
               Voir le Programme
             </a>
+            <CountdownTrigger 
+              variant="secondary"
+              label="Voir Countdown"
+              className="w-full sm:w-auto"
+            />
           </motion.div>
 
           <motion.button onClick={handleScrollDown} className="absolute bottom-8 sm:bottom-12 left-1/2 transform -translate-x-1/2 flex items-center justify-center 
@@ -182,4 +197,5 @@ const HeroSection = () => {
         </div>}
     </section>;
 };
+
 export default HeroSection;
