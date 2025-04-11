@@ -14,6 +14,7 @@ import ThemeManager from "./components/admin/ThemeManager";
 import TicketManager from "./components/admin/TicketManager";
 import ScheduleManager from "./components/admin/ScheduleManager";
 import NewsletterSubscriptions from "./components/admin/NewsletterSubscriptions";
+import ContactManager from "./components/admin/ContactManager";
 import { supabase } from "./integrations/supabase/client";
 
 import {
@@ -68,6 +69,7 @@ export default function Admin() {
           <TabsTrigger value="assets">Assets</TabsTrigger>
           <TabsTrigger value="theme">Theme</TabsTrigger>
           <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
+          <TabsTrigger value="contact">Contact</TabsTrigger>
         </TabsList>
         <TabsContent value="content" className="space-y-4">
           <ContentManager />
@@ -107,6 +109,9 @@ export default function Admin() {
         </TabsContent>
         <TabsContent value="newsletter" className="space-y-4">
           <NewsletterSubscriptions />
+        </TabsContent>
+        <TabsContent value="contact" className="space-y-4">
+          <ContactManager />
         </TabsContent>
       </Tabs>
     </div>
