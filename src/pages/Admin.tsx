@@ -146,8 +146,8 @@ const Admin = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
-            <div className="relative mb-6 md:mb-8 px-8">
-              <Carousel className="w-full" setApi={setCarouselApi} opts={{ align: "start", dragFree: true }}>
+            <div className="relative mb-6 md:mb-8">
+              <Carousel className="w-full px-10" setApi={setCarouselApi} opts={{ align: "start", dragFree: true }}>
                 <CarouselContent className="w-full">
                   <CarouselItem className="basis-auto flex-grow-0">
                     <TabsList className="inline-flex flex-nowrap min-w-max gap-2">
@@ -169,8 +169,8 @@ const Admin = () => {
                     </TabsList>
                   </CarouselItem>
                 </CarouselContent>
-                <CarouselPrevious className="left-0 translate-x-0" />
-                <CarouselNext className="right-0 translate-x-0" />
+                <CarouselPrevious className="left-0" />
+                <CarouselNext className="right-0" />
               </Carousel>
             </div>
 
