@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -142,7 +141,7 @@ const PartnersManager = () => {
         return;
       }
 
-      // URL validation regex
+      // URL validation regex for a more flexible URL pattern
       const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
       
       if (websiteUrl && !urlRegex.test(websiteUrl)) {
@@ -176,10 +175,16 @@ const PartnersManager = () => {
         return;
       }
       
+      // Add https:// to website URL if not present
+      let formattedWebsiteUrl = websiteUrl;
+      if (websiteUrl && !websiteUrl.startsWith('http://') && !websiteUrl.startsWith('https://')) {
+        formattedWebsiteUrl = 'https://' + websiteUrl;
+      }
+      
       const partnerData: Partial<Partner> = {
         name,
         logo_url: finalLogoUrl,
-        website_url: websiteUrl || null,
+        website_url: formattedWebsiteUrl || null,
         order_number: orderNumber,
         active: isActive,
         category
@@ -283,6 +288,39 @@ const PartnersManager = () => {
       title: "Actualisé",
       description: "Les données ont été actualisées"
     });
+  };
+  
+  const formatUrl = (url: string | null): string => {
+    if (!url) return '';
+    
+    try {
+      // Check if URL has a protocol
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        // Add https:// to URLs without protocol
+        return 'https://' + url;
+      }
+      return url;
+    } catch (e) {
+      console.error('Invalid URL:', url);
+      return '';
+    }
+  };
+  
+  const getHostname = (url: string | null): string => {
+    if (!url) return '';
+    
+    try {
+      // Format URL first to ensure it has a protocol
+      const formattedUrl = formatUrl(url);
+      if (!formattedUrl) return '';
+      
+      // Create URL object to get hostname
+      const urlObj = new URL(formattedUrl);
+      return urlObj.hostname;
+    } catch (e) {
+      console.error('Error extracting hostname:', e);
+      return url || ''; // Return original URL as fallback
+    }
   };
   
   return (
@@ -465,12 +503,12 @@ const PartnersManager = () => {
                     <TableCell>
                       {partner.website_url && (
                         <a 
-                          href={partner.website_url} 
+                          href={formatUrl(partner.website_url)} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="flex items-center gap-1 text-blue-600 hover:underline"
                         >
-                          {new URL(partner.website_url).hostname}
+                          {getHostname(partner.website_url)}
                           <ExternalLink className="h-3 w-3" />
                         </a>
                       )}

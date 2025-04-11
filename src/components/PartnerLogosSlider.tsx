@@ -58,6 +58,21 @@ const PartnerLogosSlider = () => {
     }
   };
   
+  // Helper function to format URLs safely
+  const formatUrl = (url: string | null): string => {
+    if (!url) return '';
+    
+    try {
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return 'https://' + url;
+      }
+      return url;
+    } catch (e) {
+      console.error('Invalid URL:', url);
+      return '';
+    }
+  };
+  
   useEffect(() => {
     fetchPartners();
     
@@ -124,7 +139,7 @@ const PartnerLogosSlider = () => {
                   <div className="p-4 h-32 flex items-center justify-center bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-300">
                     {partner.website_url ? (
                       <a 
-                        href={partner.website_url} 
+                        href={formatUrl(partner.website_url)} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="w-full h-full flex items-center justify-center"

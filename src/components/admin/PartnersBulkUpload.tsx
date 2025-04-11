@@ -86,7 +86,8 @@ const PartnersBulkUpload = ({ onComplete }: PartnersBulkUploadProps) => {
             logo_url: logoUrl,
             category: 'sponsor',
             active: true,
-            order_number: i
+            order_number: i,
+            website_url: null // Set to null by default
           });
           
         if (error) {
