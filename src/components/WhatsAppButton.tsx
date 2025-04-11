@@ -1,6 +1,6 @@
 
 import React from "react";
-import { WhatsApp } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface WhatsAppButtonProps {
@@ -24,7 +24,7 @@ const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({ phoneNumber }) => {
       whileTap={{ scale: 0.95 }}
       aria-label={`Chat on WhatsApp: ${phoneNumber}`}
     >
-      <WhatsApp className="w-7 h-7 text-white" />
+      <MessageCircle className="w-7 h-7 text-white" />
     </motion.a>
   );
 };

@@ -139,7 +139,7 @@ const Footer = () => {
                 </a>
               </li>
               <li className="flex items-start">
-                <WhatsApp className="h-5 w-5 text-[#25D366] mr-2 mt-0.5" />
+                <MessageCircle className="h-5 w-5 text-[#25D366] mr-2 mt-0.5" />
                 <a 
                   href="https://wa.me/212670625980" 
                   target="_blank"
