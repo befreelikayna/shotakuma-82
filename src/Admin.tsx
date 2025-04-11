@@ -14,6 +14,8 @@ import SliderManager from "@/components/admin/SliderManager";
 import ContentManager from "@/components/admin/ContentManager";
 import EventManager from "@/components/admin/EventManager";
 import AdminLogin from "@/components/admin/AdminLogin";
+import LogoUploader from "@/components/admin/LogoUploader";
+import PartnersManager from "@/components/admin/PartnersManager";
 import { supabase } from "@/integrations/supabase/client";
 
 const Admin = () => {
@@ -140,15 +142,16 @@ const Admin = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
-            <TabsList className="grid grid-cols-4 md:grid-cols-8 mb-6 md:mb-8 w-full overflow-x-auto">
+            <TabsList className="grid grid-cols-4 md:grid-cols-9 mb-6 md:mb-8 w-full overflow-x-auto">
               <TabsTrigger value="slider" className="whitespace-nowrap">Slider</TabsTrigger>
+              <TabsTrigger value="logo" className="whitespace-nowrap">Logo</TabsTrigger>
+              <TabsTrigger value="partners" className="whitespace-nowrap">Partenaires</TabsTrigger>
               <TabsTrigger value="gallery" className="whitespace-nowrap">Galerie</TabsTrigger>
               <TabsTrigger value="events" className="whitespace-nowrap">Événements</TabsTrigger>
               <TabsTrigger value="tickets" className="whitespace-nowrap">Billets</TabsTrigger>
               <TabsTrigger value="packages" className="whitespace-nowrap">Forfaits</TabsTrigger>
               <TabsTrigger value="content" className="whitespace-nowrap hidden md:block">Contenu</TabsTrigger>
               <TabsTrigger value="social" className="whitespace-nowrap hidden md:block">Liens</TabsTrigger>
-              <TabsTrigger value="newsletter" className="whitespace-nowrap hidden md:block">Newsletter</TabsTrigger>
             </TabsList>
             
             {/* Second row for small screens */}
@@ -160,6 +163,15 @@ const Admin = () => {
 
             <TabsContent value="slider" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <SliderManager />
+            </TabsContent>
+
+            <TabsContent value="logo" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
+              <h2 className="text-2xl font-semibold text-festival-primary mb-6">Gestion du Logo</h2>
+              <LogoUploader />
+            </TabsContent>
+
+            <TabsContent value="partners" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
+              <PartnersManager />
             </TabsContent>
 
             <TabsContent value="gallery" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">

@@ -1,11 +1,46 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [logoUrl, setLogoUrl] = useState("/logo.png"); // Default fallback
+
+  useEffect(() => {
+    // Try to fetch logo from Supabase storage
+    const fetchLogo = async () => {
+      try {
+        const { data, error } = await supabase.storage
+          .from('logos')
+          .list('', {
+            limit: 1,
+            sortBy: { column: 'created_at', order: 'desc' }
+          });
+        
+        if (error) {
+          console.error('Error fetching logo:', error);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('logos')
+            .getPublicUrl(data[0].name);
+          
+          if (publicUrl) {
+            setLogoUrl(publicUrl);
+            console.log('Logo loaded from Supabase:', publicUrl);
+          }
+        }
+      } catch (error) {
+        console.error('Error in logo fetch:', error);
+      }
+    };
+    
+    fetchLogo();
+  }, []);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -16,9 +51,15 @@ const Navbar = () => {
       <div className="festival-container py-4 flex justify-between items-center">
         <Link to="/" className="flex items-center">
           <img 
-            src="/logo.png" 
+            src={logoUrl} 
             alt="SHOTAKU Logo" 
             className="h-10 object-contain"
+            onError={(e) => {
+              // Fallback to default logo if Supabase logo fails to load
+              const target = e.target as HTMLImageElement;
+              target.src = "/logo.png";
+              console.log('Falling back to default logo');
+            }}
           />
         </Link>
         
