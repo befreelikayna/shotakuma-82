@@ -22,7 +22,8 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+    {/* Wrap in React Fragment instead of directly using TooltipProvider */}
+    <>
       <Toaster />
       <Sonner />
       <BrowserRouter>
@@ -45,7 +46,7 @@ const App = () => (
         </CountdownProvider>
         <WhatsAppButton phoneNumber="+212670625980" />
       </BrowserRouter>
-    </TooltipProvider>
+    </>
   </QueryClientProvider>
 );
 
