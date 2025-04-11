@@ -36,9 +36,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { RefreshCw, Pencil, Trash2, Calendar, Plus, MoveUp, MoveDown } from "lucide-react";
+import { RefreshCw, Pencil, Trash2, Calendar, Plus, MoveUp, MoveDown, Link, FileUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, uploadFileToSupabase } from "@/integrations/supabase/client";
 
 type ScheduleEvent = {
   id: string;
@@ -50,6 +50,9 @@ type ScheduleEvent = {
   location: string | null;
   category: string;
   order_number: number;
+  file_url?: string | null;
+  link_url?: string | null;
+  link_text?: string | null;
 };
 
 type ScheduleDay = {
@@ -90,6 +93,11 @@ const ScheduleManager = () => {
   const [eventLocation, setEventLocation] = useState("");
   const [eventCategory, setEventCategory] = useState("panel");
   const [eventOrderNumber, setEventOrderNumber] = useState(0);
+  const [eventFile, setEventFile] = useState<File | null>(null);
+  const [eventFileUrl, setEventFileUrl] = useState<string | null>(null);
+  const [eventLinkUrl, setEventLinkUrl] = useState("");
+  const [eventLinkText, setEventLinkText] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   
   // Delete confirmation state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -226,6 +234,10 @@ const ScheduleManager = () => {
       setEventLocation(event.location || "");
       setEventCategory(event.category);
       setEventOrderNumber(event.order_number);
+      setEventFileUrl(event.file_url || null);
+      setEventLinkUrl(event.link_url || "");
+      setEventLinkText(event.link_text || "");
+      setEventFile(null);
     } else {
       setEditingEventId(null);
       setEventTitle("");
@@ -235,9 +247,19 @@ const ScheduleManager = () => {
       setEventLocation("");
       setEventCategory("panel");
       setEventOrderNumber(events.length);
+      setEventFileUrl(null);
+      setEventFile(null);
+      setEventLinkUrl("");
+      setEventLinkText("");
     }
     
     setIsEventDialogOpen(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setEventFile(e.target.files[0]);
+    }
   };
 
   const saveDay = async () => {
@@ -304,6 +326,23 @@ const ScheduleManager = () => {
         return;
       }
       
+      setIsUploading(true);
+      
+      // Upload file if selected
+      let fileUrl = eventFileUrl;
+      if (eventFile) {
+        fileUrl = await uploadFileToSupabase(eventFile, 'schedule_files');
+        if (!fileUrl) {
+          toast({
+            title: "Erreur",
+            description: "Échec du téléchargement du fichier",
+            variant: "destructive",
+          });
+          setIsUploading(false);
+          return;
+        }
+      }
+      
       const eventData = {
         day_id: activeDay,
         title: eventTitle,
@@ -312,7 +351,10 @@ const ScheduleManager = () => {
         end_time: eventEndTime,
         location: eventLocation || null,
         category: eventCategory,
-        order_number: eventOrderNumber
+        order_number: eventOrderNumber,
+        file_url: fileUrl,
+        link_url: eventLinkUrl || null,
+        link_text: eventLinkText || null
       };
       
       let result;
@@ -348,6 +390,8 @@ const ScheduleManager = () => {
         description: "Une erreur est survenue lors de l'enregistrement",
         variant: "destructive",
       });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -575,6 +619,7 @@ const ScheduleManager = () => {
                       <TableHead>Catégorie</TableHead>
                       <TableHead>Horaire</TableHead>
                       <TableHead>Lieu</TableHead>
+                      <TableHead>Fichier/Lien</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -589,6 +634,18 @@ const ScheduleManager = () => {
                           {event.start_time} - {event.end_time}
                         </TableCell>
                         <TableCell>{event.location || "-"}</TableCell>
+                        <TableCell>
+                          {event.file_url && (
+                            <a href={event.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-600 hover:underline mr-2">
+                              <FileUp className="h-4 w-4 mr-1" /> Fichier
+                            </a>
+                          )}
+                          {event.link_url && (
+                            <a href={event.link_url} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-600 hover:underline">
+                              <Link className="h-4 w-4 mr-1" /> {event.link_text || 'Lien'}
+                            </a>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
@@ -771,13 +828,92 @@ const ScheduleManager = () => {
                 onChange={(e) => setEventOrderNumber(parseInt(e.target.value) || 0)}
               />
             </div>
+            
+            {/* File Upload */}
+            <div className="space-y-2 border p-4 rounded-md">
+              <label className="text-sm font-medium">Fichier associé</label>
+              
+              {eventFileUrl && (
+                <div className="flex items-center justify-between py-2">
+                  <a 
+                    href={eventFileUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center text-blue-600 hover:underline"
+                  >
+                    <FileUp className="h-4 w-4 mr-2" />
+                    Fichier téléchargé
+                  </a>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEventFileUrl(null)}
+                  >
+                    Supprimer
+                  </Button>
+                </div>
+              )}
+              
+              {!eventFileUrl && (
+                <div className="flex flex-col gap-2">
+                  <Input
+                    id="event_file"
+                    type="file"
+                    onChange={handleFileChange}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Formats supportés: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, images (max: 5MB)
+                  </p>
+                </div>
+              )}
+            </div>
+            
+            {/* External Link */}
+            <div className="space-y-2 border p-4 rounded-md">
+              <label className="text-sm font-medium">Lien externe</label>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="link_url" className="text-xs">URL</label>
+                  <Input
+                    id="link_url"
+                    value={eventLinkUrl}
+                    onChange={(e) => setEventLinkUrl(e.target.value)}
+                    placeholder="https://exemple.com"
+                    type="url"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="link_text" className="text-xs">Texte du lien</label>
+                  <Input
+                    id="link_text"
+                    value={eventLinkText}
+                    onChange={(e) => setEventLinkText(e.target.value)}
+                    placeholder="Plus d'informations"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">
+                Laisser vide si aucun lien n'est nécessaire
+              </p>
+            </div>
           </div>
           
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Annuler</Button>
             </DialogClose>
-            <Button onClick={saveEvent}>Enregistrer</Button>
+            <Button onClick={saveEvent} disabled={isUploading}>
+              {isUploading ? (
+                <>
+                  <span className="animate-spin mr-2">⟳</span>
+                  Téléchargement...
+                </>
+              ) : (
+                "Enregistrer"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

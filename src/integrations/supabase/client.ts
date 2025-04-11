@@ -80,6 +80,21 @@ const channel = supabase.channel('admin-panel-changes')
   }, (payload) => {
     console.log('Change received on countdown_settings!', payload);
   })
+  // Add realtime for schedule days and events
+  .on('postgres_changes', { 
+    event: '*', 
+    schema: 'public', 
+    table: 'schedule_days' 
+  }, (payload) => {
+    console.log('Change received on schedule_days!', payload);
+  })
+  .on('postgres_changes', { 
+    event: '*', 
+    schema: 'public', 
+    table: 'schedule_events' 
+  }, (payload) => {
+    console.log('Change received on schedule_events!', payload);
+  })
   .subscribe();
 
 // Export the channel for potential cleanup
@@ -162,6 +177,33 @@ export interface NewsletterSubscriber {
   subscribed_at: string;
 }
 
+// Define schedule related interfaces
+export interface ScheduleDay {
+  id: string;
+  date: string;
+  day_name: string;
+  order_number: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ScheduleEvent {
+  id: string;
+  day_id: string;
+  title: string;
+  description: string | null;
+  start_time: string;
+  end_time: string;
+  location: string | null;
+  category: string;
+  order_number: number;
+  file_url?: string | null;
+  link_url?: string | null;
+  link_text?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // Define a Json type to match Supabase's Json type
 export type Json = 
   | string
@@ -189,7 +231,7 @@ export async function uploadFileToSupabase(
   path?: string
 ): Promise<string | null> {
   try {
-    const fileName = path ? `${path}/${file.name}` : file.name;
+    const fileName = path ? `${path}/${Date.now()}_${file.name.replace(/\s+/g, '_')}` : `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
     
     const { data, error } = await supabase.storage
       .from(bucket)
