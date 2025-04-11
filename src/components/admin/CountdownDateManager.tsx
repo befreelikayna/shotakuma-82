@@ -11,22 +11,22 @@ import { format } from 'date-fns';
 import { Clock } from 'lucide-react';
 
 const CountdownDateManager = () => {
-  const { countdownSettings, updateCountdownSettings, isLoading } = useCountdownSettings();
+  const { settings, loading, saveSettings } = useCountdownSettings();
   
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [time, setTime] = useState("10:00");
   
   useEffect(() => {
-    if (countdownSettings?.target_date) {
+    if (settings?.targetDate) {
       try {
-        const targetDate = new Date(countdownSettings.target_date);
+        const targetDate = new Date(settings.targetDate);
         setDate(targetDate);
         setTime(format(targetDate, 'HH:mm'));
       } catch (error) {
         console.error("Error parsing date:", error);
       }
     }
-  }, [countdownSettings]);
+  }, [settings]);
 
   const handleSave = async () => {
     if (!date) {
@@ -43,9 +43,10 @@ const CountdownDateManager = () => {
       targetDate.setHours(hours, minutes, 0, 0);
       
       // Update the countdown settings
-      await updateCountdownSettings({
-        target_date: targetDate.toISOString(),
-        is_active: true
+      await saveSettings({
+        ...settings,
+        targetDate: targetDate.toISOString(),
+        enabled: true
       });
       
       toast.success("Countdown date and time updated successfully");
@@ -100,10 +101,10 @@ const CountdownDateManager = () => {
       <CardFooter>
         <Button 
           onClick={handleSave} 
-          disabled={isLoading || !date}
+          disabled={loading || !date}
           className="w-full bg-pink-600 hover:bg-pink-700"
         >
-          {isLoading ? "Saving..." : "Save Countdown Date & Time"}
+          {loading ? "Saving..." : "Save Countdown Date & Time"}
         </Button>
       </CardFooter>
     </Card>
