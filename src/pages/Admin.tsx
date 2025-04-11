@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -22,19 +23,17 @@ import LogoUploader from "@/components/admin/LogoUploader";
 import AdminLogin from "@/components/admin/AdminLogin";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  Carousel, 
-  CarouselContent, 
-  CarouselItem, 
-  CarouselPrevious, 
-  CarouselNext 
-} from "@/components/ui/carousel";
-import { type CarouselApi } from "@/components/ui/carousel";
+  Collapsible, 
+  CollapsibleContent, 
+  CollapsibleTrigger 
+} from "@/components/ui/collapsible";
+import { ChevronDown, Menu } from "lucide-react";
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("slider");
-  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -93,6 +92,7 @@ const Admin = () => {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     window.history.replaceState(null, '', `#${value}`);
+    setIsMenuOpen(false); // Close menu after selection
   };
 
   const handleLogout = async () => {
@@ -147,31 +147,38 @@ const Admin = () => {
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
             <div className="relative mb-6 md:mb-8">
-              <Carousel className="w-full px-10" setApi={setCarouselApi} opts={{ align: "start", dragFree: true }}>
-                <CarouselContent className="w-full">
-                  <CarouselItem className="basis-auto flex-grow-0">
-                    <TabsList className="inline-flex flex-nowrap min-w-max gap-2">
-                      <TabsTrigger value="slider" className="whitespace-nowrap">Slider</TabsTrigger>
-                      <TabsTrigger value="gallery" className="whitespace-nowrap">Galerie</TabsTrigger>
-                      <TabsTrigger value="events" className="whitespace-nowrap">Événements</TabsTrigger>
-                      <TabsTrigger value="schedule" className="whitespace-nowrap">Programme</TabsTrigger>
-                      <TabsTrigger value="tickets" className="whitespace-nowrap">Billets</TabsTrigger>
-                      <TabsTrigger value="packages" className="whitespace-nowrap">Forfaits</TabsTrigger>
-                      <TabsTrigger value="partners" className="whitespace-nowrap">Partenaires</TabsTrigger>
-                      <TabsTrigger value="countdown" className="whitespace-nowrap">Countdown</TabsTrigger>
-                      <TabsTrigger value="content" className="whitespace-nowrap">Contenu</TabsTrigger>
-                      <TabsTrigger value="general" className="whitespace-nowrap">Général</TabsTrigger>
-                      <TabsTrigger value="social" className="whitespace-nowrap">Liens</TabsTrigger>
-                      <TabsTrigger value="newsletter" className="whitespace-nowrap">Newsletter</TabsTrigger>
-                      <TabsTrigger value="theme" className="whitespace-nowrap">Thème</TabsTrigger>
-                      <TabsTrigger value="logo" className="whitespace-nowrap">Logo</TabsTrigger>
-                      <TabsTrigger value="assets" className="whitespace-nowrap">Assets</TabsTrigger>
-                    </TabsList>
-                  </CarouselItem>
-                </CarouselContent>
-                <CarouselPrevious className="left-0" />
-                <CarouselNext className="right-0" />
-              </Carousel>
+              <Collapsible open={isMenuOpen} onOpenChange={setIsMenuOpen} className="w-full">
+                <div className="flex items-center justify-between px-4 py-2 bg-white rounded-lg shadow-sm mb-2">
+                  <h3 className="text-lg font-medium">
+                    Section: {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                  </h3>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="p-0 h-9 w-9">
+                      <Menu className="h-5 w-5" />
+                      <span className="sr-only">Toggle menu</span>
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent className="bg-white rounded-lg shadow-sm p-4 mb-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                    <TabsTrigger value="slider" className="w-full justify-start">Slider</TabsTrigger>
+                    <TabsTrigger value="gallery" className="w-full justify-start">Galerie</TabsTrigger>
+                    <TabsTrigger value="events" className="w-full justify-start">Événements</TabsTrigger>
+                    <TabsTrigger value="schedule" className="w-full justify-start">Programme</TabsTrigger>
+                    <TabsTrigger value="tickets" className="w-full justify-start">Billets</TabsTrigger>
+                    <TabsTrigger value="packages" className="w-full justify-start">Forfaits</TabsTrigger>
+                    <TabsTrigger value="partners" className="w-full justify-start">Partenaires</TabsTrigger>
+                    <TabsTrigger value="countdown" className="w-full justify-start">Countdown</TabsTrigger>
+                    <TabsTrigger value="content" className="w-full justify-start">Contenu</TabsTrigger>
+                    <TabsTrigger value="general" className="w-full justify-start">Général</TabsTrigger>
+                    <TabsTrigger value="social" className="w-full justify-start">Liens</TabsTrigger>
+                    <TabsTrigger value="newsletter" className="w-full justify-start">Newsletter</TabsTrigger>
+                    <TabsTrigger value="theme" className="w-full justify-start">Thème</TabsTrigger>
+                    <TabsTrigger value="logo" className="w-full justify-start">Logo</TabsTrigger>
+                    <TabsTrigger value="assets" className="w-full justify-start">Assets</TabsTrigger>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
 
             <TabsContent value="slider" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
