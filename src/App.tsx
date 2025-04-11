@@ -8,6 +8,7 @@ import { AnimatePresence } from "framer-motion";
 import CustomCursor from "./components/CustomCursor";
 import ParticleEffect from "./components/ParticleEffect";
 import CountdownProvider from "./components/CountdownProvider";
+import WhatsAppButton from "./components/WhatsAppButton";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Schedule from "./pages/Schedule";
@@ -40,6 +41,7 @@ const App = () => (
             </Routes>
           </AnimatePresence>
         </CountdownProvider>
+        <WhatsAppButton phoneNumber="+212670625980" />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

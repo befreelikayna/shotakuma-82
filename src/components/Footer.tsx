@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Instagram, Facebook, Twitter, Youtube, Mail, MapPin, MessageSquare } from "lucide-react";
+import { Instagram, Facebook, Twitter, Youtube, Mail, MapPin, MessageSquare, Phone } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -130,6 +130,23 @@ const Footer = () => {
                 <Mail className="h-5 w-5 text-festival-accent mr-2 mt-0.5" />
                 <a href="mailto:infos@shotaku.ma" className="text-slate-300 hover:text-white transition-colors duration-300">
                   infos@shotaku.ma
+                </a>
+              </li>
+              <li className="flex items-start">
+                <Phone className="h-5 w-5 text-festival-accent mr-2 mt-0.5" />
+                <a href="tel:+212670625980" className="text-slate-300 hover:text-white transition-colors duration-300">
+                  +212 670-625980
+                </a>
+              </li>
+              <li className="flex items-start">
+                <WhatsApp className="h-5 w-5 text-[#25D366] mr-2 mt-0.5" />
+                <a 
+                  href="https://wa.me/212670625980" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-300 hover:text-white transition-colors duration-300"
+                >
+                  Contactez-nous sur WhatsApp
                 </a>
               </li>
             </ul>
