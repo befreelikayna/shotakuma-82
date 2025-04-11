@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -26,11 +27,13 @@ import {
   CarouselPrevious, 
   CarouselNext 
 } from "@/components/ui/carousel";
+import { type CarouselApi } from "@/components/ui/carousel";
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("slider");
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -142,11 +145,11 @@ const Admin = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
-            <div className="relative mb-6 md:mb-8">
-              <Carousel>
-                <CarouselContent className="-ml-2">
-                  <CarouselItem className="basis-auto pl-2">
-                    <TabsList className="grid grid-flow-col auto-cols-max gap-2">
+            <div className="relative mb-6 md:mb-8 px-8">
+              <Carousel className="w-full" setApi={setCarouselApi} opts={{ align: "start", dragFree: true }}>
+                <CarouselContent className="w-full">
+                  <CarouselItem className="basis-auto flex-grow-0">
+                    <TabsList className="inline-flex flex-nowrap min-w-max gap-2">
                       <TabsTrigger value="slider" className="whitespace-nowrap">Slider</TabsTrigger>
                       <TabsTrigger value="gallery" className="whitespace-nowrap">Galerie</TabsTrigger>
                       <TabsTrigger value="events" className="whitespace-nowrap">Événements</TabsTrigger>
