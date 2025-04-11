@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,6 @@ import AdminLogin from "@/components/admin/AdminLogin";
 import LogoUploader from "@/components/admin/LogoUploader";
 import PartnersManager from "@/components/admin/PartnersManager";
 import { supabase } from "@/integrations/supabase/client";
-
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,8 +26,10 @@ const Admin = () => {
     const checkSession = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase.auth.getSession();
-        
+        const {
+          data,
+          error
+        } = await supabase.auth.getSession();
         if (data && data.session) {
           setIsAuthenticated(true);
         }
@@ -39,29 +39,28 @@ const Admin = () => {
         setIsLoading(false);
       }
     };
-
     checkSession();
-    
+
     // Subscribe to auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: authListener
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
     });
-    
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
-
   const handleLogin = (success: boolean) => {
     if (success) {
       setIsAuthenticated(true);
       toast({
         title: "Connexion réussie",
-        description: "Bienvenue dans le panneau d'administration",
+        description: "Bienvenue dans le panneau d'administration"
       });
     }
   };
-  
+
   // Check if there's a hash in the URL to set the active tab
   useEffect(() => {
     const hash = window.location.hash;
@@ -96,26 +95,21 @@ const Admin = () => {
     setIsAuthenticated(false);
     toast({
       title: "Déconnexion réussie",
-      description: "Vous avez été déconnecté avec succès",
+      description: "Vous avez été déconnecté avec succès"
     });
   };
-
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
+    return <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent text-festival-primary align-[-0.125em]" role="status">
             <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading...</span>
           </div>
           <p className="mt-2 text-festival-secondary">Chargement du panneau d'administration...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    return <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
         <Navbar />
         <div className="pt-20 md:pt-32 pb-20 px-4 md:px-0">
           <div className="festival-container">
@@ -123,12 +117,9 @@ const Admin = () => {
           </div>
         </div>
         <Footer />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+  return <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <Navbar />
       <div className="pt-20 md:pt-32 pb-20 px-4 md:px-0">
         <div className="festival-container">
@@ -142,7 +133,7 @@ const Admin = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
-            <TabsList className="grid grid-cols-3 md:grid-cols-9 mb-6 md:mb-8 w-full overflow-x-auto">
+            <TabsList className="grid grid-cols-3 md:grid-cols-9 mb-6 md:mb-8 w-full overflow-x-auto py-[62px] px-[95px] rounded-none mx-[9px] my-0">
               <TabsTrigger value="slider" className="whitespace-nowrap">Slider</TabsTrigger>
               <TabsTrigger value="logo" className="whitespace-nowrap">Logo</TabsTrigger>
               <TabsTrigger value="partners" className="whitespace-nowrap">Partenaires</TabsTrigger>
@@ -208,8 +199,6 @@ const Admin = () => {
         </div>
       </div>
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Admin;
