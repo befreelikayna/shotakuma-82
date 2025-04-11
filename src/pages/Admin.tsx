@@ -21,6 +21,7 @@ import ScheduleManager from "@/components/admin/ScheduleManager";
 import SiteAssetsManager from "@/components/admin/SiteAssetsManager";
 import LogoUploader from "@/components/admin/LogoUploader";
 import HeaderMenuManager from "@/components/admin/HeaderMenuManager";
+import PageManager from "@/components/admin/PageManager";
 import AdminLogin from "@/components/admin/AdminLogin";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -144,6 +145,7 @@ const Admin = () => {
     { id: "countdown", label: "Countdown" },
     { id: "content", label: "Contenu" },
     { id: "general", label: "Général" },
+    { id: "pages", label: "Pages" },
     { id: "social", label: "Liens" },
     { id: "menu", label: "Navigation" },
     { id: "newsletter", label: "Newsletter" },
@@ -216,6 +218,7 @@ const Admin = () => {
               {activeTab === "countdown" && <CountdownManager />}
               {activeTab === "content" && <ContentManager />}
               {activeTab === "general" && <GeneralContentEditor />}
+              {activeTab === "pages" && <PageManager />}
               {activeTab === "theme" && <ThemeManager />}
               {activeTab === "social" && <SocialLinksEditor />}
               {activeTab === "menu" && <HeaderMenuManager />}

@@ -231,6 +231,42 @@ export type Database = {
         }
         Relationships: []
       }
+      pages: {
+        Row: {
+          created_at: string
+          id: string
+          is_published: boolean
+          layout: string | null
+          meta_description: string | null
+          path: string
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          layout?: string | null
+          meta_description?: string | null
+          path: string
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          layout?: string | null
+          meta_description?: string | null
+          path?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partners: {
         Row: {
           active: boolean
@@ -475,7 +511,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_page_file: {
+        Args: { page_title: string; page_slug: string; page_layout?: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
