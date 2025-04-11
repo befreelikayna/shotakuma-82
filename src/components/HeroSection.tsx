@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { ChevronDown, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -225,25 +224,25 @@ const HeroSection = () => {
             className="flex justify-center mb-6 sm:mb-10"
             variants={itemVariants}
           >
-            <div className="flex space-x-4 md:space-x-6 bg-black/30 backdrop-blur-sm px-6 py-4 rounded-lg border border-white/10">
-              <div className="flex flex-col items-center">
-                <span className="text-2xl md:text-3xl font-bold text-festival-accent">{formatTime(timeLeft.days)}</span>
-                <span className="text-xs text-white/80 uppercase mt-1">Days</span>
+            <div className="flex space-x-2 md:space-x-4 bg-black/30 backdrop-blur-sm px-6 py-4 rounded-lg border border-white/10">
+              <div className="elementor-countdown-item flex flex-col items-center">
+                <span className="elementor-countdown-digits elementor-countdown-days text-2xl md:text-3xl font-bold text-festival-accent">{formatTime(timeLeft.days)}</span>
+                <span className="elementor-countdown-label text-xs text-white/80 uppercase mt-1">Days</span>
               </div>
-              <div className="flex items-center text-white/60">:</div>
-              <div className="flex flex-col items-center">
-                <span className="text-2xl md:text-3xl font-bold text-festival-accent">{formatTime(timeLeft.hours)}</span>
-                <span className="text-xs text-white/80 uppercase mt-1">Hours</span>
+              <div className="flex items-center text-white/60 text-2xl font-bold">:</div>
+              <div className="elementor-countdown-item flex flex-col items-center">
+                <span className="elementor-countdown-digits elementor-countdown-hours text-2xl md:text-3xl font-bold text-festival-accent">{formatTime(timeLeft.hours)}</span>
+                <span className="elementor-countdown-label text-xs text-white/80 uppercase mt-1">Hours</span>
               </div>
-              <div className="flex items-center text-white/60">:</div>
-              <div className="flex flex-col items-center">
-                <span className="text-2xl md:text-3xl font-bold text-festival-accent">{formatTime(timeLeft.minutes)}</span>
-                <span className="text-xs text-white/80 uppercase mt-1">Minutes</span>
+              <div className="flex items-center text-white/60 text-2xl font-bold">:</div>
+              <div className="elementor-countdown-item flex flex-col items-center">
+                <span className="elementor-countdown-digits elementor-countdown-minutes text-2xl md:text-3xl font-bold text-festival-accent">{formatTime(timeLeft.minutes)}</span>
+                <span className="elementor-countdown-label text-xs text-white/80 uppercase mt-1">Minutes</span>
               </div>
-              <div className="flex items-center text-white/60">:</div>
-              <div className="flex flex-col items-center">
-                <span className="text-2xl md:text-3xl font-bold text-festival-accent">{formatTime(timeLeft.seconds)}</span>
-                <span className="text-xs text-white/80 uppercase mt-1">Seconds</span>
+              <div className="flex items-center text-white/60 text-2xl font-bold">:</div>
+              <div className="elementor-countdown-item flex flex-col items-center">
+                <span className="elementor-countdown-digits elementor-countdown-seconds text-2xl md:text-3xl font-bold text-festival-accent">{formatTime(timeLeft.seconds)}</span>
+                <span className="elementor-countdown-label text-xs text-white/80 uppercase mt-1">Seconds</span>
               </div>
             </div>
           </motion.div>
