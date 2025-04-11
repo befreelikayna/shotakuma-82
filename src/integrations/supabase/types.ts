@@ -237,6 +237,83 @@ export type Database = {
         }
         Relationships: []
       }
+      schedule_days: {
+        Row: {
+          created_at: string
+          date: string
+          day_name: string
+          id: string
+          order_number: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          day_name: string
+          id?: string
+          order_number?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          day_name?: string
+          id?: string
+          order_number?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      schedule_events: {
+        Row: {
+          category: string
+          created_at: string
+          day_id: string | null
+          description: string | null
+          end_time: string
+          id: string
+          location: string | null
+          order_number: number
+          start_time: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          day_id?: string | null
+          description?: string | null
+          end_time: string
+          id?: string
+          location?: string | null
+          order_number?: number
+          start_time: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          day_id?: string | null
+          description?: string | null
+          end_time?: string
+          id?: string
+          location?: string | null
+          order_number?: number
+          start_time?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_events_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "schedule_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       slider_images: {
         Row: {
           active: boolean

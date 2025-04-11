@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import ThemeManager from "@/components/admin/ThemeManager";
 import GeneralContentEditor from "@/components/admin/GeneralContentEditor";
 import PartnersManager from "@/components/admin/PartnersManager";
 import CountdownManager from "@/components/admin/CountdownManager";
+import ScheduleManager from "@/components/admin/ScheduleManager"; // Added import
 import AdminLogin from "@/components/admin/AdminLogin";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -134,10 +136,11 @@ const Admin = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
-            <TabsList className="grid grid-cols-4 md:grid-cols-12 mb-6 md:mb-8 w-full overflow-x-auto">
+            <TabsList className="grid grid-cols-4 md:grid-cols-13 mb-6 md:mb-8 w-full overflow-x-auto">
               <TabsTrigger value="slider" className="whitespace-nowrap">Slider</TabsTrigger>
               <TabsTrigger value="gallery" className="whitespace-nowrap">Galerie</TabsTrigger>
               <TabsTrigger value="events" className="whitespace-nowrap">Événements</TabsTrigger>
+              <TabsTrigger value="schedule" className="whitespace-nowrap">Programme</TabsTrigger>
               <TabsTrigger value="tickets" className="whitespace-nowrap">Billets</TabsTrigger>
               <TabsTrigger value="packages" className="whitespace-nowrap">Forfaits</TabsTrigger>
               <TabsTrigger value="partners" className="whitespace-nowrap">Partenaires</TabsTrigger>
@@ -167,6 +170,10 @@ const Admin = () => {
 
             <TabsContent value="events" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <EventManager />
+            </TabsContent>
+
+            <TabsContent value="schedule" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
+              <ScheduleManager />
             </TabsContent>
 
             <TabsContent value="tickets" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">

@@ -1,189 +1,132 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Clock, MapPin, Users } from "lucide-react";
+import { Clock, MapPin, Calendar, RefreshCw } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
-type Event = {
+type ScheduleEvent = {
   id: string;
   title: string;
-  description: string;
-  startTime: string;
-  endTime: string;
-  location: string;
+  description: string | null;
+  start_time: string;
+  end_time: string;
+  location: string | null;
   category: "panel" | "workshop" | "competition" | "screening" | "performance";
+  order_number: number;
 };
 
-type Day = {
+type ScheduleDay = {
+  id: string;
   date: string;
-  dayName: string;
-  events: Event[];
+  day_name: string;
+  events: ScheduleEvent[];
 };
 
 const Schedule = () => {
-  const [activeDay, setActiveDay] = useState<string>("day1");
-  const [schedule, setSchedule] = useState<Day[]>([
-    {
-      date: "26 Mars 2024",
-      dayName: "Jour 1",
-      events: [
-        {
-          id: "e1",
-          title: "Cérémonie d'ouverture",
-          description: "Lancement officiel du festival avec des discours de bienvenue et une performance spéciale.",
-          startTime: "10:00",
-          endTime: "11:00",
-          location: "Scène principale",
-          category: "performance",
-        },
-        {
-          id: "e2",
-          title: "Panel: Histoire du Manga",
-          description: "Une exploration de l'évolution du manga à travers les décennies.",
-          startTime: "11:30",
-          endTime: "12:30",
-          location: "Salle de conférence A",
-          category: "panel",
-        },
-        {
-          id: "e3",
-          title: "Atelier de Dessin Manga",
-          description: "Apprenez les bases du dessin manga avec un artiste professionnel.",
-          startTime: "13:00",
-          endTime: "14:30",
-          location: "Zone créative",
-          category: "workshop",
-        },
-        {
-          id: "e4",
-          title: "Projection: Films d'animation classiques",
-          description: "Redécouvrez les chefs-d'œuvre de l'animation japonaise.",
-          startTime: "15:00",
-          endTime: "17:00",
-          location: "Cinéma",
-          category: "screening",
-        },
-        {
-          id: "e5",
-          title: "Concert J-Pop",
-          description: "Un concert énergique célébrant la musique pop japonaise.",
-          startTime: "18:00",
-          endTime: "20:00",
-          location: "Scène principale",
-          category: "performance",
-        },
-      ],
-    },
-    {
-      date: "27 Mars 2024",
-      dayName: "Jour 2",
-      events: [
-        {
-          id: "e6",
-          title: "Qualifications Concours Cosplay",
-          description: "Première phase du grand concours de cosplay du festival.",
-          startTime: "10:30",
-          endTime: "12:30",
-          location: "Scène principale",
-          category: "competition",
-        },
-        {
-          id: "e7",
-          title: "Panel: Industrie de l'Anime",
-          description: "Discussion sur l'état actuel et le futur de l'industrie de l'animation japonaise.",
-          startTime: "13:00",
-          endTime: "14:00",
-          location: "Salle de conférence B",
-          category: "panel",
-        },
-        {
-          id: "e8",
-          title: "Atelier de Calligraphie",
-          description: "Découvrez l'art de la calligraphie japonaise.",
-          startTime: "14:30",
-          endTime: "16:00",
-          location: "Zone créative",
-          category: "workshop",
-        },
-        {
-          id: "e9",
-          title: "Tournoi Jeux Vidéo",
-          description: "Compétition sur les jeux de combat les plus populaires.",
-          startTime: "16:30",
-          endTime: "19:00",
-          location: "Zone gaming",
-          category: "competition",
-        },
-        {
-          id: "e10",
-          title: "Projection: Nouveaux Animes",
-          description: "Avant-première de séries d'anime récentes et à venir.",
-          startTime: "19:30",
-          endTime: "21:30",
-          location: "Cinéma",
-          category: "screening",
-        },
-      ],
-    },
-    {
-      date: "28 Mars 2024",
-      dayName: "Jour 3",
-      events: [
-        {
-          id: "e11",
-          title: "Atelier Cosplay",
-          description: "Conseils et techniques pour créer vos propres costumes.",
-          startTime: "10:00",
-          endTime: "11:30",
-          location: "Zone créative",
-          category: "workshop",
-        },
-        {
-          id: "e12",
-          title: "Finale Concours Cosplay",
-          description: "Grande finale du concours avec présentation des meilleurs cosplays.",
-          startTime: "12:00",
-          endTime: "14:00",
-          location: "Scène principale",
-          category: "competition",
-        },
-        {
-          id: "e13",
-          title: "Panel: Rencontre avec les Invités",
-          description: "Session de questions-réponses avec nos invités spéciaux.",
-          startTime: "14:30",
-          endTime: "15:30",
-          location: "Salle de conférence A",
-          category: "panel",
-        },
-        {
-          id: "e14",
-          title: "Parade Cosplay",
-          description: "Défilé de tous les cosplayers à travers le festival.",
-          startTime: "16:00",
-          endTime: "17:00",
-          location: "Tout le site",
-          category: "performance",
-        },
-        {
-          id: "e15",
-          title: "Cérémonie de Clôture",
-          description: "Remise des prix et spectacle final pour conclure le festival.",
-          startTime: "18:00",
-          endTime: "20:00",
-          location: "Scène principale",
-          category: "performance",
-        },
-      ],
-    },
-  ]);
+  const [activeDay, setActiveDay] = useState<string>("");
+  const [schedule, setSchedule] = useState<ScheduleDay[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchSchedule = async () => {
+    try {
+      setIsLoading(true);
+      
+      // First fetch days
+      const { data: daysData, error: daysError } = await supabase
+        .from('schedule_days')
+        .select('*')
+        .order('order_number', { ascending: true });
+      
+      if (daysError) {
+        throw daysError;
+      }
+      
+      if (!daysData || daysData.length === 0) {
+        setSchedule([]);
+        return;
+      }
+      
+      // Set active day to first day if not already set
+      if (!activeDay) {
+        setActiveDay(daysData[0].id);
+      }
+      
+      // Fetch events for each day
+      const scheduleDays = await Promise.all(
+        daysData.map(async (day) => {
+          const { data: eventsData, error: eventsError } = await supabase
+            .from('schedule_events')
+            .select('*')
+            .eq('day_id', day.id)
+            .order('order_number', { ascending: true });
+          
+          if (eventsError) {
+            console.error(`Error fetching events for day ${day.id}:`, eventsError);
+            return {
+              ...day,
+              events: []
+            };
+          }
+          
+          return {
+            ...day,
+            events: eventsData || []
+          };
+        })
+      );
+      
+      setSchedule(scheduleDays);
+    } catch (error) {
+      console.error('Error fetching schedule:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger le programme",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    fetchSchedule();
+    
+    // Set up realtime subscription
+    const channel = supabase
+      .channel('schedule-changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'schedule_days' 
+      }, () => {
+        console.log('Schedule days changed, refreshing...');
+        fetchSchedule();
+      })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'schedule_events' 
+      }, () => {
+        console.log('Schedule events changed, refreshing...');
+        fetchSchedule();
+      })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const getCategoryColor = (category: Event["category"]) => {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  const getCategoryColor = (category: ScheduleEvent["category"]) => {
     switch (category) {
       case "panel":
         return "bg-blue-100 text-blue-800";
@@ -200,7 +143,15 @@ const Schedule = () => {
     }
   };
 
-  const activeSchedule = schedule.find((day) => day.dayName.toLowerCase().replace(/\s+/g, "") === activeDay);
+  const activeScheduleDay = schedule.find((day) => day.id === activeDay);
+
+  const handleRefresh = () => {
+    fetchSchedule();
+    toast({
+      title: "Actualisé",
+      description: "Le programme a été actualisé"
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -219,90 +170,125 @@ const Schedule = () => {
                 Programme du Festival
               </h1>
               <p className="text-lg text-festival-secondary max-w-2xl mx-auto">
-                Découvrez les événements, ateliers, projections et performances prévus pendant les trois jours du festival
+                Découvrez les événements, ateliers, projections et performances prévus pendant les quatre jours du festival
               </p>
             </div>
 
-            {/* Day Tabs */}
-            <div className="flex justify-center mb-10">
-              <div className="inline-flex p-1 rounded-full bg-white shadow-soft">
-                {schedule.map((day, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setActiveDay(day.dayName.toLowerCase().replace(/\s+/g, ""))}
-                    className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                      activeDay === day.dayName.toLowerCase().replace(/\s+/g, "")
-                        ? "bg-festival-accent text-white shadow-accent"
-                        : "text-festival-secondary hover:bg-slate-100"
-                    }`}
-                  >
-                    {day.dayName}
-                    <span className="ml-2 text-xs opacity-75">{day.date}</span>
-                  </button>
-                ))}
-              </div>
+            <div className="flex justify-end mb-6">
+              <button 
+                onClick={handleRefresh} 
+                className="flex items-center gap-2 text-sm text-festival-secondary hover:text-festival-primary"
+              >
+                <RefreshCw className="h-4 w-4" /> 
+                Actualiser le programme
+              </button>
             </div>
 
-            {/* Event Categories Legend */}
-            <div className="flex flex-wrap justify-center gap-3 mb-10">
-              <div className="flex items-center">
-                <span className="inline-block w-3 h-3 rounded-full bg-blue-400 mr-2"></span>
-                <span className="text-sm text-festival-secondary">Panels</span>
+            {isLoading ? (
+              <div className="flex justify-center items-center p-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-festival-primary"></div>
+                <span className="ml-3 text-festival-secondary">Chargement du programme...</span>
               </div>
-              <div className="flex items-center">
-                <span className="inline-block w-3 h-3 rounded-full bg-green-400 mr-2"></span>
-                <span className="text-sm text-festival-secondary">Ateliers</span>
+            ) : schedule.length === 0 ? (
+              <div className="text-center p-12 bg-white rounded-xl shadow-soft">
+                <p className="text-festival-secondary">Aucun programme disponible pour le moment.</p>
               </div>
-              <div className="flex items-center">
-                <span className="inline-block w-3 h-3 rounded-full bg-purple-400 mr-2"></span>
-                <span className="text-sm text-festival-secondary">Compétitions</span>
-              </div>
-              <div className="flex items-center">
-                <span className="inline-block w-3 h-3 rounded-full bg-amber-400 mr-2"></span>
-                <span className="text-sm text-festival-secondary">Projections</span>
-              </div>
-              <div className="flex items-center">
-                <span className="inline-block w-3 h-3 rounded-full bg-rose-400 mr-2"></span>
-                <span className="text-sm text-festival-secondary">Performances</span>
-              </div>
-            </div>
-
-            {/* Schedule List */}
-            <div className="space-y-4">
-              {activeSchedule?.events.map((event) => (
-                <motion.div
-                  key={event.id}
-                  className="bg-white rounded-xl p-6 shadow-soft border border-slate-100"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-                    <div>
-                      <h3 className="text-xl font-semibold text-festival-primary">{event.title}</h3>
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium mt-2 ${getCategoryColor(
-                          event.category
-                        )}`}
+            ) : (
+              <>
+                {/* Day Tabs */}
+                <div className="flex justify-center mb-10 overflow-x-auto">
+                  <div className="inline-flex p-1 rounded-full bg-white shadow-soft">
+                    {schedule.map((day) => (
+                      <button
+                        key={day.id}
+                        onClick={() => setActiveDay(day.id)}
+                        className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                          activeDay === day.id
+                            ? "bg-festival-accent text-white shadow-accent"
+                            : "text-festival-secondary hover:bg-slate-100"
+                        }`}
                       >
-                        {event.category.charAt(0).toUpperCase() + event.category.slice(1)}
-                      </span>
-                    </div>
-                    <div className="flex items-center mt-2 md:mt-0">
-                      <Clock className="h-4 w-4 text-festival-secondary mr-1" />
-                      <span className="text-sm font-medium text-festival-secondary">
-                        {event.startTime} - {event.endTime}
-                      </span>
-                    </div>
+                        {day.day_name}
+                        <span className="ml-2 text-xs opacity-75">{formatDate(day.date)}</span>
+                      </button>
+                    ))}
                   </div>
-                  <p className="text-festival-secondary mb-4">{event.description}</p>
+                </div>
+
+                {/* Event Categories Legend */}
+                <div className="flex flex-wrap justify-center gap-3 mb-10">
                   <div className="flex items-center">
-                    <MapPin className="h-4 w-4 text-festival-accent mr-1" />
-                    <span className="text-sm text-festival-secondary">{event.location}</span>
+                    <span className="inline-block w-3 h-3 rounded-full bg-blue-400 mr-2"></span>
+                    <span className="text-sm text-festival-secondary">Panels</span>
                   </div>
-                </motion.div>
-              ))}
-            </div>
+                  <div className="flex items-center">
+                    <span className="inline-block w-3 h-3 rounded-full bg-green-400 mr-2"></span>
+                    <span className="text-sm text-festival-secondary">Ateliers</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="inline-block w-3 h-3 rounded-full bg-purple-400 mr-2"></span>
+                    <span className="text-sm text-festival-secondary">Compétitions</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="inline-block w-3 h-3 rounded-full bg-amber-400 mr-2"></span>
+                    <span className="text-sm text-festival-secondary">Projections</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="inline-block w-3 h-3 rounded-full bg-rose-400 mr-2"></span>
+                    <span className="text-sm text-festival-secondary">Performances</span>
+                  </div>
+                </div>
+
+                {/* Schedule List */}
+                {activeScheduleDay && (
+                  <div className="space-y-4">
+                    {activeScheduleDay.events.length === 0 ? (
+                      <div className="bg-white rounded-xl p-6 shadow-soft border border-slate-100 text-center">
+                        <p className="text-festival-secondary">Aucun événement programmé pour cette journée.</p>
+                      </div>
+                    ) : (
+                      activeScheduleDay.events.map((event) => (
+                        <motion.div
+                          key={event.id}
+                          className="bg-white rounded-xl p-6 shadow-soft border border-slate-100"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4 }}
+                        >
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+                            <div>
+                              <h3 className="text-xl font-semibold text-festival-primary">{event.title}</h3>
+                              <span
+                                className={`inline-block px-3 py-1 rounded-full text-xs font-medium mt-2 ${getCategoryColor(
+                                  event.category as ScheduleEvent["category"]
+                                )}`}
+                              >
+                                {event.category.charAt(0).toUpperCase() + event.category.slice(1)}
+                              </span>
+                            </div>
+                            <div className="flex items-center mt-2 md:mt-0">
+                              <Clock className="h-4 w-4 text-festival-secondary mr-1" />
+                              <span className="text-sm font-medium text-festival-secondary">
+                                {event.start_time} - {event.end_time}
+                              </span>
+                            </div>
+                          </div>
+                          {event.description && (
+                            <p className="text-festival-secondary mb-4">{event.description}</p>
+                          )}
+                          {event.location && (
+                            <div className="flex items-center">
+                              <MapPin className="h-4 w-4 text-festival-accent mr-1" />
+                              <span className="text-sm text-festival-secondary">{event.location}</span>
+                            </div>
+                          )}
+                        </motion.div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </>
+            )}
 
             {/* Download Button */}
             <div className="mt-12 text-center">
