@@ -14,8 +14,12 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md shadow-soft">
       <div className="festival-container py-4 flex justify-between items-center">
-        <Link to="/" className="text-2xl font-bold text-festival-primary">
-          SHOTAKU
+        <Link to="/" className="flex items-center">
+          <img 
+            src="/logo.png" 
+            alt="SHOTAKU Logo" 
+            className="h-10 object-contain"
+          />
         </Link>
         
         {/* Mobile menu button */}

@@ -10,9 +10,11 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           <div className="col-span-1 md:col-span-1">
             <Link to="/" className="inline-block mb-4">
-              <h2 className="text-2xl font-bold">
-                <span className="text-festival-accent">SHO</span>TAKU
-              </h2>
+              <img 
+                src="/logo.png" 
+                alt="SHOTAKU Logo" 
+                className="h-12 object-contain"
+              />
             </Link>
             <p className="text-sm text-slate-300 mb-6">
               Le plus grand Festival Marocain de l'anime, du Manga et de la culture Geek.
