@@ -13,28 +13,17 @@ import NewsletterSubscriptions from "@/components/admin/NewsletterSubscriptions"
 import SliderManager from "@/components/admin/SliderManager";
 import ContentManager from "@/components/admin/ContentManager";
 import EventManager from "@/components/admin/EventManager";
-import ThemeManager from "@/components/admin/ThemeManager";
-import GeneralContentEditor from "@/components/admin/GeneralContentEditor";
-import PartnersManager from "@/components/admin/PartnersManager";
-import CountdownManager from "@/components/admin/CountdownManager";
-import ScheduleManager from "@/components/admin/ScheduleManager";
-import SiteAssetsManager from "@/components/admin/SiteAssetsManager";
-import LogoUploader from "@/components/admin/LogoUploader";
 import AdminLogin from "@/components/admin/AdminLogin";
+import LogoUploader from "@/components/admin/LogoUploader";
+import PartnersManager from "@/components/admin/PartnersManager";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Collapsible, 
-  CollapsibleContent, 
-  CollapsibleTrigger 
-} from "@/components/ui/collapsible";
-import { ChevronDown, Menu } from "lucide-react";
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("slider");
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // Check if user is already logged in
   useEffect(() => {
     const checkSession = async () => {
       setIsLoading(true);
@@ -53,6 +42,7 @@ const Admin = () => {
 
     checkSession();
     
+    // Subscribe to auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
     });
@@ -72,29 +62,35 @@ const Admin = () => {
     }
   };
   
+  // Check if there's a hash in the URL to set the active tab
   useEffect(() => {
     const hash = window.location.hash;
     if (hash) {
       const tab = hash.replace('#', '');
       setActiveTab(tab);
     } else {
+      // Default to slider tab if no hash is present
       setActiveTab('slider');
+      // Update URL hash using history API
       window.history.replaceState(null, '', `#slider`);
     }
   }, []);
 
+  // Update the URL hash when the active tab changes
   useEffect(() => {
     if (isAuthenticated && activeTab) {
       window.history.replaceState(null, '', `#${activeTab}`);
     }
   }, [activeTab, isAuthenticated]);
 
+  // Handle tab value change
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    // Update URL hash using history API to avoid full page reload
     window.history.replaceState(null, '', `#${value}`);
-    setIsMenuOpen(false); // Close menu after selection
   };
 
+  // Handle logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setIsAuthenticated(false);
@@ -146,43 +142,39 @@ const Admin = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
-            <div className="relative mb-6 md:mb-8">
-              <Collapsible open={isMenuOpen} onOpenChange={setIsMenuOpen} className="w-full">
-                <div className="flex items-center justify-between px-4 py-2 bg-white rounded-lg shadow-sm mb-2">
-                  <h3 className="text-lg font-medium">
-                    Section: {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-                  </h3>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="p-0 h-9 w-9">
-                      <Menu className="h-5 w-5" />
-                      <span className="sr-only">Toggle menu</span>
-                    </Button>
-                  </CollapsibleTrigger>
-                </div>
-                <CollapsibleContent className="bg-white rounded-lg shadow-sm p-4 mb-4">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    <TabsTrigger value="slider" className="w-full justify-start">Slider</TabsTrigger>
-                    <TabsTrigger value="gallery" className="w-full justify-start">Galerie</TabsTrigger>
-                    <TabsTrigger value="events" className="w-full justify-start">Événements</TabsTrigger>
-                    <TabsTrigger value="schedule" className="w-full justify-start">Programme</TabsTrigger>
-                    <TabsTrigger value="tickets" className="w-full justify-start">Billets</TabsTrigger>
-                    <TabsTrigger value="packages" className="w-full justify-start">Forfaits</TabsTrigger>
-                    <TabsTrigger value="partners" className="w-full justify-start">Partenaires</TabsTrigger>
-                    <TabsTrigger value="countdown" className="w-full justify-start">Countdown</TabsTrigger>
-                    <TabsTrigger value="content" className="w-full justify-start">Contenu</TabsTrigger>
-                    <TabsTrigger value="general" className="w-full justify-start">Général</TabsTrigger>
-                    <TabsTrigger value="social" className="w-full justify-start">Liens</TabsTrigger>
-                    <TabsTrigger value="newsletter" className="w-full justify-start">Newsletter</TabsTrigger>
-                    <TabsTrigger value="theme" className="w-full justify-start">Thème</TabsTrigger>
-                    <TabsTrigger value="logo" className="w-full justify-start">Logo</TabsTrigger>
-                    <TabsTrigger value="assets" className="w-full justify-start">Assets</TabsTrigger>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+            <TabsList className="grid grid-cols-3 md:grid-cols-9 mb-6 md:mb-8 w-full overflow-x-auto">
+              <TabsTrigger value="slider" className="whitespace-nowrap">Slider</TabsTrigger>
+              <TabsTrigger value="logo" className="whitespace-nowrap">Logo</TabsTrigger>
+              <TabsTrigger value="partners" className="whitespace-nowrap">Partenaires</TabsTrigger>
+              <TabsTrigger value="gallery" className="whitespace-nowrap">Galerie</TabsTrigger>
+              <TabsTrigger value="events" className="whitespace-nowrap">Événements</TabsTrigger>
+              <TabsTrigger value="tickets" className="whitespace-nowrap">Billets</TabsTrigger>
+              <TabsTrigger value="packages" className="whitespace-nowrap">Forfaits</TabsTrigger>
+              <TabsTrigger value="content" className="whitespace-nowrap hidden md:block">Contenu</TabsTrigger>
+              <TabsTrigger value="social" className="whitespace-nowrap hidden md:block">Liens</TabsTrigger>
+              <TabsTrigger value="newsletter" className="whitespace-nowrap hidden md:block">Newsletter</TabsTrigger>
+            </TabsList>
+            
+            {/* Mobile-only tabs for additional items */}
+            <div className="block md:hidden">
+              <TabsList className="grid grid-cols-3 mb-6 w-full overflow-x-auto">
+                <TabsTrigger value="content" className="whitespace-nowrap">Contenu</TabsTrigger>
+                <TabsTrigger value="social" className="whitespace-nowrap">Liens</TabsTrigger>
+                <TabsTrigger value="newsletter" className="whitespace-nowrap">Newsletter</TabsTrigger>
+              </TabsList>
             </div>
 
             <TabsContent value="slider" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <SliderManager />
+            </TabsContent>
+
+            <TabsContent value="logo" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
+              <h2 className="text-2xl font-semibold text-festival-primary mb-6">Gestion du Logo</h2>
+              <LogoUploader />
+            </TabsContent>
+
+            <TabsContent value="partners" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
+              <PartnersManager />
             </TabsContent>
 
             <TabsContent value="gallery" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
@@ -193,10 +185,6 @@ const Admin = () => {
               <EventManager />
             </TabsContent>
 
-            <TabsContent value="schedule" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <ScheduleManager />
-            </TabsContent>
-
             <TabsContent value="tickets" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <TicketManager />
             </TabsContent>
@@ -205,24 +193,8 @@ const Admin = () => {
               <TicketPackageManager />
             </TabsContent>
 
-            <TabsContent value="partners" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <PartnersManager />
-            </TabsContent>
-
-            <TabsContent value="countdown" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <CountdownManager />
-            </TabsContent>
-
             <TabsContent value="content" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <ContentManager />
-            </TabsContent>
-
-            <TabsContent value="general" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <GeneralContentEditor />
-            </TabsContent>
-
-            <TabsContent value="theme" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <ThemeManager />
             </TabsContent>
 
             <TabsContent value="social" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
@@ -231,15 +203,6 @@ const Admin = () => {
 
             <TabsContent value="newsletter" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <NewsletterSubscriptions />
-            </TabsContent>
-
-            <TabsContent value="logo" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <h2 className="text-2xl font-semibold mb-4">Gestion du Logo</h2>
-              <LogoUploader />
-            </TabsContent>
-
-            <TabsContent value="assets" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <SiteAssetsManager />
             </TabsContent>
           </Tabs>
         </div>
