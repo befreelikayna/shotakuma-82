@@ -53,8 +53,8 @@ export interface Event {
   name: string;
   description?: string;
   event_date: string;
-  start_time?: string | null;
-  end_time?: string | null;
+  start_time?: string;
+  end_time?: string;
   place: string;
   location?: string;
   category?: string;

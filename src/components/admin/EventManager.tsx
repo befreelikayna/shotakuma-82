@@ -4,8 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { RefreshCw, Plus, Loader2, Calendar, MapPin, Clock } from "lucide-react";
-import { supabase, Event } from "@/integrations/supabase/client";
+import { RefreshCw, Plus, Loader2, Calendar, MapPin } from "lucide-react";
+import { customSupabase as supabase, Event } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const EVENT_CATEGORIES = [
@@ -25,8 +25,6 @@ const EventManager = () => {
     place: "",
     location: "",
     event_date: new Date().toISOString().split('T')[0],
-    start_time: "",
-    end_time: "",
     image_url: "",
     category: "culture"
   });
@@ -442,8 +440,6 @@ const EventManager = () => {
           place: newEvent.place || '',
           location: newEvent.location || '',
           event_date: newEvent.event_date,
-          start_time: newEvent.start_time || null,
-          end_time: newEvent.end_time || null,
           image_url: newEvent.image_url || '',
           category: newEvent.category || 'culture'
         }] as any);
@@ -458,8 +454,6 @@ const EventManager = () => {
         place: "",
         location: "",
         event_date: new Date().toISOString().split('T')[0],
-        start_time: "",
-        end_time: "",
         image_url: "",
         category: "culture"
       });
@@ -494,8 +488,6 @@ const EventManager = () => {
           place: event.place,
           location: event.location,
           event_date: event.event_date,
-          start_time: event.start_time || null,
-          end_time: event.end_time || null,
           image_url: event.image_url,
           category: event.category
         } as any)
@@ -564,11 +556,6 @@ const EventManager = () => {
     }
   };
 
-  const formatEventTime = (time: string | null) => {
-    if (!time) return "-";
-    return time;
-  };
-
   return (
     <div>
       <h2 className="text-2xl font-semibold text-festival-primary mb-6">Gestion des Événements ({events.length})</h2>
@@ -602,27 +589,6 @@ const EventManager = () => {
               type="date"
               value={typeof newEvent.event_date === 'string' ? newEvent.event_date.split('T')[0] : ''}
               onChange={(e) => setNewEvent({ ...newEvent, event_date: e.target.value })}
-            />
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Heure de début</label>
-            <Input
-              type="time"
-              value={newEvent.start_time || ''}
-              onChange={(e) => setNewEvent({ ...newEvent, start_time: e.target.value })}
-              placeholder="10:00"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Heure de fin</label>
-            <Input
-              type="time"
-              value={newEvent.end_time || ''}
-              onChange={(e) => setNewEvent({ ...newEvent, end_time: e.target.value })}
-              placeholder="18:00"
             />
           </div>
         </div>
@@ -717,7 +683,6 @@ const EventManager = () => {
                 <TableHead>Image</TableHead>
                 <TableHead>Nom</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Horaires</TableHead>
                 <TableHead>Lieu</TableHead>
                 <TableHead>Catégorie</TableHead>
                 <TableHead>Actions</TableHead>
@@ -737,18 +702,6 @@ const EventManager = () => {
                   </TableCell>
                   <TableCell>{event.name}</TableCell>
                   <TableCell>{formatEventDate(event.event_date)}</TableCell>
-                  <TableCell>
-                    {event.start_time ? (
-                      <>
-                        <span className="whitespace-nowrap">{formatEventTime(event.start_time)}</span>
-                        {event.end_time && (
-                          <span className="whitespace-nowrap"> - {formatEventTime(event.end_time)}</span>
-                        )}
-                      </>
-                    ) : (
-                      "-"
-                    )}
-                  </TableCell>
                   <TableCell>{event.place}</TableCell>
                   <TableCell>
                     <span className="capitalize">{event.category}</span>
@@ -795,25 +748,6 @@ const EventManager = () => {
                   type="date"
                   value={selectedEvent.event_date.split('T')[0]}
                   onChange={(e) => setSelectedEvent({ ...selectedEvent, event_date: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Heure de début</label>
-                <Input
-                  type="time"
-                  value={selectedEvent.start_time || ''}
-                  onChange={(e) => setSelectedEvent({ ...selectedEvent, start_time: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Heure de fin</label>
-                <Input
-                  type="time"
-                  value={selectedEvent.end_time || ''}
-                  onChange={(e) => setSelectedEvent({ ...selectedEvent, end_time: e.target.value })}
                 />
               </div>
             </div>
