@@ -147,6 +147,7 @@ const Admin = () => {
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
             <div className="relative mb-6 md:mb-8">
+              {/* Fixed Collapsible implementation */}
               <Collapsible open={isMenuOpen} onOpenChange={setIsMenuOpen} className="w-full">
                 <div className="flex items-center justify-between px-4 py-2 bg-white rounded-lg shadow-sm mb-2">
                   <h3 className="text-lg font-medium">
@@ -159,7 +160,7 @@ const Admin = () => {
                     </Button>
                   </CollapsibleTrigger>
                 </div>
-                <CollapsibleContent className="bg-white rounded-lg shadow-sm p-4 mb-4">
+                <CollapsibleContent className="bg-white rounded-lg shadow-sm p-4 mb-4 z-50">
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                     <TabsTrigger value="slider" className="w-full justify-start">Slider</TabsTrigger>
                     <TabsTrigger value="gallery" className="w-full justify-start">Galerie</TabsTrigger>
