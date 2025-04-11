@@ -58,11 +58,11 @@ const DynamicPage = ({ pageSlug }: DynamicPageProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white">
       <Navbar />
-      <div className="pt-20 md:pt-32">
+      <main className="flex-grow pt-20 md:pt-32 pb-12">
         <PageContentSection pageContent={content} isLoading={contentLoading} />
-      </div>
+      </main>
       <Footer />
     </div>
   );
