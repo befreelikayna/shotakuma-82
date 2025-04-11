@@ -1,68 +1,31 @@
 import { Link } from "react-router-dom";
 import { Instagram, Facebook, Twitter, Youtube, Mail, MapPin, MessageSquare, Phone, MessageCircle } from "lucide-react";
-
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-
-  return (
-    <footer className="bg-festival-primary text-white pt-16 pb-8">
+  return <footer className="bg-festival-primary text-white pt-16 pb-8">
       <div className="festival-container">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           <div className="col-span-1 md:col-span-1">
             <Link to="/" className="inline-block mb-4">
-              <img 
-                src="/logo.png" 
-                alt="SHOTAKU Logo" 
-                className="h-12 object-contain"
-              />
+              <img alt="SHOTAKU Logo" className="h-12 object-contain" src="/lovable-uploads/fd4b1d72-2d20-4ea2-993f-296d48240cc5.png" />
             </Link>
             <p className="text-sm text-slate-300 mb-6">
               Le plus grand Festival Marocain de l'anime, du Manga et de la culture Geek.
             </p>
             <div className="flex space-x-4">
-              <a
-                href="https://instagram.com/shotakume"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-300"
-                aria-label="Instagram"
-              >
+              <a href="https://instagram.com/shotakume" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-300" aria-label="Instagram">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a
-                href="https://facebook.com/OTAKU.sho"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-300"
-                aria-label="Facebook"
-              >
+              <a href="https://facebook.com/OTAKU.sho" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-300" aria-label="Facebook">
                 <Facebook className="h-5 w-5" />
               </a>
-              <a
-                href="https://x.com/shotakume"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-300"
-                aria-label="Twitter"
-              >
+              <a href="https://x.com/shotakume" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-300" aria-label="Twitter">
                 <Twitter className="h-5 w-5" />
               </a>
-              <a
-                href="https://www.youtube.com/@MarocEvents"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-300"
-                aria-label="YouTube"
-              >
+              <a href="https://www.youtube.com/@MarocEvents" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-300" aria-label="YouTube">
                 <Youtube className="h-5 w-5" />
               </a>
-              <a
-                href="https://discord.gg/KKGCF86z"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-300"
-                aria-label="Discord"
-              >
+              <a href="https://discord.gg/KKGCF86z" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-300" aria-label="Discord">
                 <MessageSquare className="h-5 w-5" />
               </a>
             </div>
@@ -146,12 +109,7 @@ const Footer = () => {
               </li>
               <li className="flex items-start">
                 <MessageCircle className="h-5 w-5 text-[#25D366] mr-2 mt-0.5" />
-                <a 
-                  href="https://wa.me/212670625980" 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-slate-300 hover:text-white transition-colors duration-300"
-                >
+                <a href="https://wa.me/212670625980" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-white transition-colors duration-300">
                   Contactez-nous sur WhatsApp
                 </a>
               </li>
@@ -173,8 +131,6 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
