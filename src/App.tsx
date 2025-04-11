@@ -16,6 +16,7 @@ import Schedule from "./pages/Schedule";
 import Gallery from "./pages/Gallery";
 import Events from "./pages/Events";
 import Volunteer from "./pages/Volunteer";
+import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import DynamicPage from "./pages/DynamicPage";
@@ -81,6 +82,7 @@ const App = () => {
                 <Route path="/gallery" element={<Gallery />} />
                 <Route path="/volunteer" element={<Volunteer />} />
                 <Route path="/events" element={<Events />} />
+                <Route path="/contact" element={<Contact />} />
                 <Route path="/admin" element={<Admin />} />
                 
                 {/* Dynamic routes generated from database */}
