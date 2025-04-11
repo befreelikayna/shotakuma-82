@@ -5,11 +5,42 @@ import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
+interface HeaderLink {
+  id: string;
+  title: string;
+  url: string;
+  order_number: number;
+  is_active: boolean;
+}
+
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [logoUrl, setLogoUrl] = useState("/logo.png"); // Default fallback
+  const [navLinks, setNavLinks] = useState<HeaderLink[]>([]);
 
   useEffect(() => {
+    // Fetch navigation links from database
+    const fetchNavLinks = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('header_menu_links')
+          .select('*')
+          .eq('is_active', true)
+          .order('order_number');
+        
+        if (error) {
+          console.error('Error fetching navigation links:', error);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          setNavLinks(data);
+        }
+      } catch (error) {
+        console.error('Error in navigation links fetch:', error);
+      }
+    };
+    
     // Try to fetch logo from Supabase storage
     const fetchLogo = async () => {
       try {
@@ -92,6 +123,7 @@ const Navbar = () => {
       }
     };
     
+    fetchNavLinks();
     fetchLogo();
     fetchFavicon();
   }, []);
@@ -99,6 +131,41 @@ const Navbar = () => {
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  // Set up real-time subscription for navigation menu changes
+  useEffect(() => {
+    const menuChannel = supabase
+      .channel('header_menu_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'header_menu_links' 
+        }, 
+        () => {
+          // Refresh the navigation links when changes occur
+          const fetchNavLinks = async () => {
+            const { data } = await supabase
+              .from('header_menu_links')
+              .select('*')
+              .eq('is_active', true)
+              .order('order_number');
+            
+            if (data) {
+              setNavLinks(data);
+            }
+          };
+          
+          fetchNavLinks();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(menuChannel);
+    };
+  }, []);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md shadow-soft">
@@ -128,12 +195,15 @@ const Navbar = () => {
 
         {/* Desktop navigation */}
         <div className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="nav-link">Accueil</Link>
-          <Link to="/about" className="nav-link">À propos</Link>
-          <Link to="/events" className="nav-link">Événements</Link>
-          <Link to="/schedule" className="nav-link">Programme</Link>
-          <Link to="/gallery" className="nav-link">Galerie</Link>
-          <Link to="/volunteer" className="nav-link">Bénévole</Link>
+          {navLinks.map(link => (
+            <Link 
+              key={link.id}
+              to={link.url} 
+              className="nav-link"
+            >
+              {link.title}
+            </Link>
+          ))}
           <Link
             to="/admin"
             className="px-3 py-1 rounded-full bg-festival-accent/10 text-festival-accent font-medium 
@@ -149,12 +219,16 @@ const Navbar = () => {
           isMenuOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
         )}>
           <div className="flex flex-col p-4 space-y-4">
-            <Link to="/" className="nav-link" onClick={toggleMenu}>Accueil</Link>
-            <Link to="/about" className="nav-link" onClick={toggleMenu}>À propos</Link>
-            <Link to="/events" className="nav-link" onClick={toggleMenu}>Événements</Link>
-            <Link to="/schedule" className="nav-link" onClick={toggleMenu}>Programme</Link>
-            <Link to="/gallery" className="nav-link" onClick={toggleMenu}>Galerie</Link>
-            <Link to="/volunteer" className="nav-link" onClick={toggleMenu}>Bénévole</Link>
+            {navLinks.map(link => (
+              <Link 
+                key={link.id}
+                to={link.url} 
+                className="nav-link" 
+                onClick={toggleMenu}
+              >
+                {link.title}
+              </Link>
+            ))}
             <Link
               to="/admin"
               className="px-3 py-1 w-fit rounded-full bg-festival-accent/10 text-festival-accent font-medium 
