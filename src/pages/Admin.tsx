@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -17,9 +16,16 @@ import ThemeManager from "@/components/admin/ThemeManager";
 import GeneralContentEditor from "@/components/admin/GeneralContentEditor";
 import PartnersManager from "@/components/admin/PartnersManager";
 import CountdownManager from "@/components/admin/CountdownManager";
-import ScheduleManager from "@/components/admin/ScheduleManager"; // Added import
+import ScheduleManager from "@/components/admin/ScheduleManager";
 import AdminLogin from "@/components/admin/AdminLogin";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  Carousel, 
+  CarouselContent, 
+  CarouselItem, 
+  CarouselPrevious, 
+  CarouselNext 
+} from "@/components/ui/carousel";
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -136,29 +142,31 @@ const Admin = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
-            <TabsList className="grid grid-cols-4 md:grid-cols-13 mb-6 md:mb-8 w-full overflow-x-auto">
-              <TabsTrigger value="slider" className="whitespace-nowrap">Slider</TabsTrigger>
-              <TabsTrigger value="gallery" className="whitespace-nowrap">Galerie</TabsTrigger>
-              <TabsTrigger value="events" className="whitespace-nowrap">Événements</TabsTrigger>
-              <TabsTrigger value="schedule" className="whitespace-nowrap">Programme</TabsTrigger>
-              <TabsTrigger value="tickets" className="whitespace-nowrap">Billets</TabsTrigger>
-              <TabsTrigger value="packages" className="whitespace-nowrap">Forfaits</TabsTrigger>
-              <TabsTrigger value="partners" className="whitespace-nowrap">Partenaires</TabsTrigger>
-              <TabsTrigger value="countdown" className="whitespace-nowrap">Countdown</TabsTrigger>
-              <TabsTrigger value="content" className="whitespace-nowrap hidden md:block">Contenu</TabsTrigger>
-              <TabsTrigger value="general" className="whitespace-nowrap hidden md:block">Général</TabsTrigger>
-              <TabsTrigger value="social" className="whitespace-nowrap hidden md:block">Liens</TabsTrigger>
-              <TabsTrigger value="newsletter" className="whitespace-nowrap hidden md:block">Newsletter</TabsTrigger>
-              <TabsTrigger value="theme" className="whitespace-nowrap hidden md:block">Thème</TabsTrigger>
-            </TabsList>
-            
-            <TabsList className="grid grid-cols-5 mb-6 w-full overflow-x-auto md:hidden">
-              <TabsTrigger value="content" className="whitespace-nowrap">Contenu</TabsTrigger>
-              <TabsTrigger value="general" className="whitespace-nowrap">Général</TabsTrigger>
-              <TabsTrigger value="social" className="whitespace-nowrap">Liens</TabsTrigger>
-              <TabsTrigger value="newsletter" className="whitespace-nowrap">Newsletter</TabsTrigger>
-              <TabsTrigger value="theme" className="whitespace-nowrap">Thème</TabsTrigger>
-            </TabsList>
+            <div className="relative mb-6 md:mb-8">
+              <Carousel>
+                <CarouselContent className="-ml-2">
+                  <CarouselItem className="basis-auto pl-2">
+                    <TabsList className="grid grid-flow-col auto-cols-max gap-2">
+                      <TabsTrigger value="slider" className="whitespace-nowrap">Slider</TabsTrigger>
+                      <TabsTrigger value="gallery" className="whitespace-nowrap">Galerie</TabsTrigger>
+                      <TabsTrigger value="events" className="whitespace-nowrap">Événements</TabsTrigger>
+                      <TabsTrigger value="schedule" className="whitespace-nowrap">Programme</TabsTrigger>
+                      <TabsTrigger value="tickets" className="whitespace-nowrap">Billets</TabsTrigger>
+                      <TabsTrigger value="packages" className="whitespace-nowrap">Forfaits</TabsTrigger>
+                      <TabsTrigger value="partners" className="whitespace-nowrap">Partenaires</TabsTrigger>
+                      <TabsTrigger value="countdown" className="whitespace-nowrap">Countdown</TabsTrigger>
+                      <TabsTrigger value="content" className="whitespace-nowrap">Contenu</TabsTrigger>
+                      <TabsTrigger value="general" className="whitespace-nowrap">Général</TabsTrigger>
+                      <TabsTrigger value="social" className="whitespace-nowrap">Liens</TabsTrigger>
+                      <TabsTrigger value="newsletter" className="whitespace-nowrap">Newsletter</TabsTrigger>
+                      <TabsTrigger value="theme" className="whitespace-nowrap">Thème</TabsTrigger>
+                    </TabsList>
+                  </CarouselItem>
+                </CarouselContent>
+                <CarouselPrevious className="left-0 translate-x-0" />
+                <CarouselNext className="right-0 translate-x-0" />
+              </Carousel>
+            </div>
 
             <TabsContent value="slider" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <SliderManager />
