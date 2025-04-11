@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
@@ -39,7 +40,60 @@ const Navbar = () => {
       }
     };
     
+    // Try to fetch favicon from Supabase storage and update the document
+    const fetchFavicon = async () => {
+      try {
+        const { data, error } = await supabase.storage
+          .from('favicons')
+          .list('', {
+            limit: 1,
+            sortBy: { column: 'created_at', order: 'desc' }
+          });
+        
+        if (error) {
+          console.error('Error fetching favicon:', error);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('favicons')
+            .getPublicUrl(data[0].name);
+          
+          if (publicUrl) {
+            // Find existing favicon link or create a new one
+            let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+            if (!link) {
+              link = document.createElement('link');
+              link.rel = 'icon';
+              document.getElementsByTagName('head')[0].appendChild(link);
+            }
+            
+            // Update the href
+            link.href = publicUrl;
+            
+            // Try to determine the type based on the file extension
+            const extension = publicUrl.split('.').pop()?.toLowerCase();
+            if (extension === 'png') {
+              link.type = 'image/png';
+            } else if (extension === 'jpg' || extension === 'jpeg') {
+              link.type = 'image/jpeg';
+            } else if (extension === 'svg') {
+              link.type = 'image/svg+xml';
+            } else {
+              link.type = 'image/x-icon';
+            }
+            
+            console.log('Favicon loaded from Supabase:', publicUrl);
+          }
+        }
+      } catch (error) {
+        console.error('Error in favicon fetch:', error);
+      }
+    };
+    
     fetchLogo();
+    fetchFavicon();
   }, []);
 
   const toggleMenu = () => {
