@@ -49,7 +49,7 @@ const Schedule = () => {
             return {
               ...day,
               events: []
-            };
+            } as ScheduleDay;
           }
           
           // Process and typecast events to ensure they match ScheduleEvent type
@@ -63,7 +63,8 @@ const Schedule = () => {
               location: event.location,
               // Ensure category is one of the allowed values
               category: validateEventCategory(event.category),
-              order_number: event.order_number
+              order_number: event.order_number,
+              day_id: event.day_id
             } as ScheduleEvent;
           });
           
@@ -71,6 +72,7 @@ const Schedule = () => {
             id: day.id,
             date: day.date,
             day_name: day.day_name,
+            order_number: day.order_number,
             events: processedEvents
           } as ScheduleDay;
         })
@@ -248,12 +250,12 @@ const Schedule = () => {
                 {/* Schedule List */}
                 {activeScheduleDay && (
                   <div className="space-y-4">
-                    {activeScheduleDay.events.length === 0 ? (
+                    {activeScheduleDay.events && activeScheduleDay.events.length === 0 ? (
                       <div className="bg-white rounded-xl p-6 shadow-soft border border-slate-100 text-center">
                         <p className="text-festival-secondary">Aucun événement programmé pour cette journée.</p>
                       </div>
                     ) : (
-                      activeScheduleDay.events.map((event) => (
+                      activeScheduleDay.events && activeScheduleDay.events.map((event) => (
                         <motion.div
                           key={event.id}
                           className="bg-white rounded-xl p-6 shadow-soft border border-slate-100"

@@ -53,6 +53,13 @@ export interface Event {
   image_url: string | null;
   created_at?: string;
   updated_at?: string;
+  // Additional properties needed by Events.tsx
+  title?: string;
+  date?: string;
+  time?: string | null;
+  image?: string;
+  past?: boolean;
+  registrationLink?: string;
 }
 
 export interface ScheduleDay {
@@ -60,6 +67,7 @@ export interface ScheduleDay {
   day_name: string;
   date: string;
   order_number: number;
+  events?: ScheduleEvent[]; // Make events available in ScheduleDay
   created_at?: string;
   updated_at?: string;
 }

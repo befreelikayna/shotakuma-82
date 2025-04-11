@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Calendar, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
@@ -19,7 +18,6 @@ const Events = () => {
   const [totalEventsCount, setTotalEventsCount] = useState(0);
   const eventsPerPage = 9;
 
-  // Fetch events from Supabase
   useEffect(() => {
     const fetchEvents = async () => {
       setIsLoading(true);
@@ -35,7 +33,6 @@ const Events = () => {
           console.log('Events fetched from Supabase:', data);
           setTotalEventsCount(data.length);
           
-          // Process events with explicit type casting and add missing properties
           const processedEvents = data.map(event => {
             const eventDate = new Date(event.event_date);
             const currentDate = new Date();
@@ -44,21 +41,23 @@ const Events = () => {
             return {
               id: event.id,
               name: event.name,
-              title: event.name, // Add title alias for EventItem
+              title: event.name,
               description: event.description || '',
-              date: formatDate(event.event_date), // Add formatted date property
-              time: extractTime(event.event_date), // Add time property
+              date: formatDate(event.event_date),
+              time: extractTime(event.event_date),
               location: event.place + (event.location ? `, ${event.location}` : ''),
               place: event.place,
               event_date: event.event_date,
-              image: event.image_url || "https://source.unsplash.com/random/800x600?festival", // Add image alias for EventItem
+              start_time: event.start_time,
+              end_time: event.end_time,
+              image: event.image_url || "https://source.unsplash.com/random/800x600?festival",
               image_url: event.image_url || "https://source.unsplash.com/random/800x600?festival",
               category: event.category || 'culture',
-              past: isPast // Add past property to indicate if event is in the past
-            };
+              past: isPast
+            } as Event;
           });
           
-          setEvents(processedEvents as Event[]);
+          setEvents(processedEvents);
         }
       } catch (error) {
         console.error('Error fetching events:', error);
@@ -69,7 +68,6 @@ const Events = () => {
 
     fetchEvents();
     
-    // Subscribe to events changes
     const channel = supabase
       .channel('events-page-changes')
       .on('postgres_changes', 
@@ -85,7 +83,6 @@ const Events = () => {
     };
   }, []);
 
-  // Format date for display
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -99,7 +96,6 @@ const Events = () => {
     }
   };
 
-  // Extract time from datetime for display
   const extractTime = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -111,7 +107,6 @@ const Events = () => {
     }
   };
 
-  // Ensure category is valid for EventItem component
   const validateCategory = (category: string): "anime" | "manga" | "cosplay" | "gaming" | "culture" => {
     const validCategories = ["anime", "manga", "cosplay", "gaming", "culture"];
     return validCategories.includes(category) 
@@ -123,26 +118,13 @@ const Events = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Update URL params when filters change
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (activeFilter !== "all") {
-      params.set("category", activeFilter);
-    }
-    params.set("tab", activeTab);
-    setSearchParams(params);
-  }, [activeFilter, activeTab, setSearchParams]);
-
   const filteredEvents = events
     .filter(event => {
-      // Filter by tab (upcoming or past)
       if (activeTab === "upcoming" && event.past) return false;
       if (activeTab === "past" && !event.past) return false;
-      // Filter by category
       return activeFilter === "all" || event.category === activeFilter;
     });
 
-  // Pagination
   const indexOfLastEvent = currentPage * eventsPerPage;
   const indexOfFirstEvent = indexOfLastEvent - eventsPerPage;
   const currentEvents = filteredEvents.slice(indexOfFirstEvent, indexOfLastEvent);
@@ -151,7 +133,6 @@ const Events = () => {
   
   const paginate = (pageNumber: number) => {
     setCurrentPage(pageNumber);
-    // Scroll to top when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -175,7 +156,6 @@ const Events = () => {
               </p>
             </div>
 
-            {/* Tabs for Upcoming/Past Events */}
             <div className="flex justify-center mb-8">
               <div className="inline-flex p-1 rounded-full bg-white shadow-soft">
                 <button
@@ -201,7 +181,6 @@ const Events = () => {
               </div>
             </div>
 
-            {/* Category Filters */}
             <div className="flex justify-center mb-10 overflow-x-auto">
               <div className="inline-flex p-1 rounded-full bg-white shadow-soft">
                 <button
@@ -267,14 +246,12 @@ const Events = () => {
               </div>
             </div>
 
-            {/* Loading state */}
             {isLoading && (
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-festival-accent"></div>
               </div>
             )}
 
-            {/* Filtered count */}
             {!isLoading && filteredEvents.length > 0 && (
               <div className="text-center mb-6">
                 <p className="text-festival-secondary">
@@ -283,7 +260,6 @@ const Events = () => {
               </div>
             )}
 
-            {/* Events Grid */}
             {!isLoading && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {currentEvents.map((event) => (
@@ -304,14 +280,12 @@ const Events = () => {
               </div>
             )}
 
-            {/* No results message */}
             {!isLoading && filteredEvents.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-festival-secondary">Aucun événement trouvé pour cette catégorie.</p>
               </div>
             )}
             
-            {/* Pagination */}
             {!isLoading && filteredEvents.length > eventsPerPage && (
               <div className="mt-10 flex justify-center">
                 <div className="inline-flex items-center gap-2">
@@ -323,7 +297,6 @@ const Events = () => {
                     <ChevronLeft className="h-5 w-5" />
                   </button>
                   
-                  {/* Page numbers */}
                   {Array.from({ length: totalPages }).map((_, index) => (
                     <button 
                       key={index}
