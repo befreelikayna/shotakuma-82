@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,8 +65,8 @@ const PartnersBulkUpload = ({ onComplete }: PartnersBulkUploadProps) => {
       try {
         const file = files[i];
         
-        // Upload the file to storage
-        const logoUrl = await uploadFileToSupabase(file);
+        // Upload the file to storage with correct parameters
+        const logoUrl = await uploadFileToSupabase(file, "partners", `logos/${file.name}`);
         
         if (!logoUrl) {
           errorCount++;

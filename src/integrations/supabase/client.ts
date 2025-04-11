@@ -59,10 +59,35 @@ export interface Event {
   location?: string;
   category?: string;
   image_url?: string;
+  // Add these properties to support Events.tsx
+  title?: string;
+  date?: string;
+  time?: string;
+  image?: string;
+  registrationLink?: string;
+  past?: boolean;
 }
 
-// Mock implementation for now - should be implemented with proper Supabase storage integration
-export const uploadFileToSupabase = async (file: File, bucket: string, path: string): Promise<string> => {
+export interface ScheduleEvent {
+  id: string;
+  title: string;
+  description: string | null;
+  start_time: string;
+  end_time: string;
+  location: string | null;
+  category: "panel" | "workshop" | "competition" | "screening" | "performance";
+  order_number: number;
+}
+
+export interface ScheduleDay {
+  id: string;
+  date: string;
+  day_name: string;
+  events: ScheduleEvent[];
+}
+
+// Correct function signature with all required parameters
+export const uploadFileToSupabase = async (file: File, bucket: string = "partners", path: string = "logos"): Promise<string> => {
   console.log('Uploading file to Supabase:', { file, bucket, path });
   // Return a mock URL for now - this should be implemented properly
   return URL.createObjectURL(file);

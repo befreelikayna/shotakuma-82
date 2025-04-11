@@ -1,29 +1,10 @@
-
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Clock, MapPin, Calendar, RefreshCw } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, ScheduleDay, ScheduleEvent } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-
-type ScheduleEvent = {
-  id: string;
-  title: string;
-  description: string | null;
-  start_time: string;
-  end_time: string;
-  location: string | null;
-  category: "panel" | "workshop" | "competition" | "screening" | "performance";
-  order_number: number;
-};
-
-type ScheduleDay = {
-  id: string;
-  date: string;
-  day_name: string;
-  events: ScheduleEvent[];
-};
 
 const Schedule = () => {
   const [activeDay, setActiveDay] = useState<string>("");
@@ -71,10 +52,27 @@ const Schedule = () => {
             };
           }
           
+          // Process and typecast events to ensure they match ScheduleEvent type
+          const processedEvents = (eventsData || []).map(event => {
+            return {
+              id: event.id,
+              title: event.title,
+              description: event.description,
+              start_time: event.start_time,
+              end_time: event.end_time,
+              location: event.location,
+              // Ensure category is one of the allowed values
+              category: validateEventCategory(event.category),
+              order_number: event.order_number
+            } as ScheduleEvent;
+          });
+          
           return {
-            ...day,
-            events: eventsData || []
-          };
+            id: day.id,
+            date: day.date,
+            day_name: day.day_name,
+            events: processedEvents
+          } as ScheduleDay;
         })
       );
       
@@ -89,6 +87,14 @@ const Schedule = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Helper function to validate event categories
+  const validateEventCategory = (category: string): "panel" | "workshop" | "competition" | "screening" | "performance" => {
+    const validCategories = ["panel", "workshop", "competition", "screening", "performance"];
+    return validCategories.includes(category) 
+      ? category as "panel" | "workshop" | "competition" | "screening" | "performance" 
+      : "panel"; // Default to panel if invalid
   };
 
   useEffect(() => {
@@ -260,7 +266,7 @@ const Schedule = () => {
                               <h3 className="text-xl font-semibold text-festival-primary">{event.title}</h3>
                               <span
                                 className={`inline-block px-3 py-1 rounded-full text-xs font-medium mt-2 ${getCategoryColor(
-                                  event.category as ScheduleEvent["category"]
+                                  event.category
                                 )}`}
                               >
                                 {event.category.charAt(0).toUpperCase() + event.category.slice(1)}

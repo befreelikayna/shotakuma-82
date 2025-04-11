@@ -156,7 +156,7 @@ const PartnersManager = () => {
       // If a new logo file is selected, upload it
       let finalLogoUrl = logoUrl;
       if (logoFile) {
-        const uploadedUrl = await uploadFileToSupabase(logoFile);
+        const uploadedUrl = await uploadFileToSupabase(logoFile, "partners", `logos/${logoFile.name}`);
         if (!uploadedUrl) {
           toast({
             title: "Erreur",
@@ -181,7 +181,8 @@ const PartnersManager = () => {
         formattedWebsiteUrl = 'https://' + websiteUrl;
       }
       
-      const partnerData: Partial<Partner> = {
+      // Ensure required fields are present for the insert operation
+      const partnerData = {
         name,
         logo_url: finalLogoUrl,
         website_url: formattedWebsiteUrl || null,

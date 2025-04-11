@@ -35,7 +35,7 @@ const Events = () => {
           console.log('Events fetched from Supabase:', data);
           setTotalEventsCount(data.length);
           
-          // Process events with explicit type casting
+          // Process events with explicit type casting and add missing properties
           const processedEvents = data.map(event => {
             const eventDate = new Date(event.event_date);
             const currentDate = new Date();
@@ -44,21 +44,21 @@ const Events = () => {
             return {
               id: event.id,
               name: event.name,
-              title: event.name,
+              title: event.name, // Add title alias for EventItem
               description: event.description || '',
-              date: formatDate(event.event_date),
-              time: extractTime(event.event_date),
+              date: formatDate(event.event_date), // Add formatted date property
+              time: extractTime(event.event_date), // Add time property
               location: event.place + (event.location ? `, ${event.location}` : ''),
               place: event.place,
               event_date: event.event_date,
-              image: event.image_url || "https://source.unsplash.com/random/800x600?festival",
+              image: event.image_url || "https://source.unsplash.com/random/800x600?festival", // Add image alias for EventItem
               image_url: event.image_url || "https://source.unsplash.com/random/800x600?festival",
               category: event.category || 'culture',
-              past: isPast
+              past: isPast // Add past property to indicate if event is in the past
             };
           });
           
-          setEvents(processedEvents);
+          setEvents(processedEvents as Event[]);
         }
       } catch (error) {
         console.error('Error fetching events:', error);
@@ -296,7 +296,7 @@ const Events = () => {
                     time={event.time}
                     location={event.location || event.place}
                     image={event.image || event.image_url || ''}
-                    category={validateCategory(event.category)}
+                    category={validateCategory(event.category || 'culture')}
                     registrationLink={event.registrationLink}
                     past={event.past}
                   />
