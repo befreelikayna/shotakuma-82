@@ -14,6 +14,7 @@ import About from "./pages/About";
 import Schedule from "./pages/Schedule";
 import Gallery from "./pages/Gallery";
 import Events from "./pages/Events";
+import Volunteer from "./pages/Volunteer";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/about" element={<About />} />
               <Route path="/schedule" element={<Schedule />} />
               <Route path="/gallery" element={<Gallery />} />
+              <Route path="/volunteer" element={<Volunteer />} />
               <Route path="/events" element={<Events />} />
               <Route path="/admin" element={<Admin />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

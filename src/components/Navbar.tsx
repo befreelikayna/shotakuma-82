@@ -34,6 +34,7 @@ const Navbar = () => {
           <Link to="/events" className="nav-link">Événements</Link>
           <Link to="/schedule" className="nav-link">Programme</Link>
           <Link to="/gallery" className="nav-link">Galerie</Link>
+          <Link to="/volunteer" className="nav-link">Bénévole</Link>
           <Link
             to="/admin"
             className="px-3 py-1 rounded-full bg-festival-accent/10 text-festival-accent font-medium 
@@ -54,6 +55,7 @@ const Navbar = () => {
             <Link to="/events" className="nav-link" onClick={toggleMenu}>Événements</Link>
             <Link to="/schedule" className="nav-link" onClick={toggleMenu}>Programme</Link>
             <Link to="/gallery" className="nav-link" onClick={toggleMenu}>Galerie</Link>
+            <Link to="/volunteer" className="nav-link" onClick={toggleMenu}>Bénévole</Link>
             <Link
               to="/admin"
               className="px-3 py-1 w-fit rounded-full bg-festival-accent/10 text-festival-accent font-medium 
