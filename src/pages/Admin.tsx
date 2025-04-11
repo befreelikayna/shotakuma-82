@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ import PartnersManager from "@/components/admin/PartnersManager";
 import CountdownManager from "@/components/admin/CountdownManager";
 import ScheduleManager from "@/components/admin/ScheduleManager";
 import SiteAssetsManager from "@/components/admin/SiteAssetsManager";
+import LogoUploader from "@/components/admin/LogoUploader";
 import AdminLogin from "@/components/admin/AdminLogin";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -164,6 +164,7 @@ const Admin = () => {
                       <TabsTrigger value="social" className="whitespace-nowrap">Liens</TabsTrigger>
                       <TabsTrigger value="newsletter" className="whitespace-nowrap">Newsletter</TabsTrigger>
                       <TabsTrigger value="theme" className="whitespace-nowrap">Thème</TabsTrigger>
+                      <TabsTrigger value="logo" className="whitespace-nowrap">Logo</TabsTrigger>
                       <TabsTrigger value="assets" className="whitespace-nowrap">Assets</TabsTrigger>
                     </TabsList>
                   </CarouselItem>
@@ -223,6 +224,11 @@ const Admin = () => {
 
             <TabsContent value="newsletter" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
               <NewsletterSubscriptions />
+            </TabsContent>
+
+            <TabsContent value="logo" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
+              <h2 className="text-2xl font-semibold mb-4">Gestion du Logo</h2>
+              <LogoUploader />
             </TabsContent>
 
             <TabsContent value="assets" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
