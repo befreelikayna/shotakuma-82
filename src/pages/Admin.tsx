@@ -131,6 +131,31 @@ const Admin = () => {
     );
   }
 
+  // Create a list of section items
+  const sectionItems = [
+    { id: "slider", label: "Slider" },
+    { id: "gallery", label: "Galerie" },
+    { id: "events", label: "Événements" },
+    { id: "schedule", label: "Programme" },
+    { id: "tickets", label: "Billets" },
+    { id: "packages", label: "Forfaits" },
+    { id: "partners", label: "Partenaires" },
+    { id: "countdown", label: "Countdown" },
+    { id: "content", label: "Contenu" },
+    { id: "general", label: "Général" },
+    { id: "social", label: "Liens" },
+    { id: "newsletter", label: "Newsletter" },
+    { id: "theme", label: "Thème" },
+    { id: "logo", label: "Logo" },
+    { id: "assets", label: "Assets" },
+  ];
+
+  const handleSectionSelect = (id: string) => {
+    setActiveTab(id);
+    window.history.replaceState(null, '', `#${id}`);
+    setIsMenuOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <Navbar />
@@ -145,9 +170,9 @@ const Admin = () => {
             </Button>
           </div>
 
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             <div className="relative mb-6 md:mb-8">
-              {/* Fixed Collapsible implementation */}
+              {/* Section selector dropdown */}
               <Collapsible open={isMenuOpen} onOpenChange={setIsMenuOpen} className="w-full">
                 <div className="flex items-center justify-between px-4 py-2 bg-white rounded-lg shadow-sm mb-2">
                   <h3 className="text-lg font-medium">
@@ -162,87 +187,45 @@ const Admin = () => {
                 </div>
                 <CollapsibleContent className="bg-white rounded-lg shadow-sm p-4 mb-4 z-50">
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    <TabsTrigger value="slider" className="w-full justify-start">Slider</TabsTrigger>
-                    <TabsTrigger value="gallery" className="w-full justify-start">Galerie</TabsTrigger>
-                    <TabsTrigger value="events" className="w-full justify-start">Événements</TabsTrigger>
-                    <TabsTrigger value="schedule" className="w-full justify-start">Programme</TabsTrigger>
-                    <TabsTrigger value="tickets" className="w-full justify-start">Billets</TabsTrigger>
-                    <TabsTrigger value="packages" className="w-full justify-start">Forfaits</TabsTrigger>
-                    <TabsTrigger value="partners" className="w-full justify-start">Partenaires</TabsTrigger>
-                    <TabsTrigger value="countdown" className="w-full justify-start">Countdown</TabsTrigger>
-                    <TabsTrigger value="content" className="w-full justify-start">Contenu</TabsTrigger>
-                    <TabsTrigger value="general" className="w-full justify-start">Général</TabsTrigger>
-                    <TabsTrigger value="social" className="w-full justify-start">Liens</TabsTrigger>
-                    <TabsTrigger value="newsletter" className="w-full justify-start">Newsletter</TabsTrigger>
-                    <TabsTrigger value="theme" className="w-full justify-start">Thème</TabsTrigger>
-                    <TabsTrigger value="logo" className="w-full justify-start">Logo</TabsTrigger>
-                    <TabsTrigger value="assets" className="w-full justify-start">Assets</TabsTrigger>
+                    {sectionItems.map((item) => (
+                      <Button 
+                        key={item.id}
+                        variant={activeTab === item.id ? "default" : "ghost"}
+                        className="w-full justify-start"
+                        onClick={() => handleSectionSelect(item.id)}
+                      >
+                        {item.label}
+                      </Button>
+                    ))}
                   </div>
                 </CollapsibleContent>
               </Collapsible>
             </div>
 
-            <TabsContent value="slider" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <SliderManager />
-            </TabsContent>
-
-            <TabsContent value="gallery" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <GalleryManager />
-            </TabsContent>
-
-            <TabsContent value="events" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <EventManager />
-            </TabsContent>
-
-            <TabsContent value="schedule" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <ScheduleManager />
-            </TabsContent>
-
-            <TabsContent value="tickets" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <TicketManager />
-            </TabsContent>
-
-            <TabsContent value="packages" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <TicketPackageManager />
-            </TabsContent>
-
-            <TabsContent value="partners" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <PartnersManager />
-            </TabsContent>
-
-            <TabsContent value="countdown" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <CountdownManager />
-            </TabsContent>
-
-            <TabsContent value="content" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <ContentManager />
-            </TabsContent>
-
-            <TabsContent value="general" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <GeneralContentEditor />
-            </TabsContent>
-
-            <TabsContent value="theme" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <ThemeManager />
-            </TabsContent>
-
-            <TabsContent value="social" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <SocialLinksEditor />
-            </TabsContent>
-
-            <TabsContent value="newsletter" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <NewsletterSubscriptions />
-            </TabsContent>
-
-            <TabsContent value="logo" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <h2 className="text-2xl font-semibold mb-4">Gestion du Logo</h2>
-              <LogoUploader />
-            </TabsContent>
-
-            <TabsContent value="assets" className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
-              <SiteAssetsManager />
-            </TabsContent>
-          </Tabs>
+            {/* Content panels */}
+            <div className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
+              {activeTab === "slider" && <SliderManager />}
+              {activeTab === "gallery" && <GalleryManager />}
+              {activeTab === "events" && <EventManager />}
+              {activeTab === "schedule" && <ScheduleManager />}
+              {activeTab === "tickets" && <TicketManager />}
+              {activeTab === "packages" && <TicketPackageManager />}
+              {activeTab === "partners" && <PartnersManager />}
+              {activeTab === "countdown" && <CountdownManager />}
+              {activeTab === "content" && <ContentManager />}
+              {activeTab === "general" && <GeneralContentEditor />}
+              {activeTab === "theme" && <ThemeManager />}
+              {activeTab === "social" && <SocialLinksEditor />}
+              {activeTab === "newsletter" && <NewsletterSubscriptions />}
+              {activeTab === "logo" && (
+                <>
+                  <h2 className="text-2xl font-semibold mb-4">Gestion du Logo</h2>
+                  <LogoUploader />
+                </>
+              )}
+              {activeTab === "assets" && <SiteAssetsManager />}
+            </div>
+          </div>
         </div>
       </div>
       <Footer />
