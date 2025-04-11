@@ -36,15 +36,37 @@ const ContactManager = () => {
   const fetchContactInfo = async () => {
     setLoading(true);
     try {
+      // Instead of fetching from contact_info, we'll get content from general_content
       const { data, error } = await supabase
-        .from("contact_info")
+        .from("general_content")
         .select("*")
+        .eq("section_key", "contact_info")
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // The record doesn't exist yet, which is fine for new setup
+          console.log("No contact info found, will create on first save");
+        } else {
+          throw error;
+        }
+      }
 
-      if (data) {
-        setContactInfo(data);
+      if (data && data.content) {
+        try {
+          // Parse the JSON content which contains our contact info
+          const parsedContent = JSON.parse(data.content);
+          setContactInfo({
+            email: parsedContent.email || "",
+            phone: parsedContent.phone || "",
+            address: parsedContent.address || "",
+            whatsapp: parsedContent.whatsapp || "",
+            hours: parsedContent.hours || "",
+            additional_info: parsedContent.additional_info || "",
+          });
+        } catch (parseError) {
+          console.error("Error parsing contact info JSON:", parseError);
+        }
       }
     } catch (error) {
       console.error("Error fetching contact info:", error);
@@ -73,9 +95,17 @@ const ContactManager = () => {
     setLoading(true);
 
     try {
+      // Store the contact info as JSON in the general_content table
       const { error } = await supabase
-        .from("contact_info")
-        .upsert(contactInfo, { onConflict: "id" });
+        .from("general_content")
+        .upsert(
+          {
+            section_key: "contact_info",
+            content: JSON.stringify(contactInfo),
+            title: "Contact Information",
+          },
+          { onConflict: "section_key" }
+        );
 
       if (error) throw error;
 

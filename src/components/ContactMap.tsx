@@ -14,8 +14,8 @@ const ContactMap = () => {
     const mapboxToken = 'pk.eyJ1IjoibG92YWJsZS1haS1wdWJsaWMiLCJhIjoiY2x2eGZlaTdlMDBvMTJxbWt5MHlycm1uNyJ9.xz550V2cYCjM8BDSD-TpCA';
     mapboxgl.accessToken = mapboxToken;
     
-    // Coordinates for Casablanca, Morocco
-    const casablancaCoords = [-7.6092, 33.5731];
+    // Coordinates for Casablanca, Morocco as a tuple [longitude, latitude]
+    const casablancaCoords: [number, number] = [-7.6092, 33.5731];
     
     map.current = new mapboxgl.Map({
       container: mapContainer.current,

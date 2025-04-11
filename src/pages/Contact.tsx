@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -39,8 +39,62 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+type ContactInfo = {
+  email: string;
+  phone: string;
+  address: string;
+  whatsapp: string;
+  hours: string;
+  additional_info: string;
+};
+
 const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({
+    email: "contact@shotaku-festival.ma",
+    phone: "+212 6 70 62 59 80",
+    address: "23 Rue des Festivals, Casablanca, 20000, Maroc",
+    whatsapp: "",
+    hours: "",
+    additional_info: "",
+  });
+  
+  useEffect(() => {
+    const fetchContactInfo = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("general_content")
+          .select("*")
+          .eq("section_key", "contact_info")
+          .single();
+
+        if (error) {
+          console.error("Error fetching contact info:", error);
+          return;
+        }
+
+        if (data && data.content) {
+          try {
+            const parsedContent = JSON.parse(data.content);
+            setContactInfo({
+              email: parsedContent.email || contactInfo.email,
+              phone: parsedContent.phone || contactInfo.phone,
+              address: parsedContent.address || contactInfo.address,
+              whatsapp: parsedContent.whatsapp || contactInfo.whatsapp,
+              hours: parsedContent.hours || contactInfo.hours,
+              additional_info: parsedContent.additional_info || contactInfo.additional_info,
+            });
+          } catch (parseError) {
+            console.error("Error parsing contact info:", parseError);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching contact info:", error);
+      }
+    };
+
+    fetchContactInfo();
+  }, []);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -56,13 +110,19 @@ const Contact = () => {
     setIsSubmitting(true);
     
     try {
-      // Store the contact form submission in Supabase
-      const { error } = await supabase.from("contact_submissions").insert([
+      // Store the message in general_content as a fallback 
+      // (in a production app, you would store this in a messages table or send by email)
+      const { error } = await supabase.from("general_content").insert([
         {
-          name: values.name,
-          email: values.email,
-          subject: values.subject,
-          message: values.message,
+          section_key: `contact_message_${Date.now()}`,
+          title: values.subject,
+          content: JSON.stringify({
+            name: values.name,
+            email: values.email,
+            subject: values.subject,
+            message: values.message,
+            date: new Date().toISOString(),
+          }),
         },
       ]);
 
@@ -228,9 +288,7 @@ const Contact = () => {
                       <div>
                         <h3 className="font-medium text-lg mb-1">Adresse</h3>
                         <p className="text-festival-secondary">
-                          23 Rue des Festivals<br />
-                          Casablanca, 20000<br />
-                          Maroc
+                          {contactInfo.address}
                         </p>
                       </div>
                     </div>
@@ -242,7 +300,7 @@ const Contact = () => {
                       <div>
                         <h3 className="font-medium text-lg mb-1">Email</h3>
                         <p className="text-festival-secondary">
-                          contact@shotaku-festival.ma
+                          {contactInfo.email}
                         </p>
                       </div>
                     </div>
@@ -254,10 +312,36 @@ const Contact = () => {
                       <div>
                         <h3 className="font-medium text-lg mb-1">Téléphone</h3>
                         <p className="text-festival-secondary">
-                          +212 6 70 62 59 80
+                          {contactInfo.phone}
                         </p>
                       </div>
                     </div>
+                    
+                    {contactInfo.hours && (
+                      <div className="flex items-start">
+                        <div className="bg-primary/10 p-3 rounded-full mr-4">
+                          <svg className="h-6 w-6 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-lg mb-1">Horaires</h3>
+                          <p className="text-festival-secondary">
+                            {contactInfo.hours}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {contactInfo.additional_info && (
+                      <div className="mt-6 pt-6 border-t border-gray-200">
+                        <h3 className="font-medium text-lg mb-2">Informations supplémentaires</h3>
+                        <p className="text-festival-secondary whitespace-pre-line">
+                          {contactInfo.additional_info}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
