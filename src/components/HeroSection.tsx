@@ -14,10 +14,26 @@ interface SliderImage {
   active: boolean;
 }
 
+interface TimeLeft {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
 const HeroSection = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [sliderImages, setSliderImages] = useState<SliderImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  // Target date for the countdown (May 8, 2025)
+  const targetDate = new Date("2025-05-08T00:00:00");
 
   // Fetch slider images from Supabase
   const fetchSliderImages = async () => {
@@ -74,6 +90,44 @@ const HeroSection = () => {
     }, 5000);
     return () => clearInterval(interval);
   }, [sliderImages]);
+  
+  // Countdown timer effect
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+      const difference = targetDate.getTime() - now;
+
+      if (difference > 0) {
+        return {
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        };
+      } else {
+        return {
+          days: 0,
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+        };
+      }
+    };
+
+    // Initial calculation
+    setTimeLeft(calculateTimeLeft());
+
+    // Update every second
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (value: number) => {
+    return value.toString().padStart(2, "0");
+  };
   
   const containerVariants = {
     hidden: {
@@ -165,6 +219,34 @@ const HeroSection = () => {
             Le plus grand événement célébrant la culture japonaise, l'anime et le manga au Maroc. 
             Rejoignez-nous pour trois jours inoubliables d'expositions, de compétitions et de performances.
           </motion.p>
+
+          {/* Countdown Timer */}
+          <motion.div 
+            className="flex justify-center mb-6 sm:mb-10"
+            variants={itemVariants}
+          >
+            <div className="flex space-x-4 md:space-x-6 bg-black/30 backdrop-blur-sm px-6 py-4 rounded-lg border border-white/10">
+              <div className="flex flex-col items-center">
+                <span className="text-2xl md:text-3xl font-bold text-festival-accent">{formatTime(timeLeft.days)}</span>
+                <span className="text-xs text-white/80 uppercase mt-1">Days</span>
+              </div>
+              <div className="flex items-center text-white/60">:</div>
+              <div className="flex flex-col items-center">
+                <span className="text-2xl md:text-3xl font-bold text-festival-accent">{formatTime(timeLeft.hours)}</span>
+                <span className="text-xs text-white/80 uppercase mt-1">Hours</span>
+              </div>
+              <div className="flex items-center text-white/60">:</div>
+              <div className="flex flex-col items-center">
+                <span className="text-2xl md:text-3xl font-bold text-festival-accent">{formatTime(timeLeft.minutes)}</span>
+                <span className="text-xs text-white/80 uppercase mt-1">Minutes</span>
+              </div>
+              <div className="flex items-center text-white/60">:</div>
+              <div className="flex flex-col items-center">
+                <span className="text-2xl md:text-3xl font-bold text-festival-accent">{formatTime(timeLeft.seconds)}</span>
+                <span className="text-xs text-white/80 uppercase mt-1">Seconds</span>
+              </div>
+            </div>
+          </motion.div>
 
           <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-10 w-full sm:w-auto" variants={itemVariants}>
             <a href="#tickets" className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-festival-accent text-white font-medium 
