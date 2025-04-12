@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, LogIn } from "lucide-react";
@@ -157,8 +158,8 @@ const Navbar = () => {
         }} />
         </Link>
         
-        <button className="md:hidden p-2 rounded-md text-festival-primary" onClick={toggleMenu} aria-label="Toggle menu">
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        <button className="md:hidden p-2 rounded-md text-white hover:bg-festival-accent/30" onClick={toggleMenu} aria-label="Toggle menu">
+          {isMenuOpen ? <X size={24} className="text-white" /> : <Menu size={24} className="text-white" />}
         </button>
 
         <div className="hidden md:flex items-center space-x-6">
@@ -173,7 +174,7 @@ const Navbar = () => {
 
         <div className={cn("absolute top-full left-0 right-0 bg-festival-primary/90 backdrop-blur-md shadow-md transition-all duration-300 md:hidden", isMenuOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0 overflow-hidden")}>
           <div className="flex flex-col p-4 space-y-4">
-            {navLinks.map(link => <Link key={link.id} to={link.url} className="nav-link text-white/80 hover:text-white" onClick={toggleMenu}>
+            {navLinks.map(link => <Link key={link.id} to={link.url} className="nav-link text-white hover:text-white" onClick={toggleMenu}>
                 {link.title}
               </Link>)}
             <Link to="/admin" className="px-3 py-1 w-fit rounded-full bg-festival-accent/20 text-white 
