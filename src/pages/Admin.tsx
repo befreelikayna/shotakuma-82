@@ -23,6 +23,7 @@ import LogoUploader from "@/components/admin/LogoUploader";
 import HeaderMenuManager from "@/components/admin/HeaderMenuManager";
 import PageManager from "@/components/admin/PageManager";
 import AdminLogin from "@/components/admin/AdminLogin";
+import ContactEditor from "@/components/admin/ContactEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Collapsible, 
@@ -152,6 +153,7 @@ const Admin = () => {
     { id: "theme", label: "Thème" },
     { id: "logo", label: "Logo" },
     { id: "assets", label: "Assets" },
+    { id: "contact", label: "Contact" },
   ];
 
   const handleSectionSelect = (id: string) => {
@@ -223,6 +225,7 @@ const Admin = () => {
               {activeTab === "social" && <SocialLinksEditor />}
               {activeTab === "menu" && <HeaderMenuManager />}
               {activeTab === "newsletter" && <NewsletterSubscriptions />}
+              {activeTab === "contact" && <ContactEditor />}
               {activeTab === "logo" && (
                 <>
                   <h2 className="text-2xl font-semibold mb-4">Gestion du Logo</h2>
