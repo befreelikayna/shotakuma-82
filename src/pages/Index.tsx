@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter } from "lucide-react";
@@ -13,7 +14,9 @@ import { usePageContent } from "@/hooks/use-page-content";
 import PageContentSection from "@/components/PageContentSection";
 import PartnerLogosSlider from "@/components/PartnerLogosSlider";
 import { customSupabase, supabase, Ticket, safeDataAccess } from "@/integrations/supabase/client";
-import AnimeCharacters from '/lovable-uploads/bef16b6a-6c72-48db-a7cd-19b6c468c700.png';
+
+// Using a relative path to access the image from the public directory
+const AnimeCharactersImage = "/lovable-uploads/bef16b6a-6c72-48db-a7cd-19b6c468c700.png";
 
 interface TicketWithFeatures extends Ticket {
   features: string[];
@@ -322,7 +325,7 @@ const Index = () => {
       <section className="py-20 bg-festival-primary text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <img 
-            src={AnimeCharacters} 
+            src={AnimeCharactersImage} 
             alt="Anime Characters" 
             className="w-full h-full object-cover object-center"
           />
