@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
@@ -15,11 +14,10 @@ interface HeaderLink {
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [logoUrl, setLogoUrl] = useState("/logo.png"); // Default fallback
+  const [logoUrl, setLogoUrl] = useState("/logo.png");
   const [navLinks, setNavLinks] = useState<HeaderLink[]>([]);
 
   useEffect(() => {
-    // Fetch navigation links from database
     const fetchNavLinks = async () => {
       try {
         const { data, error } = await supabase
@@ -41,7 +39,6 @@ const Navbar = () => {
       }
     };
     
-    // Try to fetch logo from Supabase storage
     const fetchLogo = async () => {
       try {
         const { data, error } = await supabase.storage
@@ -71,7 +68,6 @@ const Navbar = () => {
       }
     };
     
-    // Try to fetch favicon from Supabase storage and update the document
     const fetchFavicon = async () => {
       try {
         const { data, error } = await supabase.storage
@@ -92,7 +88,6 @@ const Navbar = () => {
             .getPublicUrl(data[0].name);
           
           if (publicUrl) {
-            // Find existing favicon link or create a new one
             let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
             if (!link) {
               link = document.createElement('link');
@@ -100,10 +95,8 @@ const Navbar = () => {
               document.getElementsByTagName('head')[0].appendChild(link);
             }
             
-            // Update the href
             link.href = publicUrl;
             
-            // Try to determine the type based on the file extension
             const extension = publicUrl.split('.').pop()?.toLowerCase();
             if (extension === 'png') {
               link.type = 'image/png';
@@ -132,7 +125,6 @@ const Navbar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // Set up real-time subscription for navigation menu changes
   useEffect(() => {
     const menuChannel = supabase
       .channel('header_menu_changes')
@@ -143,7 +135,6 @@ const Navbar = () => {
           table: 'header_menu_links' 
         }, 
         () => {
-          // Refresh the navigation links when changes occur
           const fetchNavLinks = async () => {
             const { data } = await supabase
               .from('header_menu_links')
@@ -161,22 +152,21 @@ const Navbar = () => {
       )
       .subscribe();
 
-    // Cleanup subscription on unmount
     return () => {
       supabase.removeChannel(menuChannel);
     };
   }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md shadow-soft">
+    <nav className="fixed top-0 left-0 right-0 z-50 
+      bg-festival-primary/80 backdrop-blur-md border-b border-white/10 shadow-soft">
       <div className="festival-container py-4 flex justify-between items-center">
         <Link to="/" className="flex items-center">
           <img 
             src={logoUrl} 
             alt="SHOTAKU Logo" 
-            className="h-10 object-contain"
+            className="h-10 object-contain brightness-150 contrast-125"
             onError={(e) => {
-              // Fallback to default logo if Supabase logo fails to load
               const target = e.target as HTMLImageElement;
               target.src = "/logo.png";
               console.log('Falling back to default logo');
@@ -184,7 +174,6 @@ const Navbar = () => {
           />
         </Link>
         
-        {/* Mobile menu button */}
         <button 
           className="md:hidden p-2 rounded-md text-festival-primary"
           onClick={toggleMenu}
@@ -193,29 +182,27 @@ const Navbar = () => {
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        {/* Desktop navigation */}
         <div className="hidden md:flex items-center space-x-6">
           {navLinks.map(link => (
             <Link 
               key={link.id}
               to={link.url} 
-              className="nav-link"
+              className="nav-link text-white/80 hover:text-white"
             >
               {link.title}
             </Link>
           ))}
           <Link
             to="/admin"
-            className="px-3 py-1 rounded-full bg-festival-accent/10 text-festival-accent font-medium 
-              hover:bg-festival-accent/20 transition-colors duration-300 ml-2"
+            className="px-3 py-1 rounded-full bg-festival-accent/20 text-white 
+              hover:bg-festival-accent/30 transition-colors duration-300 ml-2"
           >
             Admin
           </Link>
         </div>
 
-        {/* Mobile navigation */}
         <div className={cn(
-          "absolute top-full left-0 right-0 bg-white shadow-md transition-all duration-300 md:hidden",
+          "absolute top-full left-0 right-0 bg-festival-primary/90 backdrop-blur-md shadow-md transition-all duration-300 md:hidden",
           isMenuOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
         )}>
           <div className="flex flex-col p-4 space-y-4">
@@ -223,7 +210,7 @@ const Navbar = () => {
               <Link 
                 key={link.id}
                 to={link.url} 
-                className="nav-link" 
+                className="nav-link text-white/80 hover:text-white" 
                 onClick={toggleMenu}
               >
                 {link.title}
@@ -231,8 +218,8 @@ const Navbar = () => {
             ))}
             <Link
               to="/admin"
-              className="px-3 py-1 w-fit rounded-full bg-festival-accent/10 text-festival-accent font-medium 
-                hover:bg-festival-accent/20 transition-colors duration-300"
+              className="px-3 py-1 w-fit rounded-full bg-festival-accent/20 text-white 
+                hover:bg-festival-accent/30 transition-colors duration-300"
               onClick={toggleMenu}
             >
               Admin
