@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -44,6 +45,17 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Festival theme variables */
+    --festival-primary: #050F2C;
+    --festival-secondary: #2E3A59;
+    --festival-accent: #FF5370;
+    --festival-light: #F7F9FC;
+    --festival-muted: #A0AEC0;
+    
+    /* Font variables */
+    --font-heading: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   }
 
   .dark {
@@ -88,8 +100,8 @@
   }
   
   body {
-    @apply bg-background text-foreground font-sans;
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
     background-image: url('/lovable-uploads/033dc11d-ce6a-468c-8da7-e4d60a1611bc.png');
     background-size: cover;
     background-position: center;
@@ -99,7 +111,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-family: var(--font-heading);
   }
   
   /* Desktop-only custom cursor styles */
@@ -261,4 +273,41 @@
 
 .form-control-responsive .input-wrapper {
   @apply w-full md:w-3/4;
+}
+
+/* Theme override utilities */
+.text-festival-primary {
+  color: var(--festival-primary);
+}
+
+.text-festival-secondary {
+  color: var(--festival-secondary);
+}
+
+.text-festival-accent {
+  color: var(--festival-accent);
+}
+
+.bg-festival-primary {
+  background-color: var(--festival-primary);
+}
+
+.bg-festival-secondary {
+  background-color: var(--festival-secondary);
+}
+
+.bg-festival-accent {
+  background-color: var(--festival-accent);
+}
+
+.border-festival-primary {
+  border-color: var(--festival-primary);
+}
+
+.border-festival-accent {
+  border-color: var(--festival-accent);
+}
+
+.after\\:bg-festival-accent::after {
+  background-color: var(--festival-accent);
 }

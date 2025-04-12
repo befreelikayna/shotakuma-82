@@ -30,9 +30,9 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				festival: {
-					primary: '#050F2C',
-					secondary: '#2E3A59',
-					accent: '#FF5370',
+					primary: 'var(--festival-primary)',
+					secondary: 'var(--festival-secondary)',
+					accent: 'var(--festival-accent)',
 					light: '#F7F9FC',
 					muted: '#A0AEC0'
 				},
@@ -74,6 +74,10 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				}
+			},
+			fontFamily: {
+				sans: ['var(--font-body)'],
+				heading: ['var(--font-heading)'],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

@@ -10,6 +10,7 @@ import CustomCursor from "./components/CustomCursor";
 import ParticleEffect from "./components/ParticleEffect";
 import CountdownProvider from "./components/CountdownProvider";
 import WhatsAppButton from "./components/WhatsAppButton";
+import ThemeProvider from "./components/ThemeProvider";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Schedule from "./pages/Schedule";
@@ -71,35 +72,37 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <CustomCursor />
-          <ParticleEffect />
-          <CountdownProvider>
-            <AnimatePresence mode="wait">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/schedule" element={<Schedule />} />
-                <Route path="/gallery" element={<Gallery />} />
-                <Route path="/volunteer" element={<Volunteer />} />
-                <Route path="/events" element={<Events />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/admin" element={<Admin />} />
-                
-                {/* Dynamic routes generated from database */}
-                {!isLoading && dynamicRoutes.map(page => (
-                  <Route 
-                    key={page.id} 
-                    path={page.path} 
-                    element={<DynamicPage pageSlug={page.slug} />} 
-                  />
-                ))}
-                
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AnimatePresence>
-          </CountdownProvider>
-          <WhatsAppButton phoneNumber="+212670625980" />
+          <ThemeProvider>
+            <CustomCursor />
+            <ParticleEffect />
+            <CountdownProvider>
+              <AnimatePresence mode="wait">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/schedule" element={<Schedule />} />
+                  <Route path="/gallery" element={<Gallery />} />
+                  <Route path="/volunteer" element={<Volunteer />} />
+                  <Route path="/events" element={<Events />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/admin" element={<Admin />} />
+                  
+                  {/* Dynamic routes generated from database */}
+                  {!isLoading && dynamicRoutes.map(page => (
+                    <Route 
+                      key={page.id} 
+                      path={page.path} 
+                      element={<DynamicPage pageSlug={page.slug} />} 
+                    />
+                  ))}
+                  
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AnimatePresence>
+            </CountdownProvider>
+            <WhatsAppButton phoneNumber="+212670625980" />
+          </ThemeProvider>
         </BrowserRouter>
       </>
     </QueryClientProvider>
