@@ -2,12 +2,19 @@
 import React from "react";
 import { motion } from "framer-motion";
 
-const AnimatedMascots = () => {
+interface AnimatedMascotsProps {
+  className?: string;
+  scale?: number;
+  speed?: number;
+}
+
+const AnimatedMascots = ({ className = "", scale = 1, speed = 1 }: AnimatedMascotsProps) => {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+    <div className={`absolute inset-0 overflow-hidden pointer-events-none z-0 ${className}`}>
       {/* Top left mascot */}
       <motion.div 
         className="absolute -left-10 top-10 w-40 h-40 md:w-60 md:h-60"
+        style={{ scale }}
         initial={{ x: -100, y: -50, rotate: -10 }}
         animate={{ 
           x: [-50, -30, -50],
@@ -16,7 +23,7 @@ const AnimatedMascots = () => {
         }}
         transition={{ 
           repeat: Infinity, 
-          duration: 8,
+          duration: 8 / speed,
           ease: "easeInOut"
         }}
       >
@@ -30,6 +37,7 @@ const AnimatedMascots = () => {
       {/* Top right mascot */}
       <motion.div 
         className="absolute -right-10 top-40 w-36 h-36 md:w-52 md:h-52"
+        style={{ scale }}
         initial={{ x: 100, y: -30, rotate: 10 }}
         animate={{ 
           x: [30, 50, 30],
@@ -38,7 +46,7 @@ const AnimatedMascots = () => {
         }}
         transition={{ 
           repeat: Infinity, 
-          duration: 10,
+          duration: 10 / speed,
           ease: "easeInOut"
         }}
       >
@@ -52,6 +60,7 @@ const AnimatedMascots = () => {
       {/* Bottom left mascot */}
       <motion.div 
         className="absolute left-20 -bottom-20 w-44 h-44 md:w-64 md:h-64"
+        style={{ scale }}
         initial={{ x: -50, y: 100, rotate: -5 }}
         animate={{ 
           x: [-20, -40, -20],
@@ -60,7 +69,7 @@ const AnimatedMascots = () => {
         }}
         transition={{ 
           repeat: Infinity, 
-          duration: 12,
+          duration: 12 / speed,
           ease: "easeInOut"
         }}
       >

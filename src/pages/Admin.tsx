@@ -24,6 +24,7 @@ import HeaderMenuManager from "@/components/admin/HeaderMenuManager";
 import PageManager from "@/components/admin/PageManager";
 import AdminLogin from "@/components/admin/AdminLogin";
 import ContactEditor from "@/components/admin/ContactEditor";
+import AnimatedMascots from "@/components/admin/AnimatedMascots";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Collapsible, 
@@ -109,8 +110,9 @@ const Admin = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center relative overflow-hidden">
+        <AnimatedMascots scale={0.8} speed={0.5} />
+        <div className="text-center relative z-10">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent text-festival-primary align-[-0.125em]" role="status">
             <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading...</span>
           </div>
@@ -170,9 +172,13 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white relative overflow-hidden">
       <Navbar />
-      <div className="pt-20 md:pt-32 pb-20 px-4 md:px-0">
+      
+      {/* Add the animated mascots behind everything */}
+      <AnimatedMascots scale={0.7} speed={0.6} />
+      
+      <div className="pt-20 md:pt-32 pb-20 px-4 md:px-0 relative z-10">
         <div className="festival-container">
           <div className="flex justify-between items-center mb-6 md:mb-8">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-festival-primary text-center md:text-left">
@@ -187,7 +193,7 @@ const Admin = () => {
             <div className="relative mb-6 md:mb-8">
               {/* Section selector dropdown */}
               <Collapsible open={isMenuOpen} onOpenChange={setIsMenuOpen} className="w-full">
-                <div className="flex items-center justify-between px-4 py-2 bg-white rounded-lg shadow-sm mb-2">
+                <div className="flex items-center justify-between px-4 py-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm mb-2">
                   <h3 className="text-lg font-medium">
                     Section: {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
                   </h3>
@@ -198,7 +204,7 @@ const Admin = () => {
                     </Button>
                   </CollapsibleTrigger>
                 </div>
-                <CollapsibleContent className="bg-white rounded-lg shadow-sm p-4 mb-4 z-50">
+                <CollapsibleContent className="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm p-4 mb-4 z-50 relative">
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                     {sectionItems.map((item) => (
                       <Button 
@@ -216,7 +222,7 @@ const Admin = () => {
             </div>
 
             {/* Content panels */}
-            <div className="p-4 md:p-6 bg-white rounded-xl shadow-soft">
+            <div className="p-4 md:p-6 bg-white/90 backdrop-blur-md rounded-xl shadow-soft relative z-10">
               {activeTab === "slider" && <SliderManager />}
               {activeTab === "gallery" && <GalleryManager />}
               {activeTab === "events" && <EventManager />}
