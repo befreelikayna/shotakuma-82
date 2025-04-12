@@ -79,7 +79,7 @@ export interface ScheduleEvent {
   start_time: string;
   end_time: string;
   location: string | null;
-  category: "panel" | "workshop" | "competition" | "screening" | "performance";
+  category: string; // Changed from union type to string to match database schema
   day_id: string | null;
   order_number: number;
   created_at?: string;

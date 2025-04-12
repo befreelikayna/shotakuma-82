@@ -52,19 +52,10 @@ const Schedule = () => {
             } as ScheduleDay;
           }
           
-          // Process and typecast events to ensure they match ScheduleEvent type
+          // Process events to ensure they match ScheduleEvent type
           const processedEvents = (eventsData || []).map(event => {
             return {
-              id: event.id,
-              title: event.title,
-              description: event.description,
-              start_time: event.start_time,
-              end_time: event.end_time,
-              location: event.location,
-              // Ensure category is one of the allowed values
-              category: validateEventCategory(event.category),
-              order_number: event.order_number,
-              day_id: event.day_id
+              ...event
             } as ScheduleEvent;
           });
           
@@ -91,50 +82,12 @@ const Schedule = () => {
     }
   };
 
-  // Helper function to validate event categories
-  const validateEventCategory = (category: string): "panel" | "workshop" | "competition" | "screening" | "performance" => {
-    const validCategories = ["panel", "workshop", "competition", "screening", "performance"];
-    return validCategories.includes(category) 
-      ? category as "panel" | "workshop" | "competition" | "screening" | "performance" 
-      : "panel"; // Default to panel if invalid
-  };
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    fetchSchedule();
-    
-    // Set up realtime subscription
-    const channel = supabase
-      .channel('schedule-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'schedule_days' 
-      }, () => {
-        console.log('Schedule days changed, refreshing...');
-        fetchSchedule();
-      })
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'schedule_events' 
-      }, () => {
-        console.log('Schedule events changed, refreshing...');
-        fetchSchedule();
-      })
-      .subscribe();
-    
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
-  const getCategoryColor = (category: ScheduleEvent["category"]) => {
+  const getCategoryColor = (category: string) => {
     switch (category) {
       case "panel":
         return "bg-blue-100 text-blue-800";

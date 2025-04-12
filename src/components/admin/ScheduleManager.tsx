@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,7 +67,7 @@ const ScheduleManager = () => {
         };
       }));
       
-      setDays(daysWithEvents);
+      setDays(daysWithEvents as ScheduleDay[]);
     } catch (error) {
       console.error('Error fetching schedule:', error);
       toast({
