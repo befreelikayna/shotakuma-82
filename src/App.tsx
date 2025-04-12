@@ -11,6 +11,7 @@ import ParticleEffect from "./components/ParticleEffect";
 import CountdownProvider from "./components/CountdownProvider";
 import WhatsAppButton from "./components/WhatsAppButton";
 import ThemeProvider from "./components/ThemeProvider";
+import AnimatedMascots from "./components/admin/AnimatedMascots";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Schedule from "./pages/Schedule";
@@ -28,6 +29,7 @@ const queryClient = new QueryClient();
 const App = () => {
   const [dynamicRoutes, setDynamicRoutes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdminPage, setIsAdminPage] = useState(false);
 
   useEffect(() => {
     const fetchDynamicPages = async () => {
@@ -61,8 +63,17 @@ const App = () => {
       )
       .subscribe();
 
+    // Check if current route is admin
+    const checkRoute = () => {
+      setIsAdminPage(window.location.pathname.includes('/admin'));
+    };
+    
+    checkRoute();
+    window.addEventListener('popstate', checkRoute);
+
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener('popstate', checkRoute);
     };
   }, []);
 
@@ -75,6 +86,12 @@ const App = () => {
           <ThemeProvider>
             <CustomCursor />
             <ParticleEffect />
+            {/* Add the mascots to the entire application with a lower opacity */}
+            <AnimatedMascots 
+              className="opacity-30 hidden md:block" 
+              scale={0.7} 
+              speed={0.5} 
+            />
             <CountdownProvider>
               <AnimatePresence mode="wait">
                 <Routes>
