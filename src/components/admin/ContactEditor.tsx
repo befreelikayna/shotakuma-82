@@ -78,7 +78,7 @@ const ContactEditor = () => {
         if (data && data.content) {
           try {
             // Parse the JSON content
-            const parsedContent = JSON.parse(data.content);
+            const parsedContent = JSON.parse(data.content as string);
             
             // Reset form with fetched values
             form.reset({
@@ -119,7 +119,7 @@ const ContactEditor = () => {
         table: 'general_content',
         filter: 'section_key=eq.contact_info'
       }, (payload) => {
-        if (payload.new && payload.new.content) {
+        if (payload.new && typeof payload.new.content === 'string') {
           try {
             const parsedContent = JSON.parse(payload.new.content);
             

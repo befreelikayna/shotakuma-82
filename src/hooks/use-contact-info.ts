@@ -34,7 +34,7 @@ export const useContactInfo = () => {
           throw error;
         }
         
-        if (data && data.content) {
+        if (data && typeof data.content === 'string') {
           // Parse the JSON content
           const parsedContent = JSON.parse(data.content);
           
