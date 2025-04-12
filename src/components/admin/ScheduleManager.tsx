@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -614,7 +615,11 @@ const ScheduleManager = () => {
                   <SelectValue placeholder="Sélectionnez une catégorie" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="panel">Panel</SelectItem>
                   <SelectItem value="workshop">Atelier</SelectItem>
+                  <SelectItem value="competition">Compétition</SelectItem>
+                  <SelectItem value="screening">Projection</SelectItem>
+                  <SelectItem value="performance">Performance</SelectItem>
                   <SelectItem value="concert">Concert</SelectItem>
                   <SelectItem value="talk">Conférence</SelectItem>
                   <SelectItem value="exhibition">Exposition</SelectItem>
@@ -704,7 +709,11 @@ const ScheduleManager = () => {
                     <SelectValue placeholder="Sélectionnez une catégorie" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="panel">Panel</SelectItem>
                     <SelectItem value="workshop">Atelier</SelectItem>
+                    <SelectItem value="competition">Compétition</SelectItem>
+                    <SelectItem value="screening">Projection</SelectItem>
+                    <SelectItem value="performance">Performance</SelectItem>
                     <SelectItem value="concert">Concert</SelectItem>
                     <SelectItem value="talk">Conférence</SelectItem>
                     <SelectItem value="exhibition">Exposition</SelectItem>

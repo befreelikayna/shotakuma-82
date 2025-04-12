@@ -82,6 +82,10 @@ const Schedule = () => {
     }
   };
 
+  useEffect(() => {
+    fetchSchedule();
+  }, []);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -99,6 +103,12 @@ const Schedule = () => {
         return "bg-amber-100 text-amber-800";
       case "performance":
         return "bg-rose-100 text-rose-800";
+      case "concert":
+        return "bg-indigo-100 text-indigo-800";
+      case "talk":
+        return "bg-cyan-100 text-cyan-800";
+      case "exhibition":
+        return "bg-teal-100 text-teal-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
