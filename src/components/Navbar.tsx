@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+
 interface HeaderLink {
   id: string;
   title: string;
@@ -10,10 +11,12 @@ interface HeaderLink {
   order_number: number;
   is_active: boolean;
 }
+
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [logoUrl, setLogoUrl] = useState("/logo.png");
   const [navLinks, setNavLinks] = useState<HeaderLink[]>([]);
+
   useEffect(() => {
     const fetchNavLinks = async () => {
       try {
@@ -32,6 +35,7 @@ const Navbar = () => {
         console.error('Error in navigation links fetch:', error);
       }
     };
+
     const fetchLogo = async () => {
       try {
         const {
@@ -63,6 +67,7 @@ const Navbar = () => {
         console.error('Error in logo fetch:', error);
       }
     };
+
     const fetchFavicon = async () => {
       try {
         const {
@@ -110,13 +115,16 @@ const Navbar = () => {
         console.error('Error in favicon fetch:', error);
       }
     };
+
     fetchNavLinks();
     fetchLogo();
     fetchFavicon();
   }, []);
+
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
   useEffect(() => {
     const menuChannel = supabase.channel('header_menu_changes').on('postgres_changes', {
       event: '*',
@@ -137,6 +145,7 @@ const Navbar = () => {
       supabase.removeChannel(menuChannel);
     };
   }, []);
+
   return <nav className="fixed top-0 left-0 right-0 z-50 
       bg-festival-primary/80 backdrop-blur-md border-b border-white/10 shadow-soft">
       <div className="festival-container py-4 flex justify-between items-center bg-[#080829]/[0.87]">
@@ -157,8 +166,8 @@ const Navbar = () => {
               {link.title}
             </Link>)}
           <Link to="/admin" className="px-3 py-1 rounded-full bg-festival-accent/20 text-white 
-              hover:bg-festival-accent/30 transition-colors duration-300 ml-2">
-            Admin
+              hover:bg-festival-accent/30 transition-colors duration-300 ml-2 flex items-center">
+            <LogIn size={18} />
           </Link>
         </div>
 
@@ -168,12 +177,13 @@ const Navbar = () => {
                 {link.title}
               </Link>)}
             <Link to="/admin" className="px-3 py-1 w-fit rounded-full bg-festival-accent/20 text-white 
-                hover:bg-festival-accent/30 transition-colors duration-300" onClick={toggleMenu}>
-              Admin
+                hover:bg-festival-accent/30 transition-colors duration-300 flex items-center gap-2" onClick={toggleMenu}>
+              <LogIn size={18} />
             </Link>
           </div>
         </div>
       </div>
     </nav>;
 };
+
 export default Navbar;
