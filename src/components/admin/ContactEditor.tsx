@@ -37,6 +37,18 @@ const contactFormSchema = z.object({
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;
 
+// Define a type for the payload.new object from Supabase realtime updates
+interface ContactContentPayload {
+  id?: string;
+  section_key?: string;
+  title?: string | null;
+  subtitle?: string | null;
+  content?: string;
+  image_url?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 const ContactEditor = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -75,10 +87,10 @@ const ContactEditor = () => {
           }
         }
 
-        if (data && data.content) {
+        if (data && typeof data.content === 'string') {
           try {
             // Parse the JSON content
-            const parsedContent = JSON.parse(data.content as string);
+            const parsedContent = JSON.parse(data.content);
             
             // Reset form with fetched values
             form.reset({
@@ -119,9 +131,10 @@ const ContactEditor = () => {
         table: 'general_content',
         filter: 'section_key=eq.contact_info'
       }, (payload) => {
-        if (payload.new && typeof payload.new.content === 'string') {
+        const newRecord = payload.new as ContactContentPayload;
+        if (newRecord && typeof newRecord.content === 'string') {
           try {
-            const parsedContent = JSON.parse(payload.new.content);
+            const parsedContent = JSON.parse(newRecord.content);
             
             // Update form with new values from real-time update
             form.reset({

@@ -14,6 +14,18 @@ export interface ContactInfo {
   map_zoom: string;
 }
 
+// Type for the payload from Supabase real-time updates
+interface ContactContentPayload {
+  id?: string;
+  section_key?: string;
+  title?: string | null;
+  subtitle?: string | null;
+  content?: string;
+  image_url?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export const useContactInfo = () => {
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,8 +83,31 @@ export const useContactInfo = () => {
         schema: 'public',
         table: 'general_content',
         filter: 'section_key=eq.contact_info'
-      }, () => {
-        fetchContactInfo();
+      }, (payload) => {
+        const newRecord = payload.new as ContactContentPayload;
+        if (newRecord && typeof newRecord.content === 'string') {
+          try {
+            // Parse the JSON content
+            const parsedContent = JSON.parse(newRecord.content);
+            
+            // Set default values for required fields with real-time updates
+            const contactInfo: ContactInfo = {
+              email: parsedContent.email || '',
+              phone: parsedContent.phone || '',
+              whatsapp: parsedContent.whatsapp || '',
+              address: parsedContent.address || '',
+              hours: parsedContent.hours || '',
+              additional_info: parsedContent.additional_info || '',
+              map_lat: parsedContent.map_lat || '33.589886',
+              map_lng: parsedContent.map_lng || '-7.603869',
+              map_zoom: parsedContent.map_zoom || '15',
+            };
+            
+            setContactInfo(contactInfo);
+          } catch (error) {
+            console.error('Error parsing real-time contact info:', error);
+          }
+        }
       })
       .subscribe();
     
