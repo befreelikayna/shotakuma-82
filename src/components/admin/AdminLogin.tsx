@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import AnimatedMascots from "./AnimatedMascots";
 
 interface AdminLoginProps {
   onLogin: (success: boolean) => void;
@@ -87,53 +88,60 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
   };
 
   return (
-    <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow-soft p-6 md:p-8">
-      <h2 className="text-2xl font-bold text-festival-primary mb-6 text-center">
-        Connexion Admin
-      </h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="admin@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={isLoading}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="password">Mot de passe</Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={isLoading}
-          />
-        </div>
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Connexion en cours...
-            </>
-          ) : (
-            "Se connecter"
-          )}
-        </Button>
-        
-        {process.env.NODE_ENV !== 'production' && (
-          <div className="text-xs text-muted-foreground mt-4 p-2 border border-dashed rounded">
-            <div><strong>Email:</strong> info@shotaku.ma</div>
-            <div><strong>Mot de passe:</strong> shotaku2025</div>
+    <div className="max-w-md w-full mx-auto bg-white/90 backdrop-blur-md rounded-xl shadow-soft p-6 md:p-8 relative overflow-hidden">
+      {/* Add the animated mascots */}
+      <AnimatedMascots />
+      
+      <div className="relative z-10">
+        <h2 className="text-2xl font-bold text-festival-primary mb-6 text-center">
+          Connexion Admin
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="admin@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={isLoading}
+              className="bg-white/70"
+            />
           </div>
-        )}
-      </form>
+          <div className="space-y-2">
+            <Label htmlFor="password">Mot de passe</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
+              className="bg-white/70"
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Connexion en cours...
+              </>
+            ) : (
+              "Se connecter"
+            )}
+          </Button>
+          
+          {process.env.NODE_ENV !== 'production' && (
+            <div className="text-xs text-muted-foreground mt-4 p-2 border border-dashed rounded">
+              <div><strong>Email:</strong> info@shotaku.ma</div>
+              <div><strong>Mot de passe:</strong> shotaku2025</div>
+            </div>
+          )}
+        </form>
+      </div>
     </div>
   );
 };

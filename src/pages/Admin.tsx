@@ -124,9 +124,16 @@ const Admin = () => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
         <Navbar />
-        <div className="pt-20 md:pt-32 pb-20 px-4 md:px-0">
-          <div className="festival-container">
+        <div className="pt-20 md:pt-32 pb-20 px-4 md:px-0 relative overflow-hidden">
+          <div className="festival-container relative z-10">
             <AdminLogin onLogin={handleLogin} />
+          </div>
+          
+          {/* Background decorative elements */}
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+            <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full bg-festival-accent/5 animate-pulse-light"></div>
+            <div className="absolute top-40 -right-20 w-80 h-80 rounded-full bg-festival-accent/10 animate-pulse-light" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute -bottom-20 left-1/3 w-96 h-96 rounded-full bg-festival-primary/5 animate-pulse-light" style={{ animationDelay: '0.5s' }}></div>
           </div>
         </div>
         <Footer />
