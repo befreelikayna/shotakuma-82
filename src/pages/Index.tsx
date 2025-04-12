@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter } from "lucide-react";
@@ -14,6 +13,7 @@ import { usePageContent } from "@/hooks/use-page-content";
 import PageContentSection from "@/components/PageContentSection";
 import PartnerLogosSlider from "@/components/PartnerLogosSlider";
 import { customSupabase, supabase, Ticket, safeDataAccess } from "@/integrations/supabase/client";
+import AnimeCharacters from '/lovable-uploads/bef16b6a-6c72-48db-a7cd-19b6c468c700.png';
 
 interface TicketWithFeatures extends Ticket {
   features: string[];
@@ -64,7 +64,6 @@ const Index = () => {
       }
       
       if (data && Array.isArray(data)) {
-        // Create properly typed ticket objects with explicit type checking and safety
         const enhancedTickets = data.map(ticket => {
           const typedTicket = {
             id: safeDataAccess(ticket?.id, ''),
@@ -320,70 +319,15 @@ const Index = () => {
         </section>
       )}
 
-      <section className="py-20 bg-gradient-to-br from-slate-50 to-white">
-        <div className="festival-container">
-          <motion.div
-            className="text-center mb-12"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={sectionVariants}
-          >
-            <h2 className="section-heading inline-block">Rejoignez-nous en ligne</h2>
-            <p className="text-festival-secondary max-w-2xl mx-auto mt-4">
-              Suivez-nous sur les réseaux sociaux pour rester informé des dernières actualités, annonces et coulisses du festival.
-            </p>
-          </motion.div>
-
-          <div className="max-w-2xl mx-auto flex flex-col space-y-4">
-            <FestivalLink
-              title="Instagram"
-              description="Photos, stories et actualités"
-              url="https://www.instagram.com/shotakume/"
-              icon={<Instagram className="h-5 w-5 text-pink-600" />}
-            />
-            <FestivalLink
-              title="Facebook"
-              description="Événements et communauté"
-              url="https://facebook.com/OTAKU.sho"
-              icon={<Facebook className="h-5 w-5 text-blue-600" />}
-            />
-            <FestivalLink
-              title="YouTube"
-              description="Vidéos et diffusions en direct"
-              url="https://www.youtube.com/@MarocEvents"
-              icon={<Youtube className="h-5 w-5 text-red-600" />}
-            />
-            <FestivalLink
-              title="Discord - Shotaku Talk"
-              description="Rejoignez notre communauté Discord"
-              url="https://discord.gg/KKGCF86z"
-              icon={<DiscordIcon className="h-5 w-5 text-indigo-600" />}
-            />
-            <FestivalLink
-              title="Twitter"
-              description="Suivez nos actualités"
-              url="https://x.com/shotakume"
-              icon={<Twitter className="h-5 w-5 text-blue-400" />}
-            />
-            <FestivalLink
-              title="Groupe Facebook Communautaire"
-              description="Rejoignez notre groupe de fans"
-              url="https://www.facebook.com/groups/1627285827526134"
-              icon={<Facebook className="h-5 w-5 text-blue-600" />}
-            />
-            <FestivalLink
-              title="SHOTAKU TV"
-              description="Notre chaîne dédiée à l'anime"
-              url="https://www.youtube.com/@ShotakuTv"
-              icon={<Youtube className="h-5 w-5 text-red-600" />}
-            />
-          </div>
+      <section className="py-20 bg-festival-primary text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <img 
+            src={AnimeCharacters} 
+            alt="Anime Characters" 
+            className="w-full h-full object-cover object-center"
+          />
         </div>
-      </section>
-
-      <section className="py-20 bg-festival-primary text-white">
-        <div className="festival-container">
+        <div className="festival-container relative z-10">
           <motion.div
             className="max-w-3xl mx-auto text-center"
             initial="hidden"
