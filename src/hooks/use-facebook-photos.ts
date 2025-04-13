@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { toast } from "@/hooks/use-toast";
 
@@ -70,7 +71,9 @@ export function useFacebookPhotos(pageId: string = 'OTAKU.sho') {
       );
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch photos: ${response.status}`);
+        const errorBody = await response.json();
+        console.error('Facebook API error:', errorBody);
+        throw new Error(`Failed to fetch photos: ${response.status} - ${errorBody?.error?.message || 'Unknown error'}`);
       }
 
       const data = await response.json();
@@ -116,7 +119,9 @@ export function useFacebookPhotos(pageId: string = 'OTAKU.sho') {
         const response = await fetch(nextPageUrl);
         
         if (!response.ok) {
-          throw new Error(`Failed to fetch photos: ${response.status}`);
+          const errorBody = await response.json();
+          console.error('Facebook API error:', errorBody);
+          throw new Error(`Failed to fetch photos: ${response.status} - ${errorBody?.error?.message || 'Unknown error'}`);
         }
         
         const data = await response.json();
@@ -152,7 +157,7 @@ export function useFacebookPhotos(pageId: string = 'OTAKU.sho') {
     }
   };
 
-  // New function to fetch all photos through the albums endpoint
+  // Function to fetch all photos through the albums endpoint with improved error handling
   const fetchPhotosFromAlbums = async (url: string) => {
     try {
       setIsLoading(true);
@@ -169,10 +174,35 @@ export function useFacebookPhotos(pageId: string = 'OTAKU.sho') {
       // Store token temporarily in localStorage for potential future use
       localStorage.setItem('fb_access_token', accessToken);
       
-      const response = await fetch(url);
+      // Make the request with error handling
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
         
       if (!response.ok) {
-        throw new Error(`Failed to fetch albums: ${response.status}`);
+        // Try to parse error response
+        let errorDetails = '';
+        try {
+          const errorBody = await response.json();
+          console.error('Facebook API error response:', errorBody);
+          errorDetails = errorBody?.error?.message || '';
+        } catch (e) {
+          console.error('Could not parse error response', e);
+        }
+        
+        // Handle specific status codes
+        if (response.status === 400) {
+          throw new Error(`Bad request (400): The API request is invalid or malformed. ${errorDetails}`);
+        } else if (response.status === 401) {
+          throw new Error(`Authentication error (401): Your access token may be invalid or expired. ${errorDetails}`);
+        } else if (response.status >= 500) {
+          throw new Error(`Server error (${response.status}): Facebook servers are experiencing issues. Please try again later. ${errorDetails}`);
+        } else {
+          throw new Error(`Failed to fetch albums: ${response.status}${errorDetails ? ' - ' + errorDetails : ''}`);
+        }
       }
       
       const data: FacebookAlbumsResponse = await response.json();
@@ -199,7 +229,8 @@ export function useFacebookPhotos(pageId: string = 'OTAKU.sho') {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
       toast({
         title: "Erreur",
-        description: "Impossible de charger les photos depuis Facebook Albums",
+        description: "Impossible de charger les photos depuis Facebook Albums: " + 
+          (err instanceof Error ? err.message : 'An unknown error occurred'),
         variant: "destructive",
       });
       return [];

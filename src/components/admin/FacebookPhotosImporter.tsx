@@ -1,10 +1,12 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Download, Check, DownloadCloud, Link as LinkIcon } from "lucide-react";
+import { Loader2, Download, Check, DownloadCloud, Link as LinkIcon, AlertCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useFacebookPhotos } from "@/hooks/use-facebook-photos";
 import { useGalleryItems } from "@/hooks/use-gallery-items";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const FacebookPhotosImporter = () => {
   const [accessToken, setAccessToken] = useState("");
@@ -13,6 +15,7 @@ const FacebookPhotosImporter = () => {
   const [selectedPhotos, setSelectedPhotos] = useState<Record<string, boolean>>({});
   const [importing, setImporting] = useState<Record<string, boolean>>({});
   const [isImportingAll, setIsImportingAll] = useState(false);
+  const [apiVersion, setApiVersion] = useState("v18.0");
   
   const { photos, isLoading, error, fetchPhotos, fetchAllPhotos, fetchPhotosFromAlbums } = useFacebookPhotos(pageId);
   const { addImagesFromUrls } = useGalleryItems();
@@ -35,16 +38,37 @@ const FacebookPhotosImporter = () => {
   };
 
   const handleFetchFromAlbumsUrl = async () => {
-    if (!albumsUrl) {
+    try {
+      if (!albumsUrl) {
+        toast({
+          title: "Erreur",
+          description: "Veuillez entrer une URL valide pour les albums Facebook",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate URL format before fetching
+      try {
+        new URL(albumsUrl);
+      } catch (e) {
+        toast({
+          title: "Erreur",
+          description: "Format d'URL invalide. Veuillez vérifier l'URL.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await fetchPhotosFromAlbums(albumsUrl);
+    } catch (err) {
+      console.error('Error handling fetch from albums URL:', err);
       toast({
         title: "Erreur",
-        description: "Veuillez entrer une URL valide pour les albums Facebook",
+        description: "Une erreur s'est produite lors de la récupération des photos",
         variant: "destructive",
       });
-      return;
     }
-
-    await fetchPhotosFromAlbums(albumsUrl);
   };
 
   const toggleSelectPhoto = (photoId: string) => {
@@ -234,6 +258,12 @@ const FacebookPhotosImporter = () => {
       setIsImportingAll(false);
     }
   };
+  
+  // Helper function to generate a Facebook Graph API URL
+  const generateAlbumsUrl = () => {
+    if (!pageId || !accessToken) return '';
+    return `https://graph.facebook.com/${apiVersion}/${pageId}?fields=albums.fields(photos.fields(source))&access_token=${accessToken}`;
+  };
 
   return (
     <div className="bg-slate-50 p-6 rounded-lg mb-8">
@@ -243,7 +273,7 @@ const FacebookPhotosImporter = () => {
         {/* First method - Direct API */}
         <div className="border-b pb-6">
           <h4 className="font-medium mb-2">Méthode 1: Par ID de page et token</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">ID de la page</label>
               <Input
@@ -261,9 +291,17 @@ const FacebookPhotosImporter = () => {
                 placeholder="Token d'accès Facebook"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Version API</label>
+              <Input
+                value={apiVersion}
+                onChange={(e) => setApiVersion(e.target.value)}
+                placeholder="v18.0"
+              />
+            </div>
           </div>
           
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 mb-3">
             <Button 
               onClick={handleFetchPhotos}
               disabled={isLoading}
@@ -297,6 +335,32 @@ const FacebookPhotosImporter = () => {
               )}
             </Button>
           </div>
+          
+          <div className="mt-3">
+            <Button
+              onClick={() => {
+                const url = generateAlbumsUrl();
+                if (url) {
+                  setAlbumsUrl(url);
+                  toast({
+                    title: "URL générée",
+                    description: "L'URL des albums a été générée avec succès"
+                  });
+                } else {
+                  toast({
+                    title: "Erreur",
+                    description: "Veuillez entrer l'ID de la page et le token d'accès",
+                    variant: "destructive"
+                  });
+                }
+              }}
+              variant="outline"
+              size="sm"
+              disabled={!pageId || !accessToken}
+            >
+              Générer l'URL pour la méthode 2
+            </Button>
+          </div>
         </div>
         
         {/* Second method - Albums API */}
@@ -308,9 +372,12 @@ const FacebookPhotosImporter = () => {
               <Input
                 value={albumsUrl}
                 onChange={(e) => setAlbumsUrl(e.target.value)}
-                placeholder="https://graph.facebook.com/v15.0/[PAGE_ID]?fields=albums.fields(photos.fields(source))&access_token=[TOKEN]"
+                placeholder="https://graph.facebook.com/v18.0/[PAGE_ID]?fields=albums.fields(photos.fields(source))&access_token=[TOKEN]"
                 className="text-xs font-mono"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Format: https://graph.facebook.com/v18.0/PAGE_ID?fields=albums.fields(photos.fields(source))&access_token=YOUR_TOKEN
+              </p>
             </div>
           </div>
           
@@ -355,9 +422,13 @@ const FacebookPhotosImporter = () => {
       </div>
       
       {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded mb-4">
-          {error}
-        </div>
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Erreur lors de la récupération des photos</AlertTitle>
+          <AlertDescription className="font-mono text-xs mt-2 break-all">
+            {error}
+          </AlertDescription>
+        </Alert>
       )}
       
       {photos.length > 0 && (
