@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from "@/hooks/use-toast";
 
@@ -76,11 +75,69 @@ export function useFacebookPhotos(pageId: string = 'OTAKU.sho') {
     }
   };
 
+  // New function to fetch ALL photos with pagination
+  const fetchAllPhotos = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Get access token from localStorage
+      const accessToken = localStorage.getItem('fb_access_token');
+      
+      if (!accessToken) {
+        throw new Error("Access token not found");
+      }
+
+      let allPhotos: FacebookPhoto[] = [];
+      let nextPageUrl = `https://graph.facebook.com/v18.0/${pageId}/photos?fields=source,name&limit=100&access_token=${accessToken}`;
+      
+      // Loop through all pages of results
+      while (nextPageUrl) {
+        const response = await fetch(nextPageUrl);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch photos: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Facebook photos batch fetched:', data);
+        
+        if (data.data && Array.isArray(data.data)) {
+          allPhotos = [...allPhotos, ...data.data];
+        }
+        
+        // Check if there's a next page
+        if (data.paging && data.paging.next) {
+          nextPageUrl = data.paging.next;
+        } else {
+          nextPageUrl = null;
+        }
+      }
+      
+      console.log(`Total Facebook photos fetched: ${allPhotos.length}`);
+      setPhotos(allPhotos);
+      
+      return allPhotos;
+    } catch (err) {
+      console.error('Error fetching all Facebook photos:', err);
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger toutes les photos depuis Facebook",
+        variant: "destructive",
+      });
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     photos,
     isLoading,
     error,
-    fetchPhotos
+    fetchPhotos,
+    fetchAllPhotos
   };
 }
 

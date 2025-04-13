@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Download, Check } from "lucide-react";
+import { Loader2, Download, Check, DownloadCloud } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useFacebookPhotos } from "@/hooks/use-facebook-photos";
 import { useGalleryItems } from "@/hooks/use-gallery-items";
@@ -12,8 +12,9 @@ const FacebookPhotosImporter = () => {
   const [pageId, setPageId] = useState("OTAKU.sho");
   const [selectedPhotos, setSelectedPhotos] = useState<Record<string, boolean>>({});
   const [importing, setImporting] = useState<Record<string, boolean>>({});
+  const [isImportingAll, setIsImportingAll] = useState(false);
   
-  const { photos, isLoading, error, fetchPhotos } = useFacebookPhotos(pageId);
+  const { photos, isLoading, error, fetchPhotos, fetchAllPhotos } = useFacebookPhotos(pageId);
   const { addImagesFromUrls } = useGalleryItems();
 
   const handleFetchPhotos = async () => {
@@ -94,6 +95,71 @@ const FacebookPhotosImporter = () => {
     }
   };
 
+  // New function to fetch and import all photos in one operation
+  const handleFetchAndImportAll = async () => {
+    if (!accessToken) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez entrer un token d'accès Facebook",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Store token in localStorage
+    localStorage.setItem('fb_access_token', accessToken);
+    
+    try {
+      setIsImportingAll(true);
+      
+      // Step 1: Fetch all photos from Facebook
+      toast({
+        title: "Récupération",
+        description: "Récupération de toutes les photos de la page Facebook..."
+      });
+      
+      const allPhotos = await fetchAllPhotos();
+      
+      if (allPhotos.length === 0) {
+        toast({
+          title: "Information",
+          description: "Aucune photo trouvée sur la page Facebook."
+        });
+        return;
+      }
+      
+      // Step 2: Import all photos to the gallery
+      toast({
+        title: "Importation",
+        description: `Importation de ${allPhotos.length} photos en cours...`
+      });
+      
+      const photoUrls = allPhotos.map(photo => photo.source);
+      
+      const result = await addImagesFromUrls(
+        photoUrls,
+        'event',
+        'Photo importée en masse de Facebook'
+      );
+      
+      if (result?.success) {
+        toast({
+          title: "Succès",
+          description: `${photoUrls.length} photos importées avec succès depuis Facebook.`
+        });
+      }
+    } catch (err) {
+      console.error('Error in fetch and import all:', err);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'importation de toutes les photos",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImportingAll(false);
+    }
+  };
+
   return (
     <div className="bg-slate-50 p-6 rounded-lg mb-8">
       <h3 className="text-lg font-medium text-festival-primary mb-4">Importer des photos depuis Facebook</h3>
@@ -131,6 +197,24 @@ const FacebookPhotosImporter = () => {
             </>
           ) : (
             "Charger les photos"
+          )}
+        </Button>
+        
+        <Button
+          onClick={handleFetchAndImportAll}
+          disabled={isLoading || isImportingAll}
+          className="bg-green-600 text-white hover:bg-green-700"
+        >
+          {isImportingAll ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" /> 
+              Importation en cours...
+            </>
+          ) : (
+            <>
+              <DownloadCloud className="h-4 w-4 mr-2" />
+              Importer tout depuis Facebook
+            </>
           )}
         </Button>
         
