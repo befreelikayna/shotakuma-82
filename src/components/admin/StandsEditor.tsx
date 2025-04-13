@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Edit, Save, Trash, ExternalLink, Loader2 } from "lucide-react";
+import { Edit, Save, Loader2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,17 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useStandsContent } from "@/hooks/use-stands-content";
-
-interface StandsContent {
-  id: string;
-  title: string;
-  description: string;
-  url: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
+import { useStandsContent, StandsContent } from "@/hooks/use-stands-content";
 
 const StandsEditor = () => {
   const { content, isLoading, refetch } = useStandsContent();
@@ -40,10 +30,7 @@ const StandsEditor = () => {
       
       const { error } = await supabase
         .from('stands_content')
-        .upsert({
-          ...editableContent,
-          updated_at: new Date().toISOString(),
-        }, { 
+        .upsert(editableContent, { 
           onConflict: 'id' 
         });
 
