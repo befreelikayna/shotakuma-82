@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +24,9 @@ import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import DynamicPage from "./pages/DynamicPage";
+import Tickets from "./pages/Tickets";
+import Checkout from "./pages/Checkout";
+import Stands from "./pages/Stands";
 import { supabase } from "./integrations/supabase/client";
 
 const queryClient = new QueryClient();
@@ -105,6 +109,9 @@ const App = () => {
                   <Route path="/events" element={<Events />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/admin" element={<Admin />} />
+                  <Route path="/tickets" element={<Tickets />} />
+                  <Route path="/checkout/:ticketId" element={<Checkout />} />
+                  <Route path="/stands" element={<Stands />} />
                   
                   {/* Dynamic routes generated from database */}
                   {!isLoading && dynamicRoutes.map(page => (

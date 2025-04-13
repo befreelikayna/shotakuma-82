@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Home, Ticket, Store, User, Plus } from "lucide-react";
+import { Home, Ticket, Store, LogIn, MessageCircle } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -17,12 +17,12 @@ const MobileBottomNav = () => {
     if (path === "/") setActiveTab("/");
     else if (path.includes("/tickets")) setActiveTab("/tickets");
     else if (path.includes("/stands")) setActiveTab("/stands");
-    else if (path === "/profile") setActiveTab("/profile");
+    else if (path === "/admin") setActiveTab("/admin");
   }, [location]);
   
   if (!isMobile) return null;
   
-  const handleAddClick = () => {
+  const handleWhatsAppClick = () => {
     window.open(`https://wa.me/+212670625980`, '_blank');
   };
   
@@ -51,13 +51,13 @@ const MobileBottomNav = () => {
         {/* Center button for WhatsApp */}
         <div className="relative -mt-8">
           <motion.button
-            onClick={handleAddClick}
-            className="flex items-center justify-center w-14 h-14 rounded-full bg-red-500 shadow-lg"
+            onClick={handleWhatsAppClick}
+            className="flex items-center justify-center w-14 h-14 rounded-full bg-green-500 shadow-lg"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             aria-label="WhatsApp"
           >
-            <Plus size={24} color="white" />
+            <MessageCircle size={24} color="white" />
           </motion.button>
         </div>
         
@@ -69,10 +69,10 @@ const MobileBottomNav = () => {
         />
         
         <NavItem 
-          to="/profile" 
-          icon={<User size={20} />} 
-          label="Profile" 
-          isActive={activeTab === "/profile"} 
+          to="/admin" 
+          icon={<LogIn size={20} />} 
+          label="Login" 
+          isActive={activeTab === "/admin"} 
         />
       </div>
     </motion.div>

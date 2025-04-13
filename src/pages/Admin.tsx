@@ -25,6 +25,7 @@ import PageManager from "@/components/admin/PageManager";
 import AdminLogin from "@/components/admin/AdminLogin";
 import ContactEditor from "@/components/admin/ContactEditor";
 import AnimatedMascots from "@/components/admin/AnimatedMascots";
+import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Collapsible, 
@@ -163,6 +164,7 @@ const Admin = () => {
     { id: "logo", label: "Logo" },
     { id: "assets", label: "Assets" },
     { id: "contact", label: "Contact" },
+    { id: "payments", label: "Paiements" },
   ];
 
   const handleSectionSelect = (id: string) => {
@@ -239,6 +241,7 @@ const Admin = () => {
               {activeTab === "menu" && <HeaderMenuManager />}
               {activeTab === "newsletter" && <NewsletterSubscriptions />}
               {activeTab === "contact" && <ContactEditor />}
+              {activeTab === "payments" && <PaymentGatewaySettings />}
               {activeTab === "logo" && (
                 <>
                   <h2 className="text-2xl font-semibold mb-4">Gestion du Logo</h2>
