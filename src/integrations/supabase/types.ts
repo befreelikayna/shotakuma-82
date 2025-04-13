@@ -336,6 +336,48 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_settings: {
+        Row: {
+          client_id: string | null
+          client_secret: string | null
+          created_at: string
+          enabled: boolean
+          id: string
+          mode: string | null
+          provider: string
+          publishable_key: string | null
+          secret_key: string | null
+          updated_at: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          client_secret?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          mode?: string | null
+          provider: string
+          publishable_key?: string | null
+          secret_key?: string | null
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          client_secret?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          mode?: string | null
+          provider?: string
+          publishable_key?: string | null
+          secret_key?: string | null
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Relationships: []
+      }
       schedule_days: {
         Row: {
           created_at: string

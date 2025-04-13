@@ -11,18 +11,18 @@ import { Loader2, Check, CreditCard, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 // Define interfaces for our payment settings
-interface StripeSettings {
+interface PaymentSetting {
+  id: string;
+  provider: string;
   enabled: boolean;
-  publishableKey: string;
-  secretKey: string;
-  webhookSecret: string;
-}
-
-interface PayPalSettings {
-  enabled: boolean;
-  clientId: string;
-  clientSecret: string;
-  mode: string;
+  publishable_key?: string | null;
+  secret_key?: string | null;
+  webhook_secret?: string | null;
+  client_id?: string | null;
+  client_secret?: string | null;
+  mode?: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 const PaymentGatewaySettings = () => {
@@ -51,7 +51,11 @@ const PaymentGatewaySettings = () => {
           .from('payment_settings')
           .select('*')
           .eq('provider', 'stripe')
-          .maybeSingle();
+          .single();
+
+        if (stripeError && stripeError.code !== 'PGRST116') {
+          console.error("Error fetching Stripe settings:", stripeError);
+        }
 
         if (stripeSettingsData) {
           setStripeEnabled(stripeSettingsData.enabled || false);
@@ -65,7 +69,11 @@ const PaymentGatewaySettings = () => {
           .from('payment_settings')
           .select('*')
           .eq('provider', 'paypal')
-          .maybeSingle();
+          .single();
+
+        if (paypalError && paypalError.code !== 'PGRST116') {
+          console.error("Error fetching PayPal settings:", paypalError);
+        }
 
         if (paypalSettingsData) {
           setPaypalEnabled(paypalSettingsData.enabled || false);
