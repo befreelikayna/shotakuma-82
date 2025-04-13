@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter } from "lucide-react";
@@ -194,6 +195,7 @@ const Index = () => {
                     description={ticket.description || ""}
                     features={ticket.features || []}
                     isPopular={ticket.name === "Pass 3 Jours"}
+                    ticketId={ticket.id} // Pass the ticket ID for the checkout link
                   />
                 ))}
             </div>

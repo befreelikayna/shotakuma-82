@@ -31,10 +31,8 @@ const HeroSection = () => {
     seconds: 0,
   });
 
-  // Target date for the countdown (May 8, 2025)
   const targetDate = new Date("2025-05-08T00:00:00");
 
-  // Fetch slider images from Supabase
   const fetchSliderImages = async () => {
     try {
       setIsLoading(true);
@@ -63,11 +61,10 @@ const HeroSection = () => {
       setIsLoading(false);
     }
   };
-  
+
   useEffect(() => {
     fetchSliderImages();
 
-    // Set up a subscription to listen for changes to the slider_images table
     const channel = supabase.channel('public:slider_images').on('postgres_changes', {
       event: '*',
       schema: 'public',
@@ -81,7 +78,6 @@ const HeroSection = () => {
     };
   }, []);
 
-  // Auto rotate background images
   useEffect(() => {
     if (sliderImages.length === 0) return;
     const interval = setInterval(() => {
@@ -89,8 +85,7 @@ const HeroSection = () => {
     }, 5000);
     return () => clearInterval(interval);
   }, [sliderImages]);
-  
-  // Countdown timer effect
+
   useEffect(() => {
     const calculateTimeLeft = () => {
       const now = new Date().getTime();
@@ -113,10 +108,8 @@ const HeroSection = () => {
       }
     };
 
-    // Initial calculation
     setTimeLeft(calculateTimeLeft());
 
-    // Update every second
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
@@ -127,7 +120,7 @@ const HeroSection = () => {
   const formatTime = (value: number) => {
     return value.toString().padStart(2, "0");
   };
-  
+
   const containerVariants = {
     hidden: {
       opacity: 0
@@ -140,7 +133,7 @@ const HeroSection = () => {
       }
     }
   };
-  
+
   const itemVariants = {
     hidden: {
       opacity: 0,
@@ -155,7 +148,7 @@ const HeroSection = () => {
       }
     }
   };
-  
+
   const handleScrollDown = () => {
     window.scrollTo({
       top: window.innerHeight,
@@ -163,9 +156,8 @@ const HeroSection = () => {
     });
   };
 
-  // Default background while loading
   const defaultBackground = "bg-gradient-to-br from-slate-900 to-gray-800";
-  
+
   const handleRefresh = () => {
     fetchSliderImages();
     toast({
@@ -173,22 +165,19 @@ const HeroSection = () => {
       description: "Images du slider actualisées"
     });
   };
-  
+
   return <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 md:pt-20">
-      {/* Slider Background */}
       <div className={`absolute inset-0 z-0 ${isLoading ? defaultBackground : ''}`}>
         {sliderImages.length > 0 ? sliderImages.map((image, index) => <div key={image.id} className={`absolute inset-0 transition-opacity duration-1000 ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'}`}>
               {image.link ? <a href={image.link} className="block absolute inset-0 cursor-pointer" target="_blank" rel="noopener noreferrer">
                   <div className="absolute inset-0 bg-cover bg-center" style={{
             backgroundImage: `url(${image.image_url})`
           }}>
-                    {/* Overlay to ensure text visibility */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/40"></div>
                   </div>
                 </a> : <div className="absolute inset-0 bg-cover bg-center" style={{
           backgroundImage: `url(${image.image_url})`
         }}>
-                  {/* Overlay to ensure text visibility */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/40"></div>
                 </div>}
             </div>) : <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-gray-800">
@@ -197,7 +186,6 @@ const HeroSection = () => {
       </div>
 
       <div className="festival-container relative z-10 mt-8 md:mt-16 px-4 sm:px-6">
-        {/* Dev-only refresh button */}
         {process.env.NODE_ENV !== 'production' && <button onClick={handleRefresh} className="absolute top-0 right-0 p-2 bg-black/30 rounded-full hover:bg-black/40 transition-colors" title="Refresh slider images">
             <RefreshCw className="h-4 w-4 text-white" />
           </button>}
@@ -219,7 +207,6 @@ const HeroSection = () => {
             Rejoignez-nous pour trois jours inoubliables d'expositions, de compétitions et de performances.
           </motion.p>
 
-          {/* Countdown Timer */}
           <motion.div 
             className="flex justify-center mb-6 sm:mb-10"
             variants={itemVariants}
@@ -252,10 +239,10 @@ const HeroSection = () => {
               shadow-accent transition-all duration-300 hover:shadow-lg hover:bg-opacity-90 hover:translate-y-[-2px] text-center">
               Obtenir des Billets
             </a>
-            <a href="#program" className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-white text-festival-primary font-medium 
+            <a href="/stands" className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-white text-festival-primary font-medium 
               shadow-soft border border-slate-100 transition-all duration-300 
               hover:shadow-lg hover:bg-slate-50 hover:translate-y-[-2px] text-center">
-              Voir le Programme
+              Get Your Stand
             </a>
             <CountdownTrigger 
               variant="secondary"
@@ -272,7 +259,6 @@ const HeroSection = () => {
         </motion.div>
       </div>
 
-      {/* Navigation dots for the slider */}
       {sliderImages.length > 0 && <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex space-x-2">
           {sliderImages.map((_, index) => <button key={index} className={`w-2 h-2 rounded-full transition-all ${index === currentImageIndex ? 'bg-white scale-125' : 'bg-white/50'}`} onClick={() => setCurrentImageIndex(index)} aria-label={`Go to slide ${index + 1}`} />)}
         </div>}

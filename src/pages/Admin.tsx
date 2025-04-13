@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -26,6 +25,7 @@ import AdminLogin from "@/components/admin/AdminLogin";
 import ContactEditor from "@/components/admin/ContactEditor";
 import AnimatedMascots from "@/components/admin/AnimatedMascots";
 import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
+import StandsEditor from "@/components/admin/StandsEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Collapsible, 
@@ -97,7 +97,7 @@ const Admin = () => {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     window.history.replaceState(null, '', `#${value}`);
-    setIsMenuOpen(false); // Close menu after selection
+    setIsMenuOpen(false);
   };
 
   const handleLogout = async () => {
@@ -132,7 +132,6 @@ const Admin = () => {
             <AdminLogin onLogin={handleLogin} />
           </div>
           
-          {/* Background decorative elements */}
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
             <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full bg-festival-accent/5 animate-pulse-light"></div>
             <div className="absolute top-40 -right-20 w-80 h-80 rounded-full bg-festival-accent/10 animate-pulse-light" style={{ animationDelay: '1s' }}></div>
@@ -144,7 +143,6 @@ const Admin = () => {
     );
   }
 
-  // Create a list of section items
   const sectionItems = [
     { id: "slider", label: "Slider" },
     { id: "gallery", label: "Galerie" },
@@ -165,6 +163,7 @@ const Admin = () => {
     { id: "assets", label: "Assets" },
     { id: "contact", label: "Contact" },
     { id: "payments", label: "Paiements" },
+    { id: "stands", label: "Stands" },
   ];
 
   const handleSectionSelect = (id: string) => {
@@ -177,7 +176,6 @@ const Admin = () => {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white relative overflow-hidden">
       <Navbar />
       
-      {/* Add the animated mascots behind everything */}
       <AnimatedMascots scale={0.7} speed={0.6} />
       
       <div className="pt-20 md:pt-32 pb-20 px-4 md:px-0 relative z-10">
@@ -193,7 +191,6 @@ const Admin = () => {
 
           <div className="max-w-4xl mx-auto">
             <div className="relative mb-6 md:mb-8">
-              {/* Section selector dropdown */}
               <Collapsible open={isMenuOpen} onOpenChange={setIsMenuOpen} className="w-full">
                 <div className="flex items-center justify-between px-4 py-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm mb-2">
                   <h3 className="text-lg font-medium">
@@ -223,7 +220,6 @@ const Admin = () => {
               </Collapsible>
             </div>
 
-            {/* Content panels */}
             <div className="p-4 md:p-6 bg-white/90 backdrop-blur-md rounded-xl shadow-soft relative z-10">
               {activeTab === "slider" && <SliderManager />}
               {activeTab === "gallery" && <GalleryManager />}
@@ -242,6 +238,7 @@ const Admin = () => {
               {activeTab === "newsletter" && <NewsletterSubscriptions />}
               {activeTab === "contact" && <ContactEditor />}
               {activeTab === "payments" && <PaymentGatewaySettings />}
+              {activeTab === "stands" && <StandsEditor />}
               {activeTab === "logo" && (
                 <>
                   <h2 className="text-2xl font-semibold mb-4">Gestion du Logo</h2>
