@@ -7,6 +7,26 @@ export interface FacebookPhoto {
   name?: string;
 }
 
+export interface FacebookAlbum {
+  id: string;
+  name?: string;
+  photos?: {
+    data: FacebookPhoto[];
+    paging?: {
+      next?: string;
+    };
+  };
+}
+
+export interface FacebookAlbumsResponse {
+  albums?: {
+    data: FacebookAlbum[];
+    paging?: {
+      next?: string;
+    };
+  };
+}
+
 export interface FacebookEvent {
   id: string;
   name: string;
@@ -132,12 +152,69 @@ export function useFacebookPhotos(pageId: string = 'OTAKU.sho') {
     }
   };
 
+  // New function to fetch all photos through the albums endpoint
+  const fetchPhotosFromAlbums = async (url: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Parse the URL to get access token and page ID
+      const urlObj = new URL(url);
+      const accessToken = urlObj.searchParams.get('access_token');
+      
+      if (!accessToken) {
+        throw new Error("Access token not found in URL");
+      }
+
+      // Store token temporarily in localStorage for potential future use
+      localStorage.setItem('fb_access_token', accessToken);
+      
+      const response = await fetch(url);
+        
+      if (!response.ok) {
+        throw new Error(`Failed to fetch albums: ${response.status}`);
+      }
+      
+      const data: FacebookAlbumsResponse = await response.json();
+      console.log('Facebook albums fetched:', data);
+      
+      let allPhotos: FacebookPhoto[] = [];
+      
+      // Extract photos from all albums
+      if (data.albums && data.albums.data) {
+        for (const album of data.albums.data) {
+          if (album.photos && album.photos.data) {
+            console.log(`Processing album: ${album.name || album.id} with ${album.photos.data.length} photos`);
+            allPhotos = [...allPhotos, ...album.photos.data];
+          }
+        }
+      }
+      
+      console.log(`Total Facebook photos fetched from albums: ${allPhotos.length}`);
+      setPhotos(allPhotos);
+      
+      return allPhotos;
+    } catch (err) {
+      console.error('Error fetching Facebook photos from albums:', err);
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les photos depuis Facebook Albums",
+        variant: "destructive",
+      });
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     photos,
     isLoading,
     error,
     fetchPhotos,
-    fetchAllPhotos
+    fetchAllPhotos,
+    fetchPhotosFromAlbums
   };
 }
 
