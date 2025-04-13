@@ -10,6 +10,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Check, CreditCard, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+// Define interfaces for our payment settings
+interface StripeSettings {
+  enabled: boolean;
+  publishableKey: string;
+  secretKey: string;
+  webhookSecret: string;
+}
+
+interface PayPalSettings {
+  enabled: boolean;
+  clientId: string;
+  clientSecret: string;
+  mode: string;
+}
+
 const PaymentGatewaySettings = () => {
   // Stripe settings
   const [stripeEnabled, setStripeEnabled] = useState(false);
@@ -30,33 +45,33 @@ const PaymentGatewaySettings = () => {
     const fetchPaymentSettings = async () => {
       try {
         setLoading(true);
-        // In a real application, fetch stored settings from your database
-        const { data: stripeData, error: stripeError } = await supabase
-          .from('theme_settings')
-          .select('value')
-          .eq('key', 'stripe_settings')
-          .single();
+        
+        // Fetch Stripe settings
+        const { data: stripeSettingsData, error: stripeError } = await supabase
+          .from('payment_settings')
+          .select('*')
+          .eq('provider', 'stripe')
+          .maybeSingle();
 
-        if (stripeData?.value) {
-          const stripeSettings = JSON.parse(stripeData.value);
-          setStripeEnabled(stripeSettings.enabled || false);
-          setStripePublishableKey(stripeSettings.publishableKey || "");
-          setStripeSecretKey(stripeSettings.secretKey || "");
-          setStripeWebhookSecret(stripeSettings.webhookSecret || "");
+        if (stripeSettingsData) {
+          setStripeEnabled(stripeSettingsData.enabled || false);
+          setStripePublishableKey(stripeSettingsData.publishable_key || "");
+          setStripeSecretKey(stripeSettingsData.secret_key || "");
+          setStripeWebhookSecret(stripeSettingsData.webhook_secret || "");
         }
 
-        const { data: paypalData, error: paypalError } = await supabase
-          .from('theme_settings')
-          .select('value')
-          .eq('key', 'paypal_settings')
-          .single();
+        // Fetch PayPal settings
+        const { data: paypalSettingsData, error: paypalError } = await supabase
+          .from('payment_settings')
+          .select('*')
+          .eq('provider', 'paypal')
+          .maybeSingle();
 
-        if (paypalData?.value) {
-          const paypalSettings = JSON.parse(paypalData.value);
-          setPaypalEnabled(paypalSettings.enabled || false);
-          setPaypalClientId(paypalSettings.clientId || "");
-          setPaypalClientSecret(paypalSettings.clientSecret || "");
-          setPaypalMode(paypalSettings.mode || "sandbox");
+        if (paypalSettingsData) {
+          setPaypalEnabled(paypalSettingsData.enabled || false);
+          setPaypalClientId(paypalSettingsData.client_id || "");
+          setPaypalClientSecret(paypalSettingsData.client_secret || "");
+          setPaypalMode(paypalSettingsData.mode || "sandbox");
         }
       } catch (error) {
         console.error("Error fetching payment settings:", error);
@@ -77,17 +92,17 @@ const PaymentGatewaySettings = () => {
     try {
       setSaving(true);
       
-      // In a real application, save to your database
       const { error } = await supabase
-        .from('theme_settings')
+        .from('payment_settings')
         .upsert({
-          key: 'stripe_settings',
-          value: JSON.stringify({
-            enabled: stripeEnabled,
-            publishableKey: stripePublishableKey,
-            secretKey: stripeSecretKey,
-            webhookSecret: stripeWebhookSecret,
-          })
+          provider: 'stripe',
+          enabled: stripeEnabled,
+          publishable_key: stripePublishableKey,
+          secret_key: stripeSecretKey,
+          webhook_secret: stripeWebhookSecret,
+          updated_at: new Date().toISOString()
+        }, { 
+          onConflict: 'provider' 
         });
 
       if (error) throw error;
@@ -112,17 +127,17 @@ const PaymentGatewaySettings = () => {
     try {
       setSaving(true);
       
-      // In a real application, save to your database
       const { error } = await supabase
-        .from('theme_settings')
+        .from('payment_settings')
         .upsert({
-          key: 'paypal_settings',
-          value: JSON.stringify({
-            enabled: paypalEnabled,
-            clientId: paypalClientId,
-            clientSecret: paypalClientSecret,
-            mode: paypalMode,
-          })
+          provider: 'paypal',
+          enabled: paypalEnabled,
+          client_id: paypalClientId,
+          client_secret: paypalClientSecret,
+          mode: paypalMode,
+          updated_at: new Date().toISOString()
+        }, { 
+          onConflict: 'provider' 
         });
 
       if (error) throw error;
