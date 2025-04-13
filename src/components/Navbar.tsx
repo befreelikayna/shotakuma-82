@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, LogIn } from "lucide-react";
+import { Menu, X, LogIn, Home, Ticket, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -172,15 +172,32 @@ const Navbar = () => {
           </Link>
         </div>
 
-        <div className={cn("absolute top-full left-0 right-0 bg-festival-primary/90 backdrop-blur-md shadow-md transition-all duration-300 md:hidden", isMenuOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0 overflow-hidden")}>
-          <div className="flex flex-col p-4 space-y-4">
+        <div className={cn("absolute top-full left-0 right-0 bg-festival-primary/90 backdrop-blur-md shadow-md transition-all duration-300 md:hidden", isMenuOpen ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0 overflow-hidden")}>
+          <div className="flex flex-col p-4 space-y-4 bg-[#050F2C]/95">
+            <Link to="/" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+              <Home size={18} />
+              <span>Home</span>
+            </Link>
             {navLinks.map(link => <Link key={link.id} to={link.url} className="nav-link text-white hover:text-white" onClick={toggleMenu}>
                 {link.title}
               </Link>)}
-            <Link to="/admin" className="px-3 py-1 w-fit rounded-full bg-festival-accent/20 text-white 
-                hover:bg-festival-accent/30 transition-colors duration-300 flex items-center gap-2" onClick={toggleMenu}>
-              <LogIn size={18} />
-            </Link>
+            <div className="flex justify-around pt-4 border-t border-white/10">
+              <Link to="/tickets" className="px-3 py-2 rounded-full bg-festival-accent/20 text-white 
+                  hover:bg-festival-accent/30 transition-colors duration-300 flex flex-col items-center gap-1" onClick={toggleMenu}>
+                <Ticket size={18} />
+                <span className="text-xs">Buy Ticket</span>
+              </Link>
+              <Link to="/stands" className="px-3 py-2 rounded-full bg-festival-accent/20 text-white 
+                  hover:bg-festival-accent/30 transition-colors duration-300 flex flex-col items-center gap-1" onClick={toggleMenu}>
+                <Store size={18} />
+                <span className="text-xs">Get a Stand</span>
+              </Link>
+              <Link to="/admin" className="px-3 py-2 rounded-full bg-festival-accent/20 text-white 
+                  hover:bg-festival-accent/30 transition-colors duration-300 flex flex-col items-center gap-1" onClick={toggleMenu}>
+                <LogIn size={18} />
+                <span className="text-xs">Admin</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
