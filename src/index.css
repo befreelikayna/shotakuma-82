@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -108,6 +107,7 @@
     background-repeat: no-repeat;
     background-attachment: fixed;
     background-color: #050F2C; /* Fallback color matching the dark theme */
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -184,6 +184,11 @@
   
   .shotaku-cursor:hover {
     transform: scale(1.1) rotate(-5deg);
+  }
+  
+  /* Mobile Navigation */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 1rem);
   }
 }
 

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +11,8 @@ import CountdownProvider from "./components/CountdownProvider";
 import WhatsAppButton from "./components/WhatsAppButton";
 import ThemeProvider from "./components/ThemeProvider";
 import AnimatedMascots from "./components/admin/AnimatedMascots";
+import MobileBottomNav from "./components/MobileBottomNav";
+import { useIsMobile } from "./hooks/use-mobile";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Schedule from "./pages/Schedule";
@@ -30,6 +31,7 @@ const App = () => {
   const [dynamicRoutes, setDynamicRoutes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdminPage, setIsAdminPage] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchDynamicPages = async () => {
@@ -118,7 +120,8 @@ const App = () => {
                 </Routes>
               </AnimatePresence>
             </CountdownProvider>
-            <WhatsAppButton phoneNumber="+212670625980" />
+            {!isMobile && <WhatsAppButton phoneNumber="+212670625980" />}
+            <MobileBottomNav />
           </ThemeProvider>
         </BrowserRouter>
       </>

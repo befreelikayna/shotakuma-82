@@ -1,6 +1,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface WhatsAppButtonProps {
   phoneNumber: string;
@@ -9,6 +10,10 @@ interface WhatsAppButtonProps {
 const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({ phoneNumber }) => {
   // Format the phone number for WhatsApp link (remove spaces, dashes, etc.)
   const formattedPhoneNumber = phoneNumber.replace(/[\s-]/g, "");
+  const isMobile = useIsMobile();
+  
+  // Don't render on mobile as it's handled by the bottom nav
+  if (isMobile) return null;
   
   return (
     <motion.a
