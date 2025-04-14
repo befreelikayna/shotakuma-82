@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button';
 import { Ticket, BadgeHelp } from 'lucide-react';
 
 const Access = () => {
-  const { pageContent, isLoading } = usePageContent('access');
+  const { content, isLoading } = usePageContent('access');
   const [showBadgeForm, setShowBadgeForm] = useState(false);
   
   // Load SMTP.js script when component mounts
@@ -62,8 +62,8 @@ const Access = () => {
         </div>
         
         {/* Page Content */}
-        {!isLoading && pageContent && (
-          <PageContentSection content={pageContent} />
+        {!isLoading && content && (
+          <PageContentSection pageContent={content} isLoading={isLoading} />
         )}
         
         {/* Badge Application Form Modal */}
