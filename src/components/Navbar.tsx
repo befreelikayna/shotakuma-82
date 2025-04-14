@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, LogIn, Home, Ticket, Store } from "lucide-react";
@@ -38,7 +37,13 @@ const Navbar = () => {
           return;
         }
         if (data && data.length > 0) {
-          setNavLinks(data);
+          const parsedLinks = data.map(link => ({
+            ...link,
+            submenu: link.submenu ? (typeof link.submenu === 'string' 
+              ? JSON.parse(link.submenu) 
+              : link.submenu) as SubMenuItem[]
+          }));
+          setNavLinks(parsedLinks);
         }
       } catch (error) {
         console.error('Error in navigation links fetch:', error);
@@ -145,7 +150,13 @@ const Navbar = () => {
           data
         } = await supabase.from('header_menu_links').select('*').eq('is_active', true).order('order_number');
         if (data) {
-          setNavLinks(data);
+          const parsedLinks = data.map(link => ({
+            ...link,
+            submenu: link.submenu ? (typeof link.submenu === 'string' 
+              ? JSON.parse(link.submenu) 
+              : link.submenu) as SubMenuItem[]
+          }));
+          setNavLinks(parsedLinks);
         }
       };
       fetchNavLinks();
