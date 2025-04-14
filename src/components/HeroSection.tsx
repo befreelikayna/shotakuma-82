@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import CountdownTrigger from "./CountdownTrigger";
-
 interface SliderImage {
   id: string;
   image_url: string;
@@ -12,14 +11,12 @@ interface SliderImage {
   order_number: number;
   active: boolean;
 }
-
 interface TimeLeft {
   days: number;
   hours: number;
   minutes: number;
   seconds: number;
 }
-
 const HeroSection = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [sliderImages, setSliderImages] = useState<SliderImage[]>([]);
@@ -28,11 +25,9 @@ const HeroSection = () => {
     days: 0,
     hours: 0,
     minutes: 0,
-    seconds: 0,
+    seconds: 0
   });
-
   const targetDate = new Date("2025-05-08T00:00:00");
-
   const fetchSliderImages = async () => {
     try {
       setIsLoading(true);
@@ -61,10 +56,8 @@ const HeroSection = () => {
       setIsLoading(false);
     }
   };
-
   useEffect(() => {
     fetchSliderImages();
-
     const channel = supabase.channel('public:slider_images').on('postgres_changes', {
       event: '*',
       schema: 'public',
@@ -77,7 +70,6 @@ const HeroSection = () => {
       supabase.removeChannel(channel);
     };
   }, []);
-
   useEffect(() => {
     if (sliderImages.length === 0) return;
     const interval = setInterval(() => {
@@ -85,42 +77,35 @@ const HeroSection = () => {
     }, 5000);
     return () => clearInterval(interval);
   }, [sliderImages]);
-
   useEffect(() => {
     const calculateTimeLeft = () => {
       const now = new Date().getTime();
       const difference = targetDate.getTime() - now;
-
       if (difference > 0) {
         return {
           days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
+          hours: Math.floor(difference / (1000 * 60 * 60) % 24),
+          minutes: Math.floor(difference / 1000 / 60 % 60),
+          seconds: Math.floor(difference / 1000 % 60)
         };
       } else {
         return {
           days: 0,
           hours: 0,
           minutes: 0,
-          seconds: 0,
+          seconds: 0
         };
       }
     };
-
     setTimeLeft(calculateTimeLeft());
-
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
-
     return () => clearInterval(timer);
   }, []);
-
   const formatTime = (value: number) => {
     return value.toString().padStart(2, "0");
   };
-
   const containerVariants = {
     hidden: {
       opacity: 0
@@ -133,7 +118,6 @@ const HeroSection = () => {
       }
     }
   };
-
   const itemVariants = {
     hidden: {
       opacity: 0,
@@ -148,16 +132,13 @@ const HeroSection = () => {
       }
     }
   };
-
   const handleScrollDown = () => {
     window.scrollTo({
       top: window.innerHeight,
       behavior: "smooth"
     });
   };
-
   const defaultBackground = "bg-gradient-to-br from-slate-900 to-gray-800";
-
   const handleRefresh = () => {
     fetchSliderImages();
     toast({
@@ -165,7 +146,6 @@ const HeroSection = () => {
       description: "Images du slider actualisées"
     });
   };
-
   return <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 md:pt-20">
       <div className={`absolute inset-0 z-0 ${isLoading ? defaultBackground : ''}`}>
         {sliderImages.length > 0 ? sliderImages.map((image, index) => <div key={image.id} className={`absolute inset-0 transition-opacity duration-1000 ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'}`}>
@@ -207,10 +187,7 @@ const HeroSection = () => {
             Rejoignez-nous pour trois jours inoubliables d'expositions, de compétitions et de performances.
           </motion.p>
 
-          <motion.div 
-            className="flex justify-center mb-6 sm:mb-10"
-            variants={itemVariants}
-          >
+          <motion.div className="flex justify-center mb-6 sm:mb-10" variants={itemVariants}>
             <div className="flex space-x-2 md:space-x-4 bg-black/30 backdrop-blur-sm px-6 py-4 rounded-lg border border-white/10">
               <div className="elementor-countdown-item flex flex-col items-center">
                 <span className="elementor-countdown-digits elementor-countdown-days text-2xl md:text-3xl font-bold text-festival-accent">{formatTime(timeLeft.days)}</span>
@@ -244,16 +221,10 @@ const HeroSection = () => {
               hover:shadow-lg hover:bg-slate-50 hover:translate-y-[-2px] text-center">
               Get Your Access Badge
             </a>
-            <CountdownTrigger 
-              variant="secondary"
-              label="Voir Countdown"
-              className="w-full sm:w-auto"
-            />
+            <CountdownTrigger variant="secondary" label="Voir Countdown" className="w-full sm:w-auto" />
           </motion.div>
 
-          <motion.button onClick={handleScrollDown} className="absolute bottom-8 sm:bottom-12 left-1/2 transform -translate-x-1/2 flex items-center justify-center 
-            w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white shadow-soft animate-float transition-all duration-300 
-            hover:shadow-md hover:bg-slate-50" aria-label="Scroll Down" variants={itemVariants}>
+          <motion.button onClick={handleScrollDown} aria-label="Scroll Down" variants={itemVariants} className="absolute bottom-8 sm:bottom-12 left-1/2 transform -translate-x-1/2 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white shadow-soft animate-float transition-all duration-300 hover:shadow-md hover:bg-slate-50 py-0 px-0 mx-[240px] my-[120px]">
             <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6 text-festival-primary" />
           </motion.button>
         </motion.div>
@@ -264,5 +235,4 @@ const HeroSection = () => {
         </div>}
     </section>;
 };
-
 export default HeroSection;
