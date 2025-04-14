@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ import ContactEditor from "@/components/admin/ContactEditor";
 import AnimatedMascots from "@/components/admin/AnimatedMascots";
 import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
 import StandsEditor from "@/components/admin/StandsEditor";
+import AccessBadgeManager from "@/components/admin/AccessBadgeManager";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Collapsible, 
@@ -164,6 +166,7 @@ const Admin = () => {
     { id: "contact", label: "Contact" },
     { id: "payments", label: "Paiements" },
     { id: "stands", label: "Stands" },
+    { id: "access", label: "Access Badges" },
   ];
 
   const handleSectionSelect = (id: string) => {
@@ -239,6 +242,7 @@ const Admin = () => {
               {activeTab === "contact" && <ContactEditor />}
               {activeTab === "payments" && <PaymentGatewaySettings />}
               {activeTab === "stands" && <StandsEditor />}
+              {activeTab === "access" && <AccessBadgeManager />}
               {activeTab === "logo" && (
                 <>
                   <h2 className="text-2xl font-semibold mb-4">Gestion du Logo</h2>

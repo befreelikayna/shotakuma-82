@@ -235,14 +235,14 @@ const HeroSection = () => {
           </motion.div>
 
           <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-10 w-full sm:w-auto" variants={itemVariants}>
-            <a href="#tickets" className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-festival-accent text-white font-medium 
+            <a href="/stands" className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-festival-accent text-white font-medium 
               shadow-accent transition-all duration-300 hover:shadow-lg hover:bg-opacity-90 hover:translate-y-[-2px] text-center">
-              Obtenir des Billets
+              Reserve Your Stand
             </a>
-            <a href="/stands" className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-white text-festival-primary font-medium 
+            <a href="/access" className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-white text-festival-primary font-medium 
               shadow-soft border border-slate-100 transition-all duration-300 
               hover:shadow-lg hover:bg-slate-50 hover:translate-y-[-2px] text-center">
-              Get Your Stand
+              Get Your Access Badge
             </a>
             <CountdownTrigger 
               variant="secondary"
