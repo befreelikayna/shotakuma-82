@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, LogIn, Home, Ticket, Store } from "lucide-react";
@@ -38,11 +37,25 @@ const Navbar = () => {
           return;
         }
         if (data && data.length > 0) {
-          // Transform the data to match HeaderLink interface
-          const transformedData: HeaderLink[] = data.map(item => ({
-            ...item,
-            submenu: item.submenu ? (Array.isArray(item.submenu) ? item.submenu : []) : undefined
-          }));
+          // Transform the data to match HeaderLink interface with proper type casting
+          const transformedData: HeaderLink[] = data.map(item => {
+            let parsedSubmenu: SubMenuItem[] | undefined = undefined;
+            
+            if (item.submenu) {
+              // Ensure submenu is properly cast to SubMenuItem[]
+              if (Array.isArray(item.submenu)) {
+                parsedSubmenu = item.submenu as SubMenuItem[];
+              } else {
+                // If it's not an array but exists, try to parse it
+                parsedSubmenu = [];
+              }
+            }
+            
+            return {
+              ...item,
+              submenu: parsedSubmenu
+            };
+          });
           setNavLinks(transformedData);
         }
       } catch (error) {
@@ -150,11 +163,25 @@ const Navbar = () => {
           data
         } = await supabase.from('header_menu_links').select('*').eq('is_active', true).order('order_number');
         if (data) {
-          // Transform the data to match HeaderLink interface
-          const transformedData: HeaderLink[] = data.map(item => ({
-            ...item,
-            submenu: item.submenu ? (Array.isArray(item.submenu) ? item.submenu : []) : undefined
-          }));
+          // Transform the data to match HeaderLink interface with proper type casting
+          const transformedData: HeaderLink[] = data.map(item => {
+            let parsedSubmenu: SubMenuItem[] | undefined = undefined;
+            
+            if (item.submenu) {
+              // Ensure submenu is properly cast to SubMenuItem[]
+              if (Array.isArray(item.submenu)) {
+                parsedSubmenu = item.submenu as SubMenuItem[];
+              } else {
+                // If it's not an array but exists, try to parse it
+                parsedSubmenu = [];
+              }
+            }
+            
+            return {
+              ...item,
+              submenu: parsedSubmenu
+            };
+          });
           setNavLinks(transformedData);
         }
       };
