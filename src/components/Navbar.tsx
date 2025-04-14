@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, LogIn, Home, Ticket, Store } from "lucide-react";
@@ -37,12 +38,16 @@ const Navbar = () => {
           return;
         }
         if (data && data.length > 0) {
-          const parsedLinks = data.map(link => ({
-            ...link,
-            submenu: link.submenu ? (typeof link.submenu === 'string' 
-              ? JSON.parse(link.submenu) 
-              : link.submenu) as SubMenuItem[]
-          }));
+          const parsedLinks = data.map(link => {
+            const submenuData = link.submenu ? 
+              (typeof link.submenu === 'string' ? JSON.parse(link.submenu) : link.submenu) as SubMenuItem[] 
+              : undefined;
+            
+            return {
+              ...link,
+              submenu: submenuData
+            };
+          });
           setNavLinks(parsedLinks);
         }
       } catch (error) {
@@ -150,12 +155,16 @@ const Navbar = () => {
           data
         } = await supabase.from('header_menu_links').select('*').eq('is_active', true).order('order_number');
         if (data) {
-          const parsedLinks = data.map(link => ({
-            ...link,
-            submenu: link.submenu ? (typeof link.submenu === 'string' 
-              ? JSON.parse(link.submenu) 
-              : link.submenu) as SubMenuItem[]
-          }));
+          const parsedLinks = data.map(link => {
+            const submenuData = link.submenu ? 
+              (typeof link.submenu === 'string' ? JSON.parse(link.submenu) : link.submenu) as SubMenuItem[] 
+              : undefined;
+            
+            return {
+              ...link,
+              submenu: submenuData
+            };
+          });
           setNavLinks(parsedLinks);
         }
       };
