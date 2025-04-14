@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Loader2, Plus, Pencil, Trash2, ExternalLink, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { AccessBadge } from "@/hooks/use-access-badges";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const initialBadgeState: Partial<AccessBadge> = {
   title: "",
@@ -41,6 +43,9 @@ const initialBadgeState: Partial<AccessBadge> = {
   is_active: true,
 };
 
+const BUCKET_NAME = "public";
+const FILE_PATH_PREFIX = "access_badges";
+
 const AccessBadgeManager = () => {
   const [badges, setBadges] = useState<AccessBadge[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,6 +53,29 @@ const AccessBadgeManager = () => {
   const [currentBadge, setCurrentBadge] = useState<Partial<AccessBadge>>(initialBadgeState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [storageError, setStorageError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkBucketExists = async () => {
+      try {
+        const { data: buckets, error } = await supabase.storage.listBuckets();
+        
+        if (error) {
+          console.error("Error checking buckets:", error);
+          setStorageError("Could not verify storage configuration.");
+          return false;
+        }
+        
+        return buckets?.some(bucket => bucket.name === BUCKET_NAME);
+      } catch (error) {
+        console.error("Error checking bucket:", error);
+        setStorageError("Could not verify storage configuration.");
+        return false;
+      }
+    };
+    
+    checkBucketExists();
+  }, []);
 
   const fetchBadges = async () => {
     try {
@@ -97,6 +125,9 @@ const AccessBadgeManager = () => {
   }, []);
 
   const handleOpenDialog = (badge?: AccessBadge) => {
+    // Reset any previous storage errors
+    setStorageError(null);
+    
     if (badge) {
       setCurrentBadge({ ...badge });
     } else {
@@ -131,25 +162,31 @@ const AccessBadgeManager = () => {
 
     try {
       setIsUploading(true);
+      setStorageError(null);
       
       // Generate a unique file name to prevent collisions
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      const filePath = `access_badges/${fileName}`;
+      const filePath = `${FILE_PATH_PREFIX}/${fileName}`;
       
-      // First, check if the bucket exists, if not create one
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const publicBucket = buckets?.find(bucket => bucket.name === 'public');
+      // Check if the bucket exists
+      const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
+      
+      if (bucketError) {
+        console.error("Error checking buckets:", bucketError);
+        throw new Error("Could not verify storage configuration.");
+      }
+      
+      const publicBucket = buckets?.some(bucket => bucket.name === BUCKET_NAME);
       
       if (!publicBucket) {
-        // If bucket doesn't exist, create a message for the user
-        console.error("Storage bucket 'public' does not exist");
+        console.error(`Storage bucket '${BUCKET_NAME}' does not exist`);
         throw new Error("Storage not properly configured. Please contact the administrator.");
       }
       
       // Upload the file to Supabase Storage
       const { error: uploadError, data } = await supabase.storage
-        .from('public')
+        .from(BUCKET_NAME)
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: true // Allow overwrite in case of any naming conflicts
@@ -162,7 +199,7 @@ const AccessBadgeManager = () => {
       
       // Get the public URL for the uploaded file
       const { data: urlData } = supabase.storage
-        .from('public')
+        .from(BUCKET_NAME)
         .getPublicUrl(filePath);
         
       if (urlData?.publicUrl) {
@@ -176,6 +213,7 @@ const AccessBadgeManager = () => {
       }
     } catch (error: any) {
       console.error("Error uploading file:", error);
+      setStorageError(error.message || "Could not upload image. Please try again.");
       toast({
         title: "Upload Error",
         description: error.message || "Could not upload image. Please try again.",
@@ -369,6 +407,14 @@ const AccessBadgeManager = () => {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {storageError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>
+                  {storageError}
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
               <Input
