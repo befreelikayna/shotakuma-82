@@ -38,7 +38,12 @@ const Navbar = () => {
           return;
         }
         if (data && data.length > 0) {
-          setNavLinks(data);
+          // Transform the data to match HeaderLink interface
+          const transformedData: HeaderLink[] = data.map(item => ({
+            ...item,
+            submenu: item.submenu ? (Array.isArray(item.submenu) ? item.submenu : []) : undefined
+          }));
+          setNavLinks(transformedData);
         }
       } catch (error) {
         console.error('Error in navigation links fetch:', error);
@@ -145,7 +150,12 @@ const Navbar = () => {
           data
         } = await supabase.from('header_menu_links').select('*').eq('is_active', true).order('order_number');
         if (data) {
-          setNavLinks(data);
+          // Transform the data to match HeaderLink interface
+          const transformedData: HeaderLink[] = data.map(item => ({
+            ...item,
+            submenu: item.submenu ? (Array.isArray(item.submenu) ? item.submenu : []) : undefined
+          }));
+          setNavLinks(transformedData);
         }
       };
       fetchNavLinks();

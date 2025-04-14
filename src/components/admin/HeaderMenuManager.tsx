@@ -61,7 +61,13 @@ const HeaderMenuManager = () => {
         .order("order_number");
 
       if (error) throw error;
-      setLinks(data || []);
+      
+      const transformedData: HeaderLink[] = (data || []).map(item => ({
+        ...item,
+        submenu: item.submenu ? (Array.isArray(item.submenu) ? item.submenu : []) : undefined
+      }));
+      
+      setLinks(transformedData);
     } catch (error) {
       console.error("Error fetching header links:", error);
       toast.error("Failed to load header links");
