@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, LogIn, Home, Ticket, Store } from "lucide-react";
@@ -44,9 +45,15 @@ const Navbar = () => {
             if (item.submenu) {
               // Ensure submenu is properly cast to SubMenuItem[]
               if (Array.isArray(item.submenu)) {
-                parsedSubmenu = item.submenu as SubMenuItem[];
+                // Explicitly map each item to ensure it has the correct shape
+                parsedSubmenu = (item.submenu as any[]).map(subItem => ({
+                  id: subItem.id || "",
+                  title: subItem.title || "",
+                  url: subItem.url || "",
+                  order_number: subItem.order_number || 0
+                }));
               } else {
-                // If it's not an array but exists, try to parse it
+                // If it's not an array but exists, initialize an empty array
                 parsedSubmenu = [];
               }
             }
@@ -170,9 +177,15 @@ const Navbar = () => {
             if (item.submenu) {
               // Ensure submenu is properly cast to SubMenuItem[]
               if (Array.isArray(item.submenu)) {
-                parsedSubmenu = item.submenu as SubMenuItem[];
+                // Explicitly map each item to ensure it has the correct shape
+                parsedSubmenu = (item.submenu as any[]).map(subItem => ({
+                  id: subItem.id || "",
+                  title: subItem.title || "",
+                  url: subItem.url || "",
+                  order_number: subItem.order_number || 0
+                }));
               } else {
-                // If it's not an array but exists, try to parse it
+                // If it's not an array but exists, initialize an empty array
                 parsedSubmenu = [];
               }
             }
