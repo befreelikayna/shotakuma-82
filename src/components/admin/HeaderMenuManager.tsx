@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Pencil, Trash2, PlusCircle, ArrowUpCircle, ArrowDownCircle, Check, X, ExternalLink } from "lucide-react";
@@ -25,12 +24,20 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 
+interface SubMenuItem {
+  id: string;
+  title: string;
+  url: string;
+  order_number: number;
+}
+
 interface HeaderLink {
   id: string;
   title: string;
   url: string;
   order_number: number;
   is_active: boolean;
+  submenu?: SubMenuItem[];
 }
 
 const HeaderMenuManager = () => {
@@ -40,12 +47,11 @@ const HeaderMenuManager = () => {
   const [currentLink, setCurrentLink] = useState<HeaderLink | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  // Form state
   const [formTitle, setFormTitle] = useState("");
   const [formUrl, setFormUrl] = useState("");
   const [formIsActive, setFormIsActive] = useState(true);
+  const [formSubmenu, setFormSubmenu] = useState<SubMenuItem[]>([]);
 
-  // Fetch links from database
   const fetchLinks = async () => {
     setLoading(true);
     try {
@@ -74,12 +80,14 @@ const HeaderMenuManager = () => {
       setFormTitle(link.title);
       setFormUrl(link.url);
       setFormIsActive(link.is_active);
+      setFormSubmenu(link.submenu || []);
       setIsCreating(false);
     } else {
       setCurrentLink(null);
       setFormTitle("");
       setFormUrl("");
       setFormIsActive(true);
+      setFormSubmenu([]);
       setIsCreating(true);
     }
     setShowDialog(true);
@@ -90,6 +98,28 @@ const HeaderMenuManager = () => {
     setCurrentLink(null);
   };
 
+  const handleAddSubmenuItem = () => {
+    setFormSubmenu([
+      ...formSubmenu,
+      {
+        id: crypto.randomUUID(),
+        title: "",
+        url: "",
+        order_number: formSubmenu.length
+      }
+    ]);
+  };
+
+  const handleUpdateSubmenuItem = (index: number, field: keyof SubMenuItem, value: string) => {
+    const newSubmenu = [...formSubmenu];
+    newSubmenu[index] = { ...newSubmenu[index], [field]: value };
+    setFormSubmenu(newSubmenu);
+  };
+
+  const handleRemoveSubmenuItem = (index: number) => {
+    setFormSubmenu(formSubmenu.filter((_, i) => i !== index));
+  };
+
   const handleSaveLink = async () => {
     if (!formTitle.trim() || !formUrl.trim()) {
       toast.error("Title and URL are required");
@@ -98,8 +128,14 @@ const HeaderMenuManager = () => {
 
     setLoading(true);
     try {
+      const linkData = {
+        title: formTitle,
+        url: formUrl,
+        is_active: formIsActive,
+        submenu: formSubmenu.length > 0 ? formSubmenu : null
+      };
+
       if (isCreating) {
-        // Create new link
         const newOrderNumber = links.length > 0 
           ? Math.max(...links.map(link => link.order_number)) + 1 
           : 1;
@@ -107,23 +143,16 @@ const HeaderMenuManager = () => {
         const { error } = await supabase
           .from("header_menu_links")
           .insert({
-            title: formTitle,
-            url: formUrl,
-            is_active: formIsActive,
+            ...linkData,
             order_number: newOrderNumber
           });
 
         if (error) throw error;
         toast.success("Link added successfully");
       } else if (currentLink) {
-        // Update existing link
         const { error } = await supabase
           .from("header_menu_links")
-          .update({
-            title: formTitle,
-            url: formUrl,
-            is_active: formIsActive
-          })
+          .update(linkData)
           .eq('id', currentLink.id);
 
         if (error) throw error;
@@ -165,26 +194,21 @@ const HeaderMenuManager = () => {
     const currentIndex = links.findIndex(link => link.id === id);
     if (currentIndex === -1) return;
 
-    // Can't move up if already at the top
     if (direction === 'up' && currentIndex === 0) return;
     
-    // Can't move down if already at the bottom
     if (direction === 'down' && currentIndex === links.length - 1) return;
 
     const newLinks = [...links];
     const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     
-    // Swap order numbers
     const tempOrderNumber = newLinks[currentIndex].order_number;
     newLinks[currentIndex].order_number = newLinks[swapIndex].order_number;
     newLinks[swapIndex].order_number = tempOrderNumber;
 
-    // Swap positions in array
     [newLinks[currentIndex], newLinks[swapIndex]] = [newLinks[swapIndex], newLinks[currentIndex]];
     
     setLoading(true);
     try {
-      // Update both links with their new order numbers
       const updates = [
         {
           id: newLinks[currentIndex].id,
@@ -196,7 +220,6 @@ const HeaderMenuManager = () => {
         }
       ];
       
-      // Update both items
       for (const update of updates) {
         const { error } = await supabase
           .from("header_menu_links")
@@ -211,7 +234,6 @@ const HeaderMenuManager = () => {
     } catch (error) {
       console.error("Error reordering menu links:", error);
       toast.error("Failed to reorder menu links");
-      // Refresh to get the original order
       fetchLinks();
     } finally {
       setLoading(false);
@@ -228,7 +250,6 @@ const HeaderMenuManager = () => {
 
       if (error) throw error;
       
-      // Update local state
       setLinks(links.map(link => 
         link.id === id ? { ...link, is_active: !currentStatus } : link
       ));
@@ -361,7 +382,6 @@ const HeaderMenuManager = () => {
           </Table>
         )}
 
-        {/* Add/Edit Dialog */}
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogContent>
             <DialogHeader>
@@ -401,6 +421,53 @@ const HeaderMenuManager = () => {
                   onCheckedChange={setFormIsActive}
                 />
                 <Label htmlFor="active">Afficher dans le menu</Label>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label>Sous-menu (optionnel)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddSubmenuItem}
+                  >
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Ajouter un sous-menu
+                  </Button>
+                </div>
+
+                {formSubmenu.map((item, index) => (
+                  <div key={item.id} className="space-y-2 p-4 border rounded-md relative">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                      onClick={() => handleRemoveSubmenuItem(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+
+                    <div className="space-y-2">
+                      <Label>Titre du sous-menu</Label>
+                      <Input
+                        value={item.title}
+                        onChange={(e) => handleUpdateSubmenuItem(index, 'title', e.target.value)}
+                        placeholder="Titre du sous-menu"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>URL du sous-menu</Label>
+                      <Input
+                        value={item.url}
+                        onChange={(e) => handleUpdateSubmenuItem(index, 'url', e.target.value)}
+                        placeholder="/sous-menu-url"
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
