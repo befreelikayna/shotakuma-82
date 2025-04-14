@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Loader2, Plus, Pencil, Trash2, ExternalLink, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -131,12 +130,10 @@ const AccessBadgeManager = () => {
     try {
       setIsUploading(true);
       
-      // Create a unique file path
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       const filePath = `access_badges/${fileName}`;
       
-      // Upload the file
       const { error: uploadError } = await supabase.storage
         .from('public')
         .upload(filePath, file);
@@ -145,12 +142,10 @@ const AccessBadgeManager = () => {
         throw uploadError;
       }
       
-      // Get the public URL
       const { data } = supabase.storage
         .from('public')
         .getPublicUrl(filePath);
         
-      // Update the badge with the new image URL
       setCurrentBadge((prev) => ({ ...prev, image_url: data.publicUrl }));
       
     } catch (error) {
@@ -181,11 +176,18 @@ const AccessBadgeManager = () => {
     try {
       const { id, ...badgeData } = currentBadge;
       
+      const validatedBadgeData = {
+        title: badgeData.title!,
+        description: badgeData.description!,
+        type: badgeData.type!,
+        image_url: badgeData.image_url,
+        is_active: badgeData.is_active
+      };
+      
       if (id) {
-        // Update existing badge
         const { error } = await supabase
           .from("access_badges")
-          .update(badgeData)
+          .update(validatedBadgeData)
           .eq("id", id);
           
         if (error) throw error;
@@ -195,10 +197,9 @@ const AccessBadgeManager = () => {
           description: "Badge updated successfully.",
         });
       } else {
-        // Create new badge
         const { error } = await supabase
           .from("access_badges")
-          .insert([badgeData]);
+          .insert([validatedBadgeData]);
           
         if (error) throw error;
         
