@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Loader2, Plus, Pencil, Trash2, ExternalLink, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,7 +37,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 const initialBadgeState: Partial<AccessBadge> = {
   title: "",
   description: "",
-  image_url: null,
+  image_url: "",
   type: "Media",
   is_active: true,
 };
@@ -156,74 +155,6 @@ const AccessBadgeManager = () => {
     setCurrentBadge((prev) => ({ ...prev, is_active: checked }));
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setIsUploading(true);
-      setStorageError(null);
-      
-      // Generate a unique file name to prevent collisions
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      const filePath = `${FILE_PATH_PREFIX}/${fileName}`;
-      
-      // Check if the bucket exists
-      const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
-      
-      if (bucketError) {
-        console.error("Error checking buckets:", bucketError);
-        throw new Error("Could not verify storage configuration.");
-      }
-      
-      const publicBucket = buckets?.some(bucket => bucket.name === BUCKET_NAME);
-      
-      if (!publicBucket) {
-        console.error(`Storage bucket '${BUCKET_NAME}' does not exist`);
-        throw new Error("Storage not properly configured. Please contact the administrator.");
-      }
-      
-      // Upload the file to Supabase Storage
-      const { error: uploadError, data } = await supabase.storage
-        .from(BUCKET_NAME)
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true // Allow overwrite in case of any naming conflicts
-        });
-
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        throw new Error(uploadError.message || "Could not upload image. Please try again.");
-      }
-      
-      // Get the public URL for the uploaded file
-      const { data: urlData } = supabase.storage
-        .from(BUCKET_NAME)
-        .getPublicUrl(filePath);
-        
-      if (urlData?.publicUrl) {
-        setCurrentBadge((prev) => ({ ...prev, image_url: urlData.publicUrl }));
-        toast({
-          title: "Upload Success",
-          description: "Image uploaded successfully",
-        });
-      } else {
-        throw new Error("Could not get public URL for uploaded image");
-      }
-    } catch (error: any) {
-      console.error("Error uploading file:", error);
-      setStorageError(error.message || "Could not upload image. Please try again.");
-      toast({
-        title: "Upload Error",
-        description: error.message || "Could not upload image. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -244,7 +175,7 @@ const AccessBadgeManager = () => {
         title: badgeData.title!,
         description: badgeData.description!,
         type: badgeData.type!,
-        image_url: badgeData.image_url,
+        image_url: badgeData.image_url || null,
         is_active: badgeData.is_active
       };
       
@@ -458,7 +389,7 @@ const AccessBadgeManager = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="image">Badge Image</Label>
+              <Label htmlFor="image_url">Image URL</Label>
               {currentBadge.image_url && (
                 <div className="mb-2">
                   <div className="relative aspect-video w-full rounded-md overflow-hidden bg-slate-100 mb-2">
@@ -468,29 +399,16 @@ const AccessBadgeManager = () => {
                       className="object-cover w-full h-full"
                     />
                   </div>
-                  <div className="flex items-center text-xs text-muted-foreground">
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    <a 
-                      href={currentBadge.image_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="truncate hover:underline"
-                    >
-                      {currentBadge.image_url}
-                    </a>
-                  </div>
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  disabled={isUploading}
-                />
-                {isUploading && <Loader2 className="h-4 w-4 animate-spin" />}
-              </div>
+              <Input
+                id="image_url"
+                name="image_url"
+                type="url"
+                value={currentBadge.image_url || ""}
+                onChange={handleChange}
+                placeholder="https://example.com/image.jpg"
+              />
             </div>
             
             <div className="flex items-center space-x-2">
@@ -511,7 +429,7 @@ const AccessBadgeManager = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting || isUploading}>
+              <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
