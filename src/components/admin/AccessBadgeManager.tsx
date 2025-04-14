@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Loader2, Plus, Pencil, Trash2, ExternalLink, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { AccessBadge } from "@/hooks/use-access-badges";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const initialBadgeState: Partial<AccessBadge> = {
   title: "",
@@ -130,29 +132,41 @@ const AccessBadgeManager = () => {
     try {
       setIsUploading(true);
       
+      // Generate a unique file name to prevent collisions
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       const filePath = `access_badges/${fileName}`;
       
-      const { error: uploadError } = await supabase.storage
+      // Upload the file to Supabase Storage
+      const { error: uploadError, data } = await supabase.storage
         .from('public')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false // Don't overwrite existing files
+        });
 
       if (uploadError) {
-        throw uploadError;
+        console.error("Upload error:", uploadError);
+        throw new Error("Could not upload image. Please try again.");
       }
       
-      const { data } = supabase.storage
+      // Get the public URL for the uploaded file
+      const { data: urlData } = supabase.storage
         .from('public')
         .getPublicUrl(filePath);
         
-      setCurrentBadge((prev) => ({ ...prev, image_url: data.publicUrl }));
-      
-    } catch (error) {
+      if (urlData?.publicUrl) {
+        setCurrentBadge((prev) => ({ ...prev, image_url: urlData.publicUrl }));
+        toast({
+          title: "Upload Success",
+          description: "Image uploaded successfully",
+        });
+      }
+    } catch (error: any) {
       console.error("Error uploading file:", error);
       toast({
         title: "Upload Error",
-        description: "Could not upload image. Please try again.",
+        description: error.message || "Could not upload image. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -210,11 +224,11 @@ const AccessBadgeManager = () => {
       }
       
       handleCloseDialog();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving badge:", error);
       toast({
         title: "Error",
-        description: "Could not save badge. Please try again.",
+        description: error.message || "Could not save badge. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -436,7 +450,7 @@ const AccessBadgeManager = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || isUploading}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
