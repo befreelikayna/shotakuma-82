@@ -5,12 +5,20 @@ import { Menu, X, LogIn, Home, Ticket, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
+interface SubMenuItem {
+  id: string;
+  title: string;
+  url: string;
+  order_number: number;
+}
+
 interface HeaderLink {
   id: string;
   title: string;
   url: string;
   order_number: number;
   is_active: boolean;
+  submenu?: SubMenuItem[];
 }
 
 const Navbar = () => {
@@ -163,9 +171,34 @@ const Navbar = () => {
         </button>
 
         <div className="hidden md:flex items-center space-x-6">
-          {navLinks.map(link => <Link key={link.id} to={link.url} className="nav-link text-white/80 hover:text-white">
-              {link.title}
-            </Link>)}
+          {navLinks.map(link => 
+            link.submenu ? (
+              <div key={link.id} className="relative group">
+                <button className="nav-link text-white/80 hover:text-white flex items-center gap-1">
+                  {link.title}
+                  <svg width="10" height="6" viewBox="0 0 10 6" className="ml-1 transition-transform duration-200 group-hover:rotate-180">
+                    <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
+                  </svg>
+                </button>
+                <div className="absolute top-full left-0 mt-1 py-2 bg-festival-primary/95 backdrop-blur-md rounded-lg shadow-xl 
+                             opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px]">
+                  {link.submenu.map(subItem => (
+                    <Link
+                      key={subItem.id}
+                      to={subItem.url}
+                      className="block px-4 py-2 text-white/80 hover:text-white hover:bg-festival-accent/20"
+                    >
+                      {subItem.title}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Link key={link.id} to={link.url} className="nav-link text-white/80 hover:text-white">
+                {link.title}
+              </Link>
+            )
+          )}
           <Link to="/admin" className="px-3 py-1 rounded-full bg-festival-accent/20 text-white 
               hover:bg-festival-accent/30 transition-colors duration-300 ml-2 flex items-center">
             <LogIn size={18} />
@@ -178,9 +211,29 @@ const Navbar = () => {
               <Home size={18} />
               <span>Home</span>
             </Link>
-            {navLinks.map(link => <Link key={link.id} to={link.url} className="nav-link text-white hover:text-white" onClick={toggleMenu}>
-                {link.title}
-              </Link>)}
+            {navLinks.map(link => 
+              link.submenu ? (
+                <div key={link.id} className="space-y-2">
+                  <div className="text-white/80 font-medium pl-2">{link.title}</div>
+                  <div className="pl-4 space-y-2">
+                    {link.submenu.map(subItem => (
+                      <Link
+                        key={subItem.id}
+                        to={subItem.url}
+                        className="block text-white/70 hover:text-white"
+                        onClick={toggleMenu}
+                      >
+                        {subItem.title}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <Link key={link.id} to={link.url} className="nav-link text-white hover:text-white" onClick={toggleMenu}>
+                  {link.title}
+                </Link>
+              )
+            )}
             <div className="flex justify-around pt-4 border-t border-white/10">
               <Link to="/tickets" className="px-3 py-2 rounded-full bg-festival-accent/20 text-white 
                   hover:bg-festival-accent/30 transition-colors duration-300 flex flex-col items-center gap-1" onClick={toggleMenu}>
