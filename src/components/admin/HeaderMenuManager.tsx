@@ -126,13 +126,26 @@ const HeaderMenuManager = () => {
       return;
     }
 
+    const validSubmenu = formSubmenu.filter(item => item.title.trim() && item.url.trim());
+    const hasInvalidSubmenuItems = formSubmenu.length > 0 && validSubmenu.length !== formSubmenu.length;
+    
+    if (hasInvalidSubmenuItems) {
+      toast.error("All submenu items must have a title and URL");
+      return;
+    }
+
     setLoading(true);
     try {
+      const processedSubmenu = validSubmenu.map((item, index) => ({
+        ...item,
+        order_number: index,
+      }));
+
       const linkData = {
         title: formTitle,
         url: formUrl,
         is_active: formIsActive,
-        submenu: formSubmenu.length > 0 ? formSubmenu : null
+        submenu: processedSubmenu.length > 0 ? processedSubmenu : null
       };
 
       if (isCreating) {
@@ -450,8 +463,9 @@ const HeaderMenuManager = () => {
                     </Button>
 
                     <div className="space-y-2">
-                      <Label>Titre du sous-menu</Label>
+                      <Label htmlFor={`submenu-title-${index}`}>Titre du sous-menu</Label>
                       <Input
+                        id={`submenu-title-${index}`}
                         value={item.title}
                         onChange={(e) => handleUpdateSubmenuItem(index, 'title', e.target.value)}
                         placeholder="Titre du sous-menu"
@@ -459,8 +473,9 @@ const HeaderMenuManager = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>URL du sous-menu</Label>
+                      <Label htmlFor={`submenu-url-${index}`}>URL du sous-menu</Label>
                       <Input
+                        id={`submenu-url-${index}`}
                         value={item.url}
                         onChange={(e) => handleUpdateSubmenuItem(index, 'url', e.target.value)}
                         placeholder="/sous-menu-url"
