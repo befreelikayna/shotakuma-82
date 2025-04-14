@@ -141,12 +141,16 @@ const HeaderMenuManager = () => {
         order_number: index,
       }));
 
+      const submenuForDb = processedSubmenu.length > 0 ? processedSubmenu : null;
+
       const linkData = {
         title: formTitle,
         url: formUrl,
         is_active: formIsActive,
-        submenu: processedSubmenu.length > 0 ? processedSubmenu : null
+        submenu: submenuForDb
       };
+
+      console.log("Saving link data:", JSON.stringify(linkData, null, 2));
 
       if (isCreating) {
         const newOrderNumber = links.length > 0 
@@ -160,7 +164,10 @@ const HeaderMenuManager = () => {
             order_number: newOrderNumber
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase error:", error);
+          throw error;
+        }
         toast.success("Link added successfully");
       } else if (currentLink) {
         const { error } = await supabase
@@ -168,15 +175,18 @@ const HeaderMenuManager = () => {
           .update(linkData)
           .eq('id', currentLink.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase error:", error);
+          throw error;
+        }
         toast.success("Link updated successfully");
       }
 
       handleCloseDialog();
       fetchLinks();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving header link:", error);
-      toast.error("Failed to save header link");
+      toast.error(`Failed to save header link: ${error.message || error}`);
     } finally {
       setLoading(false);
     }
@@ -322,7 +332,14 @@ const HeaderMenuManager = () => {
             <TableBody>
               {links.map((link) => (
                 <TableRow key={link.id}>
-                  <TableCell className="font-medium">{link.title}</TableCell>
+                  <TableCell className="font-medium">
+                    {link.title}
+                    {link.submenu && link.submenu.length > 0 && (
+                      <span className="ml-2 text-xs px-1.5 py-0.5 bg-gray-100 rounded-full text-gray-600">
+                        {link.submenu.length} sous-menu{link.submenu.length > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1 text-xs text-gray-600">
                       {link.url}
