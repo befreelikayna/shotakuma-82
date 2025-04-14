@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Shield, Camera, Users } from "lucide-react";
@@ -7,6 +6,7 @@ import Footer from "@/components/Footer";
 import { useAccessBadges } from "@/hooks/use-access-badges";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BadgeApplicationForm } from "@/components/BadgeApplicationForm";
 
 const iconMap = {
   "Media": <Camera className="h-10 w-10 text-blue-500" />,
@@ -15,33 +15,46 @@ const iconMap = {
 };
 
 const BadgeCard = ({ title, description, image, type }: { title: string; description: string; image: string | null; type: string }) => {
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
   return (
-    <motion.div
-      className="bg-white rounded-xl shadow-soft overflow-hidden border border-slate-100"
-      whileHover={{ y: -5 }}
-      transition={{ duration: 0.2 }}
-    >
-      <div className="relative aspect-[3/2] overflow-hidden">
-        {image ? (
-          <img 
-            src={image} 
-            alt={title} 
-            className="w-full h-full object-cover" 
-          />
-        ) : (
-          <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-            {iconMap[type as keyof typeof iconMap] || <Shield className="h-10 w-10 text-slate-400" />}
-          </div>
-        )}
-      </div>
-      <div className="p-6">
-        <h3 className="text-xl font-semibold mb-2 text-festival-primary">{title}</h3>
-        <p className="text-festival-secondary mb-4">{description}</p>
-        <Button className="w-full bg-festival-accent text-white">
-          Apply for {title}
-        </Button>
-      </div>
-    </motion.div>
+    <>
+      <motion.div
+        className="bg-white rounded-xl shadow-soft overflow-hidden border border-slate-100"
+        whileHover={{ y: -5 }}
+        transition={{ duration: 0.2 }}
+      >
+        <div className="relative aspect-[3/2] overflow-hidden">
+          {image ? (
+            <img 
+              src={image} 
+              alt={title} 
+              className="w-full h-full object-cover" 
+            />
+          ) : (
+            <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+              {iconMap[type as keyof typeof iconMap] || <Shield className="h-10 w-10 text-slate-400" />}
+            </div>
+          )}
+        </div>
+        <div className="p-6">
+          <h3 className="text-xl font-semibold mb-2 text-festival-primary">{title}</h3>
+          <p className="text-festival-secondary mb-4">{description}</p>
+          <Button 
+            className="w-full bg-festival-accent text-white"
+            onClick={() => setIsFormOpen(true)}
+          >
+            Apply for {title}
+          </Button>
+        </div>
+      </motion.div>
+
+      <BadgeApplicationForm 
+        open={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        badgeType={type}
+      />
+    </>
   );
 };
 
