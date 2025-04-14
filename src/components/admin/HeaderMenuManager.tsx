@@ -150,8 +150,6 @@ const HeaderMenuManager = () => {
         submenu: submenuForDb
       };
 
-      console.log("Saving link data:", JSON.stringify(linkData, null, 2));
-
       if (isCreating) {
         const newOrderNumber = links.length > 0 
           ? Math.max(...links.map(link => link.order_number)) + 1 

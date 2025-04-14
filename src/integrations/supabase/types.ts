@@ -231,6 +231,7 @@ export type Database = {
           id: string
           is_active: boolean
           order_number: number
+          submenu: Json | null
           title: string
           updated_at: string
           url: string
@@ -240,6 +241,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           order_number?: number
+          submenu?: Json | null
           title: string
           updated_at?: string
           url: string
@@ -249,6 +251,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           order_number?: number
+          submenu?: Json | null
           title?: string
           updated_at?: string
           url?: string
