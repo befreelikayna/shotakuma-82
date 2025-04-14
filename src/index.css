@@ -190,6 +190,27 @@
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 1rem);
   }
+
+  .background-animation {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    animation: backgroundFloat 20s ease-in-out infinite;
+    position: relative;
+  }
+
+  @keyframes backgroundFloat {
+    0% {
+      background-position: center 0%;
+    }
+    50% {
+      background-position: center 10%;
+    }
+    100% {
+      background-position: center 0%;
+    }
+  }
 }
 
 /* Custom animations */
