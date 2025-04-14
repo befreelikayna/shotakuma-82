@@ -45,12 +45,11 @@ const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   useEffect(() => {
     if (currentBg) {
       document.body.style.backgroundImage = `url('${currentBg}')`;
-      document.body.classList.add('background-animation');
     }
     
     return () => {
+      // Clean up when component unmounts
       document.body.style.backgroundImage = '';
-      document.body.classList.remove('background-animation');
     };
   }, [currentBg]);
 

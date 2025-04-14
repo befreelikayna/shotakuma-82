@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Pencil, Trash2, PlusCircle, ArrowUpCircle, ArrowDownCircle, Check, X, ExternalLink } from "lucide-react";
@@ -62,34 +61,7 @@ const HeaderMenuManager = () => {
         .order("order_number");
 
       if (error) throw error;
-      
-      // Transform the data to properly handle submenu
-      const transformedData: HeaderLink[] = (data || []).map(item => {
-        let parsedSubmenu: SubMenuItem[] | undefined = undefined;
-        
-        if (item.submenu) {
-          // Ensure submenu is properly cast to SubMenuItem[]
-          if (Array.isArray(item.submenu)) {
-            // Explicitly map each item to ensure it has the correct shape
-            parsedSubmenu = (item.submenu as any[]).map(subItem => ({
-              id: subItem.id || "",
-              title: subItem.title || "",
-              url: subItem.url || "",
-              order_number: subItem.order_number || 0
-            }));
-          } else {
-            // If it's not an array but exists, initialize an empty array
-            parsedSubmenu = [];
-          }
-        }
-        
-        return {
-          ...item,
-          submenu: parsedSubmenu
-        };
-      });
-      
-      setLinks(transformedData);
+      setLinks(data || []);
     } catch (error) {
       console.error("Error fetching header links:", error);
       toast.error("Failed to load header links");
