@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Loader2, Plus, Pencil, Trash2, ExternalLink, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -137,17 +137,27 @@ const AccessBadgeManager = () => {
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       const filePath = `access_badges/${fileName}`;
       
+      // First, check if the bucket exists, if not create one
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const publicBucket = buckets?.find(bucket => bucket.name === 'public');
+      
+      if (!publicBucket) {
+        // If bucket doesn't exist, create a message for the user
+        console.error("Storage bucket 'public' does not exist");
+        throw new Error("Storage not properly configured. Please contact the administrator.");
+      }
+      
       // Upload the file to Supabase Storage
       const { error: uploadError, data } = await supabase.storage
         .from('public')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false // Don't overwrite existing files
+          upsert: true // Allow overwrite in case of any naming conflicts
         });
 
       if (uploadError) {
         console.error("Upload error:", uploadError);
-        throw new Error("Could not upload image. Please try again.");
+        throw new Error(uploadError.message || "Could not upload image. Please try again.");
       }
       
       // Get the public URL for the uploaded file
@@ -161,6 +171,8 @@ const AccessBadgeManager = () => {
           title: "Upload Success",
           description: "Image uploaded successfully",
         });
+      } else {
+        throw new Error("Could not get public URL for uploaded image");
       }
     } catch (error: any) {
       console.error("Error uploading file:", error);
@@ -351,6 +363,9 @@ const AccessBadgeManager = () => {
             <DialogTitle>
               {currentBadge.id ? "Edit Badge" : "Create New Badge"}
             </DialogTitle>
+            <DialogDescription>
+              Fill in the details for this access badge.
+            </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
