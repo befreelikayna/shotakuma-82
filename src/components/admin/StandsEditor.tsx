@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from "react";
-import { Edit, Save, Loader2, ExternalLink } from "lucide-react";
+import { Edit, Save, Loader2, ExternalLink, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useStandsContent, StandsContent } from "@/hooks/use-stands-content";
@@ -20,7 +21,7 @@ const StandsEditor = () => {
     if (content && !editableContent) {
       setEditableContent(content);
     }
-  }, [content]);
+  }, [content, editableContent]);
 
   const handleSave = async () => {
     if (!editableContent) return;
@@ -60,6 +61,10 @@ const StandsEditor = () => {
       setEditableContent(content);
     }
     setIsEditing(false);
+  };
+
+  const isGoogleDocsUrl = (url: string) => {
+    return url && url.includes('docs.google.com');
   };
 
   if (isLoading) {
@@ -127,7 +132,12 @@ const StandsEditor = () => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="url">External URL</Label>
+            <Label htmlFor="url" className="flex items-center gap-2">
+              External URL
+              {isEditing && isGoogleDocsUrl(editableContent?.url || "") && (
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Google Docs</span>
+              )}
+            </Label>
             <Input
               id="url"
               value={editableContent?.url || ""}
@@ -173,6 +183,19 @@ const StandsEditor = () => {
           </div>
         </div>
       </div>
+
+      {isEditing && isGoogleDocsUrl(editableContent?.url || "") && (
+        <Alert variant="warning" className="bg-amber-50 border-amber-200">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-700">
+            <strong>Tips for Google Docs:</strong> For Google Docs to work in the iframe, make sure to:
+            <ul className="list-disc ml-6 mt-2 space-y-1">
+              <li>Ensure the document is set to "Anyone with the link can view"</li>
+              <li>Use the "/preview" format instead of "/edit" or "/view" (e.g., https://docs.google.com/document/d/DOC_ID/preview)</li>
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="p-4 bg-blue-50 rounded-md text-sm text-blue-700">
         <p>
