@@ -1,15 +1,14 @@
-
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Clock, MapPin, Calendar, RefreshCw } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { supabase, ExtendedScheduleDay, ScheduleEvent } from "@/integrations/supabase/client";
+import { supabase, ScheduleDay, ScheduleEvent } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 const Schedule = () => {
   const [activeDay, setActiveDay] = useState<string>("");
-  const [schedule, setSchedule] = useState<ExtendedScheduleDay[]>([]);
+  const [schedule, setSchedule] = useState<ScheduleDay[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchSchedule = async () => {
@@ -50,7 +49,7 @@ const Schedule = () => {
             return {
               ...day,
               events: []
-            } as ExtendedScheduleDay;
+            } as ScheduleDay;
           }
           
           // Process events to ensure they match ScheduleEvent type
@@ -65,10 +64,8 @@ const Schedule = () => {
             date: day.date,
             day_name: day.day_name,
             order_number: day.order_number,
-            created_at: day.created_at,
-            updated_at: day.updated_at,
             events: processedEvents
-          } as ExtendedScheduleDay;
+          } as ScheduleDay;
         })
       );
       

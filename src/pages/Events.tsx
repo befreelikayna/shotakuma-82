@@ -6,13 +6,13 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import EventItem from "@/components/EventItem";
-import { supabase, ExtendedEvent } from "@/integrations/supabase/client";
+import { supabase, Event } from "@/integrations/supabase/client";
 
 const Events = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState<string>(searchParams.get("category") || "all");
   const [activeTab, setActiveTab] = useState<string>(searchParams.get("tab") || "upcoming");
-  const [events, setEvents] = useState<ExtendedEvent[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalEventsCount, setTotalEventsCount] = useState(0);
@@ -54,7 +54,7 @@ const Events = () => {
               image_url: event.image_url || "https://source.unsplash.com/random/800x600?festival",
               category: event.category || 'culture',
               past: isPast
-            } as ExtendedEvent;
+            } as Event;
           });
           
           setEvents(processedEvents);
