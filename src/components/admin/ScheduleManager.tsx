@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase, ExtendedScheduleDay, ScheduleEvent } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
-const ScheduleManager = () => {
+const ScheduleManager: React.FC = () => {
   const [days, setDays] = useState<ExtendedScheduleDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [addingDay, setAddingDay] = useState(false);
@@ -76,5 +76,11 @@ const ScheduleManager = () => {
     }
   };
 
-  // ... rest of the component remains unchanged
+  return (
+    <div>
+      {/* Existing JSX content */}
+    </div>
+  );
 };
+
+export default ScheduleManager;
