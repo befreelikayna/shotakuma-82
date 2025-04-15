@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Edit, Save, Loader2, ExternalLink, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -185,7 +184,7 @@ const StandsEditor = () => {
       </div>
 
       {isEditing && isGoogleDocsUrl(editableContent?.url || "") && (
-        <Alert variant="warning" className="bg-amber-50 border-amber-200">
+        <Alert variant="default" className="bg-amber-50 border-amber-200">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-700">
             <strong>Tips for Google Docs:</strong> For Google Docs to work in the iframe, make sure to:

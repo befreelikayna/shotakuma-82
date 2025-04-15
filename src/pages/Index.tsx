@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Users, MapPin, Instagram, Facebook, Youtube, Twitter } from "lucide-react";
@@ -17,8 +16,13 @@ import { customSupabase, supabase, Ticket, safeDataAccess } from "@/integrations
 
 const AnimeCharactersImage = "/lovable-uploads/88018e32-71b5-4eba-9372-973a5c4d8bc1.png";
 
-interface TicketWithFeatures extends Ticket {
-  features: string[];
+interface TicketWithFeatures {
+  id: string;
+  name: string;
+  price: number;
+  description: string | null;
+  available: boolean;
+  features?: string[];
 }
 
 const Index = () => {
