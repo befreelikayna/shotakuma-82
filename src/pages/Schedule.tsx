@@ -53,17 +53,12 @@ const Schedule = () => {
           }
           
           // Process events to ensure they match ScheduleEvent type
-          const processedEvents = (eventsData || []).map(event => {
-            return {
-              ...event
-            } as ScheduleEvent;
-          });
+          const processedEvents = (eventsData || []).map(event => ({
+            ...event
+          } as ScheduleEvent));
           
           return {
-            id: day.id,
-            date: day.date,
-            day_name: day.day_name,
-            order_number: day.order_number,
+            ...day,
             events: processedEvents
           } as ScheduleDay;
         })
@@ -166,7 +161,6 @@ const Schedule = () => {
               </div>
             ) : (
               <>
-                {/* Day Tabs */}
                 <div className="flex justify-center mb-10 overflow-x-auto">
                   <div className="inline-flex p-1 rounded-full bg-white shadow-soft">
                     {schedule.map((day) => (
@@ -186,7 +180,6 @@ const Schedule = () => {
                   </div>
                 </div>
 
-                {/* Event Categories Legend */}
                 <div className="flex flex-wrap justify-center gap-3 mb-10">
                   <div className="flex items-center">
                     <span className="inline-block w-3 h-3 rounded-full bg-blue-400 mr-2"></span>
@@ -210,7 +203,6 @@ const Schedule = () => {
                   </div>
                 </div>
 
-                {/* Schedule List */}
                 {activeScheduleDay && (
                   <div className="space-y-4">
                     {activeScheduleDay.events && activeScheduleDay.events.length === 0 ? (
@@ -261,7 +253,6 @@ const Schedule = () => {
               </>
             )}
 
-            {/* Download Button */}
             <div className="mt-12 text-center">
               <a
                 href="#download-pdf"

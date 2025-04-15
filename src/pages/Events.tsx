@@ -33,12 +33,13 @@ const Events = () => {
           console.log('Events fetched from Supabase:', data);
           setTotalEventsCount(data.length);
           
-          const processedEvents = data.map(event => {
+          const processedEvents: Event[] = data.map(event => {
             const eventDate = new Date(event.event_date);
             const currentDate = new Date();
             const isPast = eventDate < currentDate;
             
             return {
+              ...event,
               id: event.id,
               name: event.name,
               title: event.name,
@@ -54,7 +55,7 @@ const Events = () => {
               image_url: event.image_url || "https://source.unsplash.com/random/800x600?festival",
               category: event.category || 'culture',
               past: isPast
-            } as Event;
+            };
           });
           
           setEvents(processedEvents);

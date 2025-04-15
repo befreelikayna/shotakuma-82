@@ -38,15 +38,16 @@ const PartnerLogosSlider = () => {
       
       if (data && Array.isArray(data)) {
         // Create properly typed Partner objects
-        const partnersData: Partner[] = data.map(item => ({
+        const partnersData = data.map(item => ({
+          ...item, // This includes all base fields like created_at, updated_at
           id: safeDataAccess(item?.id, ''),
           name: safeDataAccess(item?.name, ''),
           logo_url: safeDataAccess(item?.logo_url, ''),
-          website_url: item?.website_url ? String(item.website_url) : null,
+          website_url: item?.website_url || null,
           order_number: safeDataAccess(item?.order_number, 0),
           active: safeDataAccess(item?.active, true),
-          category: item?.category ? String(item.category) : null,
-        }));
+          category: item?.category || null,
+        } as Partner));
         
         setPartners(partnersData);
         console.log('Partner logos loaded:', partnersData);
