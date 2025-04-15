@@ -17,28 +17,26 @@ export const customSupabase = supabase;
 // Type definitions
 export type Json = Database['public']['Tables']['page_content']['Row']['content'];
 
-// Extended partner type with optional fields for compatibility
-export interface Partner extends Database['public']['Tables']['partners']['Row'] {
-  // Additional properties that might be added during data processing
-  website_url: string | null;
-}
+// Type for partner with additional fields
+export type Partner = Database['public']['Tables']['partners']['Row'] & {
+  website_url?: string | null;
+};
 
-// Extended event type with additional fields for UI purposes
-export interface Event extends Database['public']['Tables']['events']['Row'] {
-  // Additional UI-specific properties
+// Type for event with additional UI-specific fields
+export type Event = Database['public']['Tables']['events']['Row'] & {
   title?: string;
   date?: string;
   time?: string;
   image?: string;
-  location?: string; 
+  location?: string;
   past?: boolean;
   registrationLink?: string;
-}
+};
 
-// Extended schedule day type with events array
-export interface ScheduleDay extends Database['public']['Tables']['schedule_days']['Row'] {
+// Type for schedule days with events array
+export type ScheduleDay = Database['public']['Tables']['schedule_days']['Row'] & {
   events?: ScheduleEvent[];
-}
+};
 
 export type ScheduleEvent = Database['public']['Tables']['schedule_events']['Row'];
 export type Ticket = Database['public']['Tables']['tickets']['Row'];
