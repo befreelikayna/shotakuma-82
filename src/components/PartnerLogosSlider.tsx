@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { customSupabase, Partner, safeDataAccess } from '@/integrations/supabase/client';
+import { customSupabase, ExtendedPartner, safeDataAccess } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import {
   Carousel,
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/carousel";
 
 const PartnerLogosSlider = () => {
-  const [partners, setPartners] = useState<Partner[]>([]);
+  const [partners, setPartners] = useState<ExtendedPartner[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch partner logos from Supabase
@@ -38,7 +38,7 @@ const PartnerLogosSlider = () => {
       
       if (data && Array.isArray(data)) {
         // Create properly typed Partner objects
-        const partnersData: Partner[] = data.map(item => ({
+        const partnersData: ExtendedPartner[] = data.map(item => ({
           id: safeDataAccess(item?.id, ''),
           name: safeDataAccess(item?.name, ''),
           logo_url: safeDataAccess(item?.logo_url, ''),
