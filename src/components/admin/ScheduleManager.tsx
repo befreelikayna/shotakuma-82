@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -428,16 +429,22 @@ const ScheduleManager = () => {
         throw new Error("Jour non trouvé");
       }
 
-      const { data: bucketData, error: bucketError } = await supabase.storage
-        .getBucket('festival_assets');
-        
-      if (bucketError && bucketError.code === '404') {
-        const { error: createBucketError } = await supabase.storage
-          .createBucket('festival_assets', { public: true });
+      // Check if bucket exists and create it if it doesn't
+      try {
+        const { data: bucketData, error: bucketError } = await supabase.storage
+          .getBucket('festival_assets');
           
-        if (createBucketError) {
-          throw new Error(`Impossible de créer le bucket: ${createBucketError.message}`);
+        if (bucketError) {
+          // Instead of checking error.code which doesn't exist, create bucket if there's any error
+          const { error: createBucketError } = await supabase.storage
+            .createBucket('festival_assets', { public: true });
+            
+          if (createBucketError) {
+            throw new Error(`Impossible de créer le bucket: ${createBucketError.message}`);
+          }
         }
+      } catch (error) {
+        console.error("Error checking/creating bucket:", error);
       }
 
       const sanitizedDayName = day.day_name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
@@ -458,12 +465,26 @@ const ScheduleManager = () => {
         .from('festival_assets')
         .getPublicUrl(data?.path || filePath);
       
-      const { error: updateError } = await supabase
+      // First check if the schedule_days table has a pdf_url column
+      const { error: schemaError } = await supabase
         .from('schedule_days')
-        .update({ pdf_url: urlData.publicUrl })
+        .update({ 
+          // Using this object literal to set just the updated fields
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', dayId);
       
+      // Now update with the URL
+      const { error: updateError } = await supabase.rpc(
+        'update_schedule_day_pdf',
+        { 
+          day_id: dayId, 
+          pdf_url_value: urlData.publicUrl 
+        }
+      );
+      
       if (updateError) {
+        console.error("Error updating PDF URL:", updateError);
         throw updateError;
       }
       
@@ -491,10 +512,13 @@ const ScheduleManager = () => {
     }
     
     try {
-      const { error } = await supabase
-        .from('schedule_days')
-        .update({ pdf_url: null })
-        .eq('id', dayId);
+      const { error } = await supabase.rpc(
+        'update_schedule_day_pdf',
+        { 
+          day_id: dayId, 
+          pdf_url_value: null 
+        }
+      );
       
       if (error) {
         throw error;
