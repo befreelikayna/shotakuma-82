@@ -1,77 +1,136 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { Plus, Trash, Save, CalendarIcon, UploadCloud, FileText, X } from "lucide-react";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { supabase } from "@/integrations/supabase/client";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { supabase, ScheduleDay, ScheduleEvent } from "@/integrations/supabase/client";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
+// Schema for day validation
+const daySchema = z.object({
+  day_name: z.string().min(1, { message: "Le nom du jour est requis" }),
+  date: z.date({ required_error: "La date est requise" }),
+});
+
+// Schema for event validation
+const eventSchema = z.object({
+  title: z.string().min(1, { message: "Le titre est requis" }),
+  description: z.string().optional(),
+  start_time: z.string().min(1, { message: "L'heure de début est requise" }),
+  end_time: z.string().min(1, { message: "L'heure de fin est requise" }),
+  location: z.string().optional(),
+  category: z.string().min(1, { message: "La catégorie est requise" }),
+});
 
 const ScheduleManager = () => {
-  const [days, setDays] = useState<ScheduleDay[]>([]);
+  const [days, setDays] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pdfUploading, setPdfUploading] = useState<Record<string, boolean>>({});
   const [addingDay, setAddingDay] = useState(false);
-  const [newDay, setNewDay] = useState({
-    day_name: "",
-    date: "",
-    order_number: 0
-  });
-  const [selectedDay, setSelectedDay] = useState<ScheduleDay | null>(null);
-  const [editingDay, setEditingDay] = useState(false);
-  const [addingEvent, setAddingEvent] = useState(false);
-  const [newEvent, setNewEvent] = useState({
-    title: "",
-    description: "",
-    start_time: "",
-    end_time: "",
-    location: "",
-    category: "workshop",
-    order_number: 0
-  });
-  const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
-  const [editingEvent, setEditingEvent] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [editingDay, setEditingDay] = useState<string | null>(null);
+  const [addingEventToDay, setAddingEventToDay] = useState<string | null>(null);
+  const [editingEvent, setEditingEvent] = useState<{
+    dayId: string;
+    eventId: string;
+  } | null>(null);
 
-  useEffect(() => {
-    fetchSchedule();
-  }, []);
+  const dayForm = useForm<z.infer<typeof daySchema>>({
+    resolver: zodResolver(daySchema),
+    defaultValues: {
+      day_name: "",
+    },
+  });
 
-  const fetchSchedule = async () => {
+  const eventForm = useForm<z.infer<typeof eventSchema>>({
+    resolver: zodResolver(eventSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      start_time: "",
+      end_time: "",
+      location: "",
+      category: "panel",
+    },
+  });
+
+  const fetchDays = async () => {
     try {
       setLoading(true);
-      
-      // Fetch days
       const { data: daysData, error: daysError } = await supabase
-        .from('schedule_days')
-        .select('*')
-        .order('order_number');
-      
+        .from("schedule_days")
+        .select("*")
+        .order("order_number");
+
       if (daysError) throw daysError;
-      
-      // Fetch events for each day
-      const daysWithEvents = await Promise.all((daysData || []).map(async (day) => {
-        const { data: events, error: eventsError } = await supabase
-          .from('schedule_events')
-          .select('*')
-          .eq('day_id', day.id)
-          .order('order_number');
-        
-        if (eventsError) throw eventsError;
-        
-        return {
-          ...day,
-          events: events || []
-        } as ScheduleDay;
-      }));
-      
+
+      // For each day, get events
+      const daysWithEvents = await Promise.all(
+        daysData.map(async (day) => {
+          const { data: eventsData, error: eventsError } = await supabase
+            .from("schedule_events")
+            .select("*")
+            .eq("day_id", day.id)
+            .order("order_number");
+
+          if (eventsError) throw eventsError;
+
+          return {
+            ...day,
+            events: eventsData || [],
+          };
+        })
+      );
+
       setDays(daysWithEvents);
     } catch (error) {
-      console.error('Error fetching schedule:', error);
+      console.error("Error fetching schedule:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de charger le programme",
+        description: "Impossible de charger les données du programme",
         variant: "destructive",
       });
     } finally {
@@ -79,82 +138,74 @@ const ScheduleManager = () => {
     }
   };
 
-  const handleAddDay = async () => {
+  useEffect(() => {
+    fetchDays();
+  }, []);
+
+  const handleCreateDay = async (values: z.infer<typeof daySchema>) => {
     try {
-      setIsSaving(true);
+      // Find max order number
+      const maxOrder = days.length > 0
+        ? Math.max(...days.map(day => day.order_number))
+        : -1;
       
-      const { data, error } = await supabase
-        .from('schedule_days')
-        .insert([
-          {
-            day_name: newDay.day_name,
-            date: newDay.date,
-            order_number: newDay.order_number
-          }
-        ])
-        .select();
-      
+      const { data, error } = await supabase.from("schedule_days").insert({
+        day_name: values.day_name,
+        date: format(values.date, "yyyy-MM-dd"),
+        order_number: maxOrder + 1,
+      }).select();
+
       if (error) throw error;
-      
+
       toast({
         title: "Succès",
-        description: "Jour ajouté au programme"
+        description: "Jour ajouté au programme",
       });
-      
-      setNewDay({
-        day_name: "",
-        date: "",
-        order_number: 0
-      });
-      
+
       setAddingDay(false);
-      fetchSchedule();
+      dayForm.reset();
+      
+      // Refresh days
+      fetchDays();
     } catch (error) {
-      console.error('Error adding day:', error);
+      console.error("Error creating day:", error);
       toast({
         title: "Erreur",
-        description: "Impossible d'ajouter le jour",
+        description: "Impossible de créer le jour",
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
-  const handleUpdateDay = async () => {
-    if (!selectedDay) return;
-    
+  const handleUpdateDay = async (dayId: string, values: z.infer<typeof daySchema>) => {
     try {
-      setIsSaving(true);
-      
       const { error } = await supabase
-        .from('schedule_days')
+        .from("schedule_days")
         .update({
-          day_name: selectedDay.day_name,
-          date: selectedDay.date,
-          order_number: selectedDay.order_number
+          day_name: values.day_name,
+          date: format(values.date, "yyyy-MM-dd"),
         })
-        .eq('id', selectedDay.id);
-      
+        .eq("id", dayId);
+
       if (error) throw error;
-      
+
       toast({
         title: "Succès",
-        description: "Jour mis à jour"
+        description: "Jour mis à jour",
       });
+
+      setEditingDay(null);
+      dayForm.reset();
       
-      setEditingDay(false);
-      setSelectedDay(null);
-      fetchSchedule();
+      // Refresh days
+      fetchDays();
     } catch (error) {
-      console.error('Error updating day:', error);
+      console.error("Error updating day:", error);
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le jour",
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -162,136 +213,150 @@ const ScheduleManager = () => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce jour et tous ses événements ?")) {
       return;
     }
-    
+
     try {
-      setIsSaving(true);
-      
-      // First delete all events for this day
+      // Delete all events first
       const { error: eventsError } = await supabase
-        .from('schedule_events')
+        .from("schedule_events")
         .delete()
-        .eq('day_id', dayId);
-      
+        .eq("day_id", dayId);
+
       if (eventsError) throw eventsError;
-      
+
       // Then delete the day
       const { error: dayError } = await supabase
-        .from('schedule_days')
+        .from("schedule_days")
         .delete()
-        .eq('id', dayId);
-      
+        .eq("id", dayId);
+
       if (dayError) throw dayError;
-      
+
       toast({
         title: "Succès",
-        description: "Jour supprimé"
+        description: "Jour supprimé du programme",
       });
       
-      fetchSchedule();
+      // Refresh days
+      fetchDays();
     } catch (error) {
-      console.error('Error deleting day:', error);
+      console.error("Error deleting day:", error);
       toast({
         title: "Erreur",
         description: "Impossible de supprimer le jour",
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
-  const handleAddEvent = async () => {
-    if (!selectedDay) return;
+  const handleDayDragEnd = async (result: any) => {
+    if (!result.destination) return;
     
+    const reorderedDays = Array.from(days);
+    const [removed] = reorderedDays.splice(result.source.index, 1);
+    reorderedDays.splice(result.destination.index, 0, removed);
+    
+    // Update UI immediately
+    setDays(reorderedDays);
+    
+    // Update order_number in database
     try {
-      setIsSaving(true);
+      const updates = reorderedDays.map((day, index) => ({
+        id: day.id,
+        order_number: index
+      }));
       
-      const { data, error } = await supabase
-        .from('schedule_events')
-        .insert([
-          {
-            title: newEvent.title,
-            description: newEvent.description,
-            start_time: newEvent.start_time,
-            end_time: newEvent.end_time,
-            location: newEvent.location,
-            category: newEvent.category,
-            day_id: selectedDay.id,
-            order_number: newEvent.order_number
-          }
-        ])
-        .select();
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Succès",
-        description: "Événement ajouté au programme"
-      });
-      
-      setNewEvent({
-        title: "",
-        description: "",
-        start_time: "",
-        end_time: "",
-        location: "",
-        category: "workshop",
-        order_number: 0
-      });
-      
-      setAddingEvent(false);
-      fetchSchedule();
+      for (const update of updates) {
+        await supabase
+          .from("schedule_days")
+          .update({ order_number: update.order_number })
+          .eq("id", update.id);
+      }
     } catch (error) {
-      console.error('Error adding event:', error);
+      console.error("Error updating day order:", error);
       toast({
         title: "Erreur",
-        description: "Impossible d'ajouter l'événement",
+        description: "Impossible de mettre à jour l'ordre des jours",
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
+      // Refresh to get original order
+      fetchDays();
     }
   };
 
-  const handleUpdateEvent = async () => {
-    if (!selectedEvent || !selectedDay) return;
-    
+  const handleCreateEvent = async (dayId: string, values: z.infer<typeof eventSchema>) => {
     try {
-      setIsSaving(true);
+      // Find max order number for this day's events
+      const dayEvents = days.find(d => d.id === dayId)?.events || [];
+      const maxOrder = dayEvents.length > 0
+        ? Math.max(...dayEvents.map((event: any) => event.order_number))
+        : -1;
       
-      const { error } = await supabase
-        .from('schedule_events')
-        .update({
-          title: selectedEvent.title,
-          description: selectedEvent.description,
-          start_time: selectedEvent.start_time,
-          end_time: selectedEvent.end_time,
-          location: selectedEvent.location,
-          category: selectedEvent.category,
-          day_id: selectedDay.id,
-          order_number: selectedEvent.order_number
-        })
-        .eq('id', selectedEvent.id);
-      
+      const { data, error } = await supabase.from("schedule_events").insert({
+        day_id: dayId,
+        title: values.title,
+        description: values.description || null,
+        start_time: values.start_time,
+        end_time: values.end_time,
+        location: values.location || null,
+        category: values.category,
+        order_number: maxOrder + 1,
+      }).select();
+
       if (error) throw error;
-      
+
       toast({
         title: "Succès",
-        description: "L'événement a été mis à jour"
+        description: "Événement ajouté au programme",
       });
 
-      fetchSchedule();
+      setAddingEventToDay(null);
+      eventForm.reset();
+      
+      // Refresh days
+      fetchDays();
     } catch (error) {
-      console.error('Error updating schedule event:', error);
+      console.error("Error creating event:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer l'événement",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateEvent = async (dayId: string, eventId: string, values: z.infer<typeof eventSchema>) => {
+    try {
+      const { error } = await supabase
+        .from("schedule_events")
+        .update({
+          title: values.title,
+          description: values.description || null,
+          start_time: values.start_time,
+          end_time: values.end_time,
+          location: values.location || null,
+          category: values.category,
+        })
+        .eq("id", eventId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Événement mis à jour",
+      });
+
+      setEditingEvent(null);
+      eventForm.reset();
+      
+      // Refresh days
+      fetchDays();
+    } catch (error) {
+      console.error("Error updating event:", error);
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour l'événement",
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
-      setSelectedEvent(null);
-      setEditingEvent(false);
     }
   };
 
@@ -299,448 +364,909 @@ const ScheduleManager = () => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer cet événement ?")) {
       return;
     }
-    
+
     try {
-      setIsSaving(true);
-      
       const { error } = await supabase
-        .from('schedule_events')
+        .from("schedule_events")
         .delete()
-        .eq('id', eventId);
-      
+        .eq("id", eventId);
+
       if (error) throw error;
-      
+
       toast({
         title: "Succès",
-        description: "Événement supprimé"
+        description: "Événement supprimé du programme",
       });
       
-      fetchSchedule();
+      // Refresh days
+      fetchDays();
     } catch (error) {
-      console.error('Error deleting event:', error);
+      console.error("Error deleting event:", error);
       toast({
         title: "Erreur",
         description: "Impossible de supprimer l'événement",
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
+  const handleEventDragEnd = async (dayId: string, result: any) => {
+    if (!result.destination) return;
+    
+    const day = days.find(d => d.id === dayId);
+    if (!day) return;
+    
+    const reorderedEvents = Array.from(day.events);
+    const [removed] = reorderedEvents.splice(result.source.index, 1);
+    reorderedEvents.splice(result.destination.index, 0, removed);
+    
+    // Update UI immediately
+    setDays(days.map(d => 
+      d.id === dayId ? { ...d, events: reorderedEvents } : d
+    ));
+    
+    // Update order_number in database
+    try {
+      const updates = reorderedEvents.map((event: any, index: number) => ({
+        id: event.id,
+        order_number: index
+      }));
+      
+      for (const update of updates) {
+        await supabase
+          .from("schedule_events")
+          .update({ order_number: update.order_number })
+          .eq("id", update.id);
+      }
+    } catch (error) {
+      console.error("Error updating event order:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour l'ordre des événements",
+        variant: "destructive",
+      });
+      // Refresh to get original order
+      fetchDays();
+    }
+  };
+
+  // Handle PDF upload for a day
+  const handlePdfUpload = async (dayId: string, file: File) => {
+    if (!file || file.type !== 'application/pdf') {
+      toast({
+        title: "Erreur",
+        description: "Seuls les fichiers PDF sont autorisés",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setPdfUploading({...pdfUploading, [dayId]: true});
+      
+      const day = days.find(d => d.id === dayId);
+      if (!day) {
+        throw new Error("Jour non trouvé");
+      }
+
+      // Create file name based on day name
+      const sanitizedDayName = day.day_name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      const filePath = `schedule_pdfs/${dayId}/${sanitizedDayName}-${Date.now()}.pdf`;
+      
+      // Upload file to storage
+      const { data, error } = await supabase.storage
+        .from('festival_assets')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('festival_assets')
+        .getPublicUrl(data?.path || filePath);
+      
+      // Update day with PDF URL
+      const { error: updateError } = await supabase
+        .from('schedule_days')
+        .update({ pdf_url: urlData.publicUrl })
+        .eq('id', dayId);
+      
+      if (updateError) {
+        throw updateError;
+      }
+      
+      toast({
+        title: "Succès",
+        description: `PDF pour ${day.day_name} téléchargé avec succès`,
+      });
+      
+      // Refresh days
+      fetchDays();
+    } catch (error) {
+      console.error("Error uploading PDF:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de télécharger le PDF",
+        variant: "destructive",
+      });
+    } finally {
+      setPdfUploading({...pdfUploading, [dayId]: false});
+    }
+  };
+
+  const handleRemovePdf = async (dayId: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce PDF ?")) {
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('schedule_days')
+        .update({ pdf_url: null })
+        .eq('id', dayId);
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: "Succès",
+        description: "PDF supprimé avec succès",
+      });
+      
+      // Refresh days
+      fetchDays();
+    } catch (error) {
+      console.error("Error removing PDF:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // When editing a day, load its data into the form
+  useEffect(() => {
+    if (editingDay) {
+      const day = days.find(d => d.id === editingDay);
+      if (day) {
+        dayForm.setValue('day_name', day.day_name);
+        try {
+          dayForm.setValue('date', new Date(day.date));
+        } catch (e) {
+          console.error("Invalid date:", e);
+        }
+      }
+    }
+  }, [editingDay, days, dayForm]);
+
+  // When editing an event, load its data into the form
+  useEffect(() => {
+    if (editingEvent) {
+      const day = days.find(d => d.id === editingEvent.dayId);
+      const event = day?.events.find((e: any) => e.id === editingEvent.eventId);
+      
+      if (event) {
+        eventForm.setValue('title', event.title);
+        eventForm.setValue('description', event.description || "");
+        eventForm.setValue('start_time', event.start_time);
+        eventForm.setValue('end_time', event.end_time);
+        eventForm.setValue('location', event.location || "");
+        eventForm.setValue('category', event.category);
+      }
+    }
+  }, [editingEvent, days, eventForm]);
+
   if (loading) {
     return (
-      <div className="w-full flex items-center justify-center py-12">
-        <div className="animate-spin h-8 w-8 border-4 border-primary rounded-full border-t-transparent"></div>
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin h-8 w-8 border-2 border-festival-primary border-t-transparent rounded-full"></div>
+        <span className="ml-2">Chargement du programme...</span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Gestion du Programme</h2>
-        <Button onClick={() => setAddingDay(true)}>Ajouter un jour</Button>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-festival-primary">Programme</h2>
+        <Button onClick={() => {
+          dayForm.reset();
+          setAddingDay(true);
+        }}>
+          <Plus className="mr-2 h-4 w-4" /> Ajouter un jour
+        </Button>
       </div>
 
-      {days.length === 0 ? (
-        <div className="text-center py-12 border rounded-lg">
-          <p className="text-muted-foreground">Aucun jour dans le programme pour le moment.</p>
-          <Button 
-            variant="outline" 
-            onClick={() => setAddingDay(true)}
-            className="mt-4"
-          >
-            Ajouter un jour
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {days.map((day) => (
-            <div key={day.id} className="border rounded-lg p-4 space-y-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-xl font-medium">{day.day_name}</h3>
-                  <p className="text-muted-foreground">{new Date(day.date).toLocaleDateString()}</p>
-                </div>
-                <div className="flex space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      setSelectedDay(day);
-                      setEditingDay(true);
-                    }}
+      <Tabs defaultValue="days">
+        <TabsList>
+          <TabsTrigger value="days">Jours</TabsTrigger>
+          <TabsTrigger value="events">Événements</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="days" className="space-y-4 pt-4">
+          {days.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <p className="text-muted-foreground">Aucun jour n'a été créé pour le programme.</p>
+                <Button className="mt-4" onClick={() => {
+                  dayForm.reset();
+                  setAddingDay(true);
+                }}>
+                  <Plus className="mr-2 h-4 w-4" /> Ajouter un jour
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <DragDropContext onDragEnd={handleDayDragEnd}>
+              <Droppable droppableId="days">
+                {(provided) => (
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className="space-y-4"
                   >
-                    Modifier
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    size="sm"
-                    onClick={() => handleDeleteDay(day.id)}
-                  >
-                    Supprimer
-                  </Button>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-medium">Événements</h4>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setSelectedDay(day);
-                      setAddingEvent(true);
-                    }}
-                  >
-                    Ajouter un événement
-                  </Button>
-                </div>
-
-                {day.events && day.events.length > 0 ? (
-                  <div className="space-y-2">
-                    {day.events.map((event) => (
-                      <div 
-                        key={event.id} 
-                        className="flex justify-between items-center border rounded p-3 bg-background"
-                      >
-                        <div>
-                          <div className="font-medium">{event.title}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {event.start_time} - {event.end_time}
-                            {event.location && ` | ${event.location}`}
+                    {days.map((day, index) => (
+                      <Draggable key={day.id} draggableId={day.id} index={index}>
+                        {(provided) => (
+                          <Card
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className="border-l-4 border-l-festival-primary"
+                          >
+                            <CardHeader className="pb-2">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <CardTitle>{day.day_name}</CardTitle>
+                                  <CardDescription>
+                                    {format(new Date(day.date), "dd MMMM yyyy", {
+                                      locale: fr,
+                                    })}
+                                  </CardDescription>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setEditingDay(day.id)}
+                                  >
+                                    Modifier
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleDeleteDay(day.id)}
+                                    className="text-destructive hover:text-destructive"
+                                  >
+                                    <Trash className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-4">
+                                {/* PDF Upload Section */}
+                                <div className="border rounded-lg p-4 bg-slate-50">
+                                  <h4 className="text-sm font-medium mb-2 flex items-center">
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Programme PDF
+                                  </h4>
+                                  
+                                  {day.pdf_url ? (
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center">
+                                        <a 
+                                          href={day.pdf_url} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="text-blue-600 hover:underline text-sm flex items-center"
+                                        >
+                                          <FileText className="w-4 h-4 mr-1" /> 
+                                          Voir le PDF
+                                        </a>
+                                      </div>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleRemovePdf(day.id)}
+                                        className="text-destructive hover:text-destructive"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <Input
+                                        type="file"
+                                        accept=".pdf"
+                                        id={`pdf-upload-${day.id}`}
+                                        className="text-sm"
+                                        onChange={(e) => {
+                                          if (e.target.files && e.target.files[0]) {
+                                            handlePdfUpload(day.id, e.target.files[0]);
+                                          }
+                                        }}
+                                        disabled={pdfUploading[day.id]}
+                                      />
+                                      {pdfUploading[day.id] && (
+                                        <div className="animate-spin h-4 w-4 border border-festival-primary border-t-transparent rounded-full"></div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                <Button
+                                  className="w-full"
+                                  onClick={() => {
+                                    eventForm.reset();
+                                    setAddingEventToDay(day.id);
+                                  }}
+                                  variant="outline"
+                                >
+                                  <Plus className="mr-2 h-4 w-4" /> Ajouter un événement à cette journée
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="events" className="space-y-6 pt-4">
+          {days.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <p className="text-muted-foreground">
+                  Vous devez d'abord créer au moins un jour.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {days.map((day) => (
+                <Accordion key={day.id} type="single" collapsible className="border rounded-lg">
+                  <AccordionItem value={day.id}>
+                    <AccordionTrigger className="px-4 py-2 hover:no-underline">
+                      <div className="flex items-center">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        <span>{day.day_name} - {format(new Date(day.date), "dd MMMM yyyy", { locale: fr })}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          ({day.events?.length || 0} événements)
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="p-4 space-y-4">
+                        {day.events?.length === 0 ? (
+                          <div className="text-center py-6">
+                            <p className="text-muted-foreground">
+                              Aucun événement programmé pour cette journée.
+                            </p>
+                            <Button
+                              className="mt-4"
+                              size="sm"
+                              onClick={() => {
+                                eventForm.reset();
+                                setAddingEventToDay(day.id);
+                              }}
+                            >
+                              <Plus className="mr-2 h-4 w-4" /> Ajouter un événement
+                            </Button>
                           </div>
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button 
-                            variant="outline" 
+                        ) : (
+                          <DragDropContext onDragEnd={(result) => handleEventDragEnd(day.id, result)}>
+                            <Droppable droppableId={`events-${day.id}`}>
+                              {(provided) => (
+                                <div
+                                  {...provided.droppableProps}
+                                  ref={provided.innerRef}
+                                  className="space-y-2"
+                                >
+                                  {day.events.map((event: any, index: number) => (
+                                    <Draggable
+                                      key={event.id}
+                                      draggableId={event.id}
+                                      index={index}
+                                    >
+                                      {(provided) => (
+                                        <div
+                                          ref={provided.innerRef}
+                                          {...provided.draggableProps}
+                                          {...provided.dragHandleProps}
+                                          className="border rounded-md p-3 bg-white"
+                                        >
+                                          <div className="flex items-start justify-between">
+                                            <div>
+                                              <h4 className="font-medium">{event.title}</h4>
+                                              <div className="flex items-center text-sm text-muted-foreground">
+                                                <Clock className="h-3 w-3 mr-1" />
+                                                <span>{event.start_time} - {event.end_time}</span>
+                                                {event.location && (
+                                                  <>
+                                                    <span className="mx-1">•</span>
+                                                    <span>{event.location}</span>
+                                                  </>
+                                                )}
+                                              </div>
+                                              {event.description && (
+                                                <p className="text-sm mt-2 text-muted-foreground">
+                                                  {event.description}
+                                                </p>
+                                              )}
+                                            </div>
+                                            <div className="flex items-center space-x-1">
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => setEditingEvent({
+                                                  dayId: day.id,
+                                                  eventId: event.id,
+                                                })}
+                                              >
+                                                Modifier
+                                              </Button>
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => handleDeleteEvent(event.id)}
+                                                className="text-destructive hover:text-destructive"
+                                              >
+                                                <Trash className="h-4 w-4" />
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </Draggable>
+                                  ))}
+                                  {provided.placeholder}
+                                </div>
+                              )}
+                            </Droppable>
+                          </DragDropContext>
+                        )}
+                        <div className="pt-2">
+                          <Button
                             size="sm"
+                            variant="outline"
+                            className="w-full"
                             onClick={() => {
-                              setSelectedDay(day);
-                              setSelectedEvent(event);
-                              setEditingEvent(true);
+                              eventForm.reset();
+                              setAddingEventToDay(day.id);
                             }}
                           >
-                            Modifier
-                          </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="sm"
-                            onClick={() => handleDeleteEvent(event.id)}
-                          >
-                            Supprimer
+                            <Plus className="mr-2 h-4 w-4" /> Ajouter un événement
                           </Button>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6 border rounded-lg">
-                    <p className="text-muted-foreground">Aucun événement pour ce jour.</p>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setSelectedDay(day);
-                        setAddingEvent(true);
-                      }}
-                      className="mt-2"
-                    >
-                      Ajouter un événement
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              ))}
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Day Form Dialog */}
+      {addingDay && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Ajouter un jour</h3>
+            <Form {...dayForm}>
+              <form onSubmit={dayForm.handleSubmit(handleCreateDay)} className="space-y-4">
+                <FormField
+                  control={dayForm.control}
+                  name="day_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom du jour</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ex: Jour 1" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={dayForm.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className="w-full pl-3 text-left font-normal"
+                            >
+                              {field.value ? (
+                                format(field.value, "dd MMMM yyyy", { locale: fr })
+                              ) : (
+                                <span className="text-muted-foreground">
+                                  Choisir une date
+                                </span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setAddingDay(false)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button type="submit">
+                    <Save className="mr-2 h-4 w-4" /> Enregistrer
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
         </div>
       )}
 
-      {/* Add Day Dialog */}
-      <Dialog open={addingDay} onOpenChange={setAddingDay}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ajouter un jour au programme</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="day-name">Nom du jour</Label>
-              <Input 
-                id="day-name" 
-                value={newDay.day_name}
-                onChange={(e) => setNewDay({...newDay, day_name: e.target.value})}
-                placeholder="ex: Samedi"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="day-date">Date</Label>
-              <Input 
-                id="day-date" 
-                type="date"
-                value={newDay.date}
-                onChange={(e) => setNewDay({...newDay, date: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="day-order">Ordre d'affichage</Label>
-              <Input 
-                id="day-order" 
-                type="number"
-                value={newDay.order_number}
-                onChange={(e) => setNewDay({...newDay, order_number: parseInt(e.target.value) || 0})}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddingDay(false)}>Annuler</Button>
-            <Button 
-              onClick={handleAddDay}
-              disabled={isSaving || !newDay.day_name || !newDay.date}
-            >
-              {isSaving ? 'Ajout en cours...' : 'Ajouter'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Edit Day Dialog */}
-      <Dialog open={editingDay} onOpenChange={setEditingDay}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modifier le jour</DialogTitle>
-          </DialogHeader>
-          {selectedDay && (
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-day-name">Nom du jour</Label>
-                <Input 
-                  id="edit-day-name" 
-                  value={selectedDay.day_name}
-                  onChange={(e) => setSelectedDay({...selectedDay, day_name: e.target.value})}
+      {editingDay && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Modifier le jour</h3>
+            <Form {...dayForm}>
+              <form onSubmit={dayForm.handleSubmit((values) => handleUpdateDay(editingDay, values))} className="space-y-4">
+                <FormField
+                  control={dayForm.control}
+                  name="day_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom du jour</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ex: Jour 1" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-day-date">Date</Label>
-                <Input 
-                  id="edit-day-date" 
-                  type="date"
-                  value={selectedDay.date}
-                  onChange={(e) => setSelectedDay({...selectedDay, date: e.target.value})}
+                <FormField
+                  control={dayForm.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className="w-full pl-3 text-left font-normal"
+                            >
+                              {field.value ? (
+                                format(field.value, "dd MMMM yyyy", { locale: fr })
+                              ) : (
+                                <span className="text-muted-foreground">
+                                  Choisir une date
+                                </span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-day-order">Ordre d'affichage</Label>
-                <Input 
-                  id="edit-day-order" 
-                  type="number"
-                  value={selectedDay.order_number}
-                  onChange={(e) => setSelectedDay({...selectedDay, order_number: parseInt(e.target.value) || 0})}
-                />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingDay(false)}>Annuler</Button>
-            <Button 
-              onClick={handleUpdateDay}
-              disabled={isSaving || !selectedDay?.day_name || !selectedDay?.date}
-            >
-              {isSaving ? 'Mise à jour...' : 'Mettre à jour'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditingDay(null)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button type="submit">
+                    <Save className="mr-2 h-4 w-4" /> Enregistrer
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </div>
+      )}
 
       {/* Add Event Dialog */}
-      <Dialog open={addingEvent} onOpenChange={setAddingEvent}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ajouter un événement</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="event-title">Titre</Label>
-              <Input 
-                id="event-title" 
-                value={newEvent.title}
-                onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="event-description">Description</Label>
-              <Textarea 
-                id="event-description" 
-                value={newEvent.description || ''}
-                onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="event-start">Heure de début</Label>
-                <Input 
-                  id="event-start" 
-                  value={newEvent.start_time}
-                  onChange={(e) => setNewEvent({...newEvent, start_time: e.target.value})}
-                  placeholder="ex: 14:00"
+      {addingEventToDay && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">
+              Ajouter un événement - {days.find(d => d.id === addingEventToDay)?.day_name}
+            </h3>
+            <Form {...eventForm}>
+              <form onSubmit={eventForm.handleSubmit((values) => handleCreateEvent(addingEventToDay, values))} className="space-y-4">
+                <FormField
+                  control={eventForm.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Titre</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Titre de l'événement" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="event-end">Heure de fin</Label>
-                <Input 
-                  id="event-end" 
-                  value={newEvent.end_time}
-                  onChange={(e) => setNewEvent({...newEvent, end_time: e.target.value})}
-                  placeholder="ex: 15:30"
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={eventForm.control}
+                    name="start_time"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Heure de début</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ex: 10:00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={eventForm.control}
+                    name="end_time"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Heure de fin</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ex: 11:30" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={eventForm.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lieu</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ex: Salle A" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="event-location">Lieu</Label>
-              <Input 
-                id="event-location" 
-                value={newEvent.location || ''}
-                onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="event-category">Catégorie</Label>
-              <Select 
-                value={newEvent.category}
-                onValueChange={(value) => setNewEvent({...newEvent, category: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionnez une catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="panel">Panel</SelectItem>
-                  <SelectItem value="workshop">Atelier</SelectItem>
-                  <SelectItem value="competition">Compétition</SelectItem>
-                  <SelectItem value="screening">Projection</SelectItem>
-                  <SelectItem value="performance">Performance</SelectItem>
-                  <SelectItem value="concert">Concert</SelectItem>
-                  <SelectItem value="talk">Conférence</SelectItem>
-                  <SelectItem value="exhibition">Exposition</SelectItem>
-                  <SelectItem value="other">Autre</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="event-order">Ordre d'affichage</Label>
-              <Input 
-                id="event-order" 
-                type="number"
-                value={newEvent.order_number}
-                onChange={(e) => setNewEvent({...newEvent, order_number: parseInt(e.target.value) || 0})}
-              />
-            </div>
+                <FormField
+                  control={eventForm.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Catégorie</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner une catégorie" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="panel">Panel</SelectItem>
+                          <SelectItem value="workshop">Atelier</SelectItem>
+                          <SelectItem value="competition">Compétition</SelectItem>
+                          <SelectItem value="screening">Projection</SelectItem>
+                          <SelectItem value="performance">Performance</SelectItem>
+                          <SelectItem value="concert">Concert</SelectItem>
+                          <SelectItem value="talk">Conférence</SelectItem>
+                          <SelectItem value="exhibition">Exposition</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={eventForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Description détaillée de l'événement"
+                          {...field}
+                          rows={4}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setAddingEventToDay(null)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button type="submit">
+                    <Save className="mr-2 h-4 w-4" /> Enregistrer
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddingEvent(false)}>Annuler</Button>
-            <Button 
-              onClick={handleAddEvent}
-              disabled={isSaving || !newEvent.title || !newEvent.start_time || !newEvent.end_time}
-            >
-              {isSaving ? 'Ajout en cours...' : 'Ajouter'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       {/* Edit Event Dialog */}
-      <Dialog open={editingEvent} onOpenChange={setEditingEvent}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modifier l'événement</DialogTitle>
-          </DialogHeader>
-          {selectedEvent && (
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-event-title">Titre</Label>
-                <Input 
-                  id="edit-event-title" 
-                  value={selectedEvent.title}
-                  onChange={(e) => setSelectedEvent({...selectedEvent, title: e.target.value})}
+      {editingEvent && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">
+              Modifier l'événement - {days.find(d => d.id === editingEvent.dayId)?.day_name}
+            </h3>
+            <Form {...eventForm}>
+              <form onSubmit={eventForm.handleSubmit((values) => handleUpdateEvent(editingEvent.dayId, editingEvent.eventId, values))} className="space-y-4">
+                <FormField
+                  control={eventForm.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Titre</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Titre de l'événement" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-event-description">Description</Label>
-                <Textarea 
-                  id="edit-event-description" 
-                  value={selectedEvent.description || ''}
-                  onChange={(e) => setSelectedEvent({...selectedEvent, description: e.target.value})}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-event-start">Heure de début</Label>
-                  <Input 
-                    id="edit-event-start" 
-                    value={selectedEvent.start_time}
-                    onChange={(e) => setSelectedEvent({...selectedEvent, start_time: e.target.value})}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={eventForm.control}
+                    name="start_time"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Heure de début</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ex: 10:00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={eventForm.control}
+                    name="end_time"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Heure de fin</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ex: 11:30" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-event-end">Heure de fin</Label>
-                  <Input 
-                    id="edit-event-end" 
-                    value={selectedEvent.end_time}
-                    onChange={(e) => setSelectedEvent({...selectedEvent, end_time: e.target.value})}
-                  />
+                <FormField
+                  control={eventForm.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lieu</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ex: Salle A" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={eventForm.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Catégorie</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner une catégorie" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="panel">Panel</SelectItem>
+                          <SelectItem value="workshop">Atelier</SelectItem>
+                          <SelectItem value="competition">Compétition</SelectItem>
+                          <SelectItem value="screening">Projection</SelectItem>
+                          <SelectItem value="performance">Performance</SelectItem>
+                          <SelectItem value="concert">Concert</SelectItem>
+                          <SelectItem value="talk">Conférence</SelectItem>
+                          <SelectItem value="exhibition">Exposition</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={eventForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Description détaillée de l'événement"
+                          {...field}
+                          rows={4}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditingEvent(null)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button type="submit">
+                    <Save className="mr-2 h-4 w-4" /> Enregistrer
+                  </Button>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-event-location">Lieu</Label>
-                <Input 
-                  id="edit-event-location" 
-                  value={selectedEvent.location || ''}
-                  onChange={(e) => setSelectedEvent({...selectedEvent, location: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-event-category">Catégorie</Label>
-                <Select 
-                  value={selectedEvent.category}
-                  onValueChange={(value) => setSelectedEvent({...selectedEvent, category: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionnez une catégorie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="panel">Panel</SelectItem>
-                    <SelectItem value="workshop">Atelier</SelectItem>
-                    <SelectItem value="competition">Compétition</SelectItem>
-                    <SelectItem value="screening">Projection</SelectItem>
-                    <SelectItem value="performance">Performance</SelectItem>
-                    <SelectItem value="concert">Concert</SelectItem>
-                    <SelectItem value="talk">Conférence</SelectItem>
-                    <SelectItem value="exhibition">Exposition</SelectItem>
-                    <SelectItem value="other">Autre</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-event-order">Ordre d'affichage</Label>
-                <Input 
-                  id="edit-event-order" 
-                  type="number"
-                  value={selectedEvent.order_number}
-                  onChange={(e) => setSelectedEvent({...selectedEvent, order_number: parseInt(e.target.value) || 0})}
-                />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingEvent(false)}>Annuler</Button>
-            <Button 
-              onClick={handleUpdateEvent}
-              disabled={isSaving || !selectedEvent?.title || !selectedEvent?.start_time || !selectedEvent?.end_time}
-            >
-              {isSaving ? 'Mise à jour...' : 'Mettre à jour'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              </form>
+            </Form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

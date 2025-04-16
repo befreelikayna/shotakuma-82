@@ -36,6 +36,7 @@ export type Event = Database['public']['Tables']['events']['Row'] & {
 // Type for schedule days with events array
 export type ScheduleDay = Database['public']['Tables']['schedule_days']['Row'] & {
   events?: ScheduleEvent[];
+  pdf_url?: string | null;
 };
 
 export type ScheduleEvent = Database['public']['Tables']['schedule_events']['Row'];

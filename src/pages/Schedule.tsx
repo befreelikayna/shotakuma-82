@@ -1,15 +1,26 @@
+
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Clock, MapPin, Calendar, RefreshCw } from "lucide-react";
+import { Clock, MapPin, Calendar, RefreshCw, FileText, Download } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { supabase, ScheduleDay, ScheduleEvent } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const Schedule = () => {
   const [activeDay, setActiveDay] = useState<string>("");
   const [schedule, setSchedule] = useState<ScheduleDay[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [openPdfDialog, setOpenPdfDialog] = useState(false);
+  const [currentPdfUrl, setCurrentPdfUrl] = useState<string | null>(null);
 
   const fetchSchedule = async () => {
     try {
@@ -119,6 +130,11 @@ const Schedule = () => {
     });
   };
 
+  const openPdfViewer = (pdfUrl: string) => {
+    setCurrentPdfUrl(pdfUrl);
+    setOpenPdfDialog(true);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <Navbar />
@@ -179,6 +195,20 @@ const Schedule = () => {
                     ))}
                   </div>
                 </div>
+
+                {/* PDF View button for active day */}
+                {activeScheduleDay?.pdf_url && (
+                  <div className="mb-8 flex justify-center">
+                    <Button
+                      onClick={() => openPdfViewer(activeScheduleDay.pdf_url as string)}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <FileText className="w-4 h-4" />
+                      Voir le programme complet en PDF
+                    </Button>
+                  </div>
+                )}
 
                 <div className="flex flex-wrap justify-center gap-3 mb-10">
                   <div className="flex items-center">
@@ -254,17 +284,64 @@ const Schedule = () => {
             )}
 
             <div className="mt-12 text-center">
-              <a
-                href="#download-pdf"
-                className="inline-flex items-center px-6 py-3 rounded-full bg-festival-primary text-white font-medium 
-                shadow-soft transition-all duration-300 hover:shadow-md hover:bg-opacity-90"
-              >
-                Télécharger le programme complet (PDF)
-              </a>
+              {schedule.length > 0 && schedule.some(day => day.pdf_url) ? (
+                <div className="flex flex-wrap justify-center gap-4 mt-8">
+                  {schedule.map((day) => (
+                    day.pdf_url && (
+                      <a
+                        key={day.id}
+                        href={day.pdf_url}
+                        download
+                        className="inline-flex items-center px-4 py-2 rounded-md bg-white border border-slate-200 text-festival-secondary hover:bg-slate-50 hover:text-festival-primary transition-all"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Programme {day.day_name} (PDF)
+                      </a>
+                    )
+                  ))}
+                </div>
+              ) : (
+                <a
+                  href="#download-pdf"
+                  className="inline-flex items-center px-6 py-3 rounded-full bg-festival-primary text-white font-medium 
+                  shadow-soft transition-all duration-300 hover:shadow-md hover:bg-opacity-90"
+                >
+                  Télécharger le programme complet (PDF)
+                </a>
+              )}
             </div>
           </motion.div>
         </div>
       </section>
+
+      {/* PDF Viewer Dialog */}
+      <Dialog open={openPdfDialog} onOpenChange={setOpenPdfDialog}>
+        <DialogContent className="max-w-4xl w-[90vw] h-[80vh] p-0">
+          <DialogHeader className="p-4 border-b">
+            <DialogTitle>Programme PDF</DialogTitle>
+            <DialogDescription>
+              <div className="flex justify-end">
+                <a 
+                  href={currentPdfUrl || '#'} 
+                  download
+                  className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                >
+                  <Download className="w-4 h-4" /> Télécharger
+                </a>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="h-full">
+            {currentPdfUrl && (
+              <iframe 
+                src={`${currentPdfUrl}#toolbar=0&navpanes=0`} 
+                className="w-full h-full border-0"
+                title="Programme PDF"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
