@@ -428,6 +428,18 @@ const ScheduleManager = () => {
         throw new Error("Jour non trouvé");
       }
 
+      const { data: bucketData, error: bucketError } = await supabase.storage
+        .getBucket('festival_assets');
+        
+      if (bucketError && bucketError.code === '404') {
+        const { error: createBucketError } = await supabase.storage
+          .createBucket('festival_assets', { public: true });
+          
+        if (createBucketError) {
+          throw new Error(`Impossible de créer le bucket: ${createBucketError.message}`);
+        }
+      }
+
       const sanitizedDayName = day.day_name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
       const filePath = `schedule_pdfs/${dayId}/${sanitizedDayName}-${Date.now()}.pdf`;
       
@@ -465,7 +477,7 @@ const ScheduleManager = () => {
       console.error("Error uploading PDF:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de télécharger le PDF",
+        description: "Impossible de télécharger le PDF. Vérifiez que le bucket de stockage existe.",
         variant: "destructive",
       });
     } finally {
