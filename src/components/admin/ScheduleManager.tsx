@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Plus, Trash, Save, CalendarIcon, UploadCloud, FileText, X, Clock } from "lucide-react";
+import { Plus, Trash, Save, CalendarIcon, UploadCloud, FileText, X, Clock, Image } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
@@ -67,7 +66,7 @@ const eventSchema = z.object({
 const ScheduleManager = () => {
   const [days, setDays] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pdfUploading, setPdfUploading] = useState<Record<string, boolean>>({});
+  const [fileUploading, setFileUploading] = useState<Record<string, boolean>>({});
   const [addingDay, setAddingDay] = useState(false);
   const [editingDay, setEditingDay] = useState<string | null>(null);
   const [addingEventToDay, setAddingEventToDay] = useState<string | null>(null);
@@ -411,18 +410,29 @@ const ScheduleManager = () => {
     }
   };
 
-  const handlePdfUpload = async (dayId: string, file: File) => {
-    if (!file || file.type !== 'application/pdf') {
+  const getFileType = (file: File): 'pdf' | 'image' | null => {
+    if (file.type === 'application/pdf') {
+      return 'pdf';
+    } else if (file.type.startsWith('image/')) {
+      return 'image';
+    }
+    return null;
+  };
+
+  const handleFileUpload = async (dayId: string, file: File) => {
+    const fileType = getFileType(file);
+    
+    if (!file || !fileType) {
       toast({
         title: "Erreur",
-        description: "Seuls les fichiers PDF sont autorisés",
+        description: "Seuls les fichiers PDF ou images sont autorisés",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      setPdfUploading({...pdfUploading, [dayId]: true});
+      setFileUploading({...fileUploading, [dayId]: true});
       
       const day = days.find(d => d.id === dayId);
       if (!day) {
@@ -435,7 +445,7 @@ const ScheduleManager = () => {
           .getBucket('festival_assets');
           
         if (bucketError) {
-          // Instead of checking error.code which doesn't exist, create bucket if there's any error
+          // Create bucket if there's any error
           const { error: createBucketError } = await supabase.storage
             .createBucket('festival_assets', { public: true });
             
@@ -448,7 +458,8 @@ const ScheduleManager = () => {
       }
 
       const sanitizedDayName = day.day_name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-      const filePath = `schedule_pdfs/${dayId}/${sanitizedDayName}-${Date.now()}.pdf`;
+      const extension = fileType === 'pdf' ? 'pdf' : file.name.split('.').pop();
+      const filePath = `schedule_files/${dayId}/${sanitizedDayName}-${Date.now()}.${extension}`;
       
       const { data, error } = await supabase.storage
         .from('festival_assets')
@@ -465,16 +476,7 @@ const ScheduleManager = () => {
         .from('festival_assets')
         .getPublicUrl(data?.path || filePath);
       
-      // First check if the schedule_days table has a pdf_url column
-      const { error: schemaError } = await supabase
-        .from('schedule_days')
-        .update({ 
-          // Using this object literal to set just the updated fields
-          updated_at: new Date().toISOString() 
-        })
-        .eq('id', dayId);
-      
-      // Now update with the URL using a direct update instead of RPC
+      // Update the schedule day with the file URL
       const { error: updateError } = await supabase
         .from('schedule_days')
         .update({ 
@@ -484,35 +486,34 @@ const ScheduleManager = () => {
         .eq('id', dayId);
       
       if (updateError) {
-        console.error("Error updating PDF URL:", updateError);
+        console.error("Error updating file URL:", updateError);
         throw updateError;
       }
       
       toast({
         title: "Succès",
-        description: `PDF pour ${day.day_name} téléchargé avec succès`,
+        description: `Fichier pour ${day.day_name} téléchargé avec succès`,
       });
       
       fetchDays();
     } catch (error) {
-      console.error("Error uploading PDF:", error);
+      console.error("Error uploading file:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de télécharger le PDF. Vérifiez que le bucket de stockage existe.",
+        description: "Impossible de télécharger le fichier. Vérifiez que le bucket de stockage existe.",
         variant: "destructive",
       });
     } finally {
-      setPdfUploading({...pdfUploading, [dayId]: false});
+      setFileUploading({...fileUploading, [dayId]: false});
     }
   };
 
-  const handleRemovePdf = async (dayId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce PDF ?")) {
+  const handleRemoveFile = async (dayId: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce fichier ?")) {
       return;
     }
     
     try {
-      // Direct update instead of RPC
       const { error } = await supabase
         .from('schedule_days')
         .update({ 
@@ -527,17 +528,52 @@ const ScheduleManager = () => {
       
       toast({
         title: "Succès",
-        description: "PDF supprimé avec succès",
+        description: "Fichier supprimé avec succès",
       });
       
       fetchDays();
     } catch (error) {
-      console.error("Error removing PDF:", error);
+      console.error("Error removing file:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer le PDF",
+        description: "Impossible de supprimer le fichier",
         variant: "destructive",
       });
+    }
+  };
+
+  const getFilePreview = (url: string) => {
+    if (!url) return null;
+    
+    const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+    
+    if (isImage) {
+      return (
+        <div className="flex flex-col items-center gap-2">
+          <img src={url} alt="Programme" className="max-h-24 rounded-md border border-gray-300" />
+          <a 
+            href={url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline text-sm flex items-center"
+          >
+            <Image className="w-4 h-4 mr-1" /> 
+            Voir l'image
+          </a>
+        </div>
+      );
+    } else {
+      return (
+        <a 
+          href={url} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline text-sm flex items-center"
+        >
+          <FileText className="w-4 h-4 mr-1" /> 
+          Voir le PDF
+        </a>
+      );
     }
   };
 
@@ -663,26 +699,18 @@ const ScheduleManager = () => {
                                 <div className="border rounded-lg p-4 bg-slate-50">
                                   <h4 className="text-sm font-medium mb-2 flex items-center">
                                     <FileText className="w-4 h-4 mr-2" />
-                                    Programme PDF
+                                    Programme (PDF ou image)
                                   </h4>
                                   
                                   {day.pdf_url ? (
                                     <div className="flex items-center justify-between">
                                       <div className="flex items-center">
-                                        <a 
-                                          href={day.pdf_url} 
-                                          target="_blank" 
-                                          rel="noopener noreferrer"
-                                          className="text-blue-600 hover:underline text-sm flex items-center"
-                                        >
-                                          <FileText className="w-4 h-4 mr-1" /> 
-                                          Voir le PDF
-                                        </a>
+                                        {getFilePreview(day.pdf_url)}
                                       </div>
                                       <Button
                                         size="sm"
                                         variant="ghost"
-                                        onClick={() => handleRemovePdf(day.id)}
+                                        onClick={() => handleRemoveFile(day.id)}
                                         className="text-destructive hover:text-destructive"
                                       >
                                         <X className="h-4 w-4" />
@@ -692,17 +720,17 @@ const ScheduleManager = () => {
                                     <div className="flex items-center gap-2">
                                       <Input
                                         type="file"
-                                        accept=".pdf"
-                                        id={`pdf-upload-${day.id}`}
+                                        accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
+                                        id={`file-upload-${day.id}`}
                                         className="text-sm"
                                         onChange={(e) => {
                                           if (e.target.files && e.target.files[0]) {
-                                            handlePdfUpload(day.id, e.target.files[0]);
+                                            handleFileUpload(day.id, e.target.files[0]);
                                           }
                                         }}
-                                        disabled={pdfUploading[day.id]}
+                                        disabled={fileUploading[day.id]}
                                       />
-                                      {pdfUploading[day.id] && (
+                                      {fileUploading[day.id] && (
                                         <div className="animate-spin h-4 w-4 border border-festival-primary border-t-transparent rounded-full"></div>
                                       )}
                                     </div>
