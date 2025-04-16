@@ -474,14 +474,14 @@ const ScheduleManager = () => {
         })
         .eq('id', dayId);
       
-      // Now update with the URL
-      const { error: updateError } = await supabase.rpc(
-        'update_schedule_day_pdf',
-        { 
-          day_id: dayId, 
-          pdf_url_value: urlData.publicUrl 
-        }
-      );
+      // Now update with the URL using a direct update instead of RPC
+      const { error: updateError } = await supabase
+        .from('schedule_days')
+        .update({ 
+          pdf_url: urlData.publicUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', dayId);
       
       if (updateError) {
         console.error("Error updating PDF URL:", updateError);
@@ -512,13 +512,14 @@ const ScheduleManager = () => {
     }
     
     try {
-      const { error } = await supabase.rpc(
-        'update_schedule_day_pdf',
-        { 
-          day_id: dayId, 
-          pdf_url_value: null 
-        }
-      );
+      // Direct update instead of RPC
+      const { error } = await supabase
+        .from('schedule_days')
+        .update({ 
+          pdf_url: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', dayId);
       
       if (error) {
         throw error;
