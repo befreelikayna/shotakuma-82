@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Plus, Trash, Save, CalendarIcon, UploadCloud, FileText, X, Clock, Image, Link } from "lucide-react";
+import { Plus, Trash, Save, CalendarIcon, UploadCloud, FileText, X } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
@@ -49,21 +49,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
+// Schema for day validation
 const daySchema = z.object({
   day_name: z.string().min(1, { message: "Le nom du jour est requis" }),
   date: z.date({ required_error: "La date est requise" }),
 });
 
+// Schema for event validation
 const eventSchema = z.object({
   title: z.string().min(1, { message: "Le titre est requis" }),
   description: z.string().optional(),
@@ -73,14 +66,10 @@ const eventSchema = z.object({
   category: z.string().min(1, { message: "La catégorie est requise" }),
 });
 
-const urlSchema = z.object({
-  url: z.string().url({ message: "Veuillez entrer une URL valide" }).min(1, { message: "L'URL est requise" }),
-});
-
 const ScheduleManager = () => {
   const [days, setDays] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [fileUploading, setFileUploading] = useState<Record<string, boolean>>({});
+  const [pdfUploading, setPdfUploading] = useState<Record<string, boolean>>({});
   const [addingDay, setAddingDay] = useState(false);
   const [editingDay, setEditingDay] = useState<string | null>(null);
   const [addingEventToDay, setAddingEventToDay] = useState<string | null>(null);
@@ -88,8 +77,6 @@ const ScheduleManager = () => {
     dayId: string;
     eventId: string;
   } | null>(null);
-  const [isUrlDialogOpen, setIsUrlDialogOpen] = useState(false);
-  const [currentDayIdForUrl, setCurrentDayIdForUrl] = useState<string | null>(null);
 
   const dayForm = useForm<z.infer<typeof daySchema>>({
     resolver: zodResolver(daySchema),
@@ -110,13 +97,6 @@ const ScheduleManager = () => {
     },
   });
 
-  const urlForm = useForm<z.infer<typeof urlSchema>>({
-    resolver: zodResolver(urlSchema),
-    defaultValues: {
-      url: "",
-    },
-  });
-
   const fetchDays = async () => {
     try {
       setLoading(true);
@@ -127,6 +107,7 @@ const ScheduleManager = () => {
 
       if (daysError) throw daysError;
 
+      // For each day, get events
       const daysWithEvents = await Promise.all(
         daysData.map(async (day) => {
           const { data: eventsData, error: eventsError } = await supabase
@@ -163,6 +144,7 @@ const ScheduleManager = () => {
 
   const handleCreateDay = async (values: z.infer<typeof daySchema>) => {
     try {
+      // Find max order number
       const maxOrder = days.length > 0
         ? Math.max(...days.map(day => day.order_number))
         : -1;
@@ -183,6 +165,7 @@ const ScheduleManager = () => {
       setAddingDay(false);
       dayForm.reset();
       
+      // Refresh days
       fetchDays();
     } catch (error) {
       console.error("Error creating day:", error);
@@ -214,6 +197,7 @@ const ScheduleManager = () => {
       setEditingDay(null);
       dayForm.reset();
       
+      // Refresh days
       fetchDays();
     } catch (error) {
       console.error("Error updating day:", error);
@@ -231,6 +215,7 @@ const ScheduleManager = () => {
     }
 
     try {
+      // Delete all events first
       const { error: eventsError } = await supabase
         .from("schedule_events")
         .delete()
@@ -238,6 +223,7 @@ const ScheduleManager = () => {
 
       if (eventsError) throw eventsError;
 
+      // Then delete the day
       const { error: dayError } = await supabase
         .from("schedule_days")
         .delete()
@@ -250,6 +236,7 @@ const ScheduleManager = () => {
         description: "Jour supprimé du programme",
       });
       
+      // Refresh days
       fetchDays();
     } catch (error) {
       console.error("Error deleting day:", error);
@@ -268,8 +255,10 @@ const ScheduleManager = () => {
     const [removed] = reorderedDays.splice(result.source.index, 1);
     reorderedDays.splice(result.destination.index, 0, removed);
     
+    // Update UI immediately
     setDays(reorderedDays);
     
+    // Update order_number in database
     try {
       const updates = reorderedDays.map((day, index) => ({
         id: day.id,
@@ -289,12 +278,14 @@ const ScheduleManager = () => {
         description: "Impossible de mettre à jour l'ordre des jours",
         variant: "destructive",
       });
+      // Refresh to get original order
       fetchDays();
     }
   };
 
   const handleCreateEvent = async (dayId: string, values: z.infer<typeof eventSchema>) => {
     try {
+      // Find max order number for this day's events
       const dayEvents = days.find(d => d.id === dayId)?.events || [];
       const maxOrder = dayEvents.length > 0
         ? Math.max(...dayEvents.map((event: any) => event.order_number))
@@ -321,6 +312,7 @@ const ScheduleManager = () => {
       setAddingEventToDay(null);
       eventForm.reset();
       
+      // Refresh days
       fetchDays();
     } catch (error) {
       console.error("Error creating event:", error);
@@ -356,6 +348,7 @@ const ScheduleManager = () => {
       setEditingEvent(null);
       eventForm.reset();
       
+      // Refresh days
       fetchDays();
     } catch (error) {
       console.error("Error updating event:", error);
@@ -385,6 +378,7 @@ const ScheduleManager = () => {
         description: "Événement supprimé du programme",
       });
       
+      // Refresh days
       fetchDays();
     } catch (error) {
       console.error("Error deleting event:", error);
@@ -406,10 +400,12 @@ const ScheduleManager = () => {
     const [removed] = reorderedEvents.splice(result.source.index, 1);
     reorderedEvents.splice(result.destination.index, 0, removed);
     
+    // Update UI immediately
     setDays(days.map(d => 
       d.id === dayId ? { ...d, events: reorderedEvents } : d
     ));
     
+    // Update order_number in database
     try {
       const updates = reorderedEvents.map((event: any, index: number) => ({
         id: event.id,
@@ -429,61 +425,35 @@ const ScheduleManager = () => {
         description: "Impossible de mettre à jour l'ordre des événements",
         variant: "destructive",
       });
+      // Refresh to get original order
       fetchDays();
     }
   };
 
-  const getFileType = (file: File): 'pdf' | 'image' | null => {
-    if (file.type === 'application/pdf') {
-      return 'pdf';
-    } else if (file.type.startsWith('image/')) {
-      return 'image';
-    }
-    return null;
-  };
-
-  const handleFileUpload = async (dayId: string, file: File) => {
-    const fileType = getFileType(file);
-    
-    if (!file || !fileType) {
+  // Handle PDF upload for a day
+  const handlePdfUpload = async (dayId: string, file: File) => {
+    if (!file || file.type !== 'application/pdf') {
       toast({
         title: "Erreur",
-        description: "Seuls les fichiers PDF ou images sont autorisés",
+        description: "Seuls les fichiers PDF sont autorisés",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      setFileUploading({...fileUploading, [dayId]: true});
+      setPdfUploading({...pdfUploading, [dayId]: true});
       
       const day = days.find(d => d.id === dayId);
       if (!day) {
         throw new Error("Jour non trouvé");
       }
 
-      // Check if bucket exists and create it if it doesn't
-      try {
-        const { data: bucketData, error: bucketError } = await supabase.storage
-          .getBucket('festival_assets');
-          
-        if (bucketError) {
-          // Create bucket if there's any error
-          const { error: createBucketError } = await supabase.storage
-            .createBucket('festival_assets', { public: true });
-            
-          if (createBucketError) {
-            throw new Error(`Impossible de créer le bucket: ${createBucketError.message}`);
-          }
-        }
-      } catch (error) {
-        console.error("Error checking/creating bucket:", error);
-      }
-
+      // Create file name based on day name
       const sanitizedDayName = day.day_name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-      const extension = fileType === 'pdf' ? 'pdf' : file.name.split('.').pop();
-      const filePath = `schedule_files/${dayId}/${sanitizedDayName}-${Date.now()}.${extension}`;
+      const filePath = `schedule_pdfs/${dayId}/${sanitizedDayName}-${Date.now()}.pdf`;
       
+      // Upload file to storage
       const { data, error } = await supabase.storage
         .from('festival_assets')
         .upload(filePath, file, {
@@ -495,98 +465,49 @@ const ScheduleManager = () => {
         throw error;
       }
       
+      // Get public URL
       const { data: urlData } = supabase.storage
         .from('festival_assets')
         .getPublicUrl(data?.path || filePath);
       
-      // Update the schedule day with the file URL
+      // Update day with PDF URL
       const { error: updateError } = await supabase
         .from('schedule_days')
-        .update({ 
-          pdf_url: urlData.publicUrl,
-          updated_at: new Date().toISOString()
-        })
+        .update({ pdf_url: urlData.publicUrl })
         .eq('id', dayId);
       
       if (updateError) {
-        console.error("Error updating file URL:", updateError);
         throw updateError;
       }
       
       toast({
         title: "Succès",
-        description: `Fichier pour ${day.day_name} téléchargé avec succès`,
+        description: `PDF pour ${day.day_name} téléchargé avec succès`,
       });
       
+      // Refresh days
       fetchDays();
     } catch (error) {
-      console.error("Error uploading file:", error);
+      console.error("Error uploading PDF:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de télécharger le fichier. Vérifiez que le bucket de stockage existe.",
+        description: "Impossible de télécharger le PDF",
         variant: "destructive",
       });
     } finally {
-      setFileUploading({...fileUploading, [dayId]: false});
+      setPdfUploading({...pdfUploading, [dayId]: false});
     }
   };
 
-  const handleUrlSubmit = async (values: z.infer<typeof urlSchema>) => {
-    if (!currentDayIdForUrl) return;
-    
-    try {
-      const day = days.find(d => d.id === currentDayIdForUrl);
-      if (!day) {
-        throw new Error("Jour non trouvé");
-      }
-
-      // Update the schedule day with the URL
-      const { error: updateError } = await supabase
-        .from('schedule_days')
-        .update({ 
-          pdf_url: values.url,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', currentDayIdForUrl);
-      
-      if (updateError) {
-        console.error("Error updating URL:", updateError);
-        throw updateError;
-      }
-      
-      toast({
-        title: "Succès",
-        description: `URL ajoutée pour ${day.day_name}`,
-      });
-      
-      // Close dialog and reset form
-      setIsUrlDialogOpen(false);
-      setCurrentDayIdForUrl(null);
-      urlForm.reset();
-      
-      fetchDays();
-    } catch (error) {
-      console.error("Error setting URL:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter l'URL",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleRemoveFile = async (dayId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce fichier ?")) {
+  const handleRemovePdf = async (dayId: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce PDF ?")) {
       return;
     }
     
     try {
       const { error } = await supabase
         .from('schedule_days')
-        .update({ 
-          pdf_url: null,
-          updated_at: new Date().toISOString()
-        })
+        .update({ pdf_url: null })
         .eq('id', dayId);
       
       if (error) {
@@ -595,84 +516,22 @@ const ScheduleManager = () => {
       
       toast({
         title: "Succès",
-        description: "Fichier supprimé avec succès",
+        description: "PDF supprimé avec succès",
       });
       
+      // Refresh days
       fetchDays();
     } catch (error) {
-      console.error("Error removing file:", error);
+      console.error("Error removing PDF:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer le fichier",
+        description: "Impossible de supprimer le PDF",
         variant: "destructive",
       });
     }
   };
 
-  const getFilePreview = (url: string) => {
-    if (!url) return null;
-
-    // Check if it's a URL (not a file from storage)
-    const isExternalUrl = !url.includes("supabase.co/storage") && !url.includes("festival_assets");
-    
-    if (isExternalUrl) {
-      return (
-        <a 
-          href={url} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-blue-600 hover:underline text-sm flex items-center"
-        >
-          <Link className="w-4 h-4 mr-1" /> 
-          Lien externe
-        </a>
-      );
-    }
-    
-    const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
-    
-    if (isImage) {
-      return (
-        <div className="flex flex-col items-center gap-2">
-          <img src={url} alt="Programme" className="max-h-24 rounded-md border border-gray-300" />
-          <a 
-            href={url} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline text-sm flex items-center"
-          >
-            <Image className="w-4 h-4 mr-1" /> 
-            Voir l'image
-          </a>
-        </div>
-      );
-    } else {
-      return (
-        <a 
-          href={url} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-blue-600 hover:underline text-sm flex items-center"
-        >
-          <FileText className="w-4 h-4 mr-1" /> 
-          Voir le PDF
-        </a>
-      );
-    }
-  };
-
-  const openUrlDialog = (dayId: string) => {
-    const day = days.find(d => d.id === dayId);
-    if (day && day.pdf_url && !day.pdf_url.includes("supabase.co/storage") && !day.pdf_url.includes("festival_assets")) {
-      urlForm.setValue("url", day.pdf_url);
-    } else {
-      urlForm.setValue("url", "");
-    }
-    
-    setCurrentDayIdForUrl(dayId);
-    setIsUrlDialogOpen(true);
-  };
-
+  // When editing a day, load its data into the form
   useEffect(() => {
     if (editingDay) {
       const day = days.find(d => d.id === editingDay);
@@ -687,6 +546,7 @@ const ScheduleManager = () => {
     }
   }, [editingDay, days, dayForm]);
 
+  // When editing an event, load its data into the form
   useEffect(() => {
     if (editingEvent) {
       const day = days.find(d => d.id === editingEvent.dayId);
@@ -792,60 +652,52 @@ const ScheduleManager = () => {
                             </CardHeader>
                             <CardContent>
                               <div className="space-y-4">
+                                {/* PDF Upload Section */}
                                 <div className="border rounded-lg p-4 bg-slate-50">
                                   <h4 className="text-sm font-medium mb-2 flex items-center">
                                     <FileText className="w-4 h-4 mr-2" />
-                                    Programme (PDF, image ou URL)
+                                    Programme PDF
                                   </h4>
                                   
                                   {day.pdf_url ? (
                                     <div className="flex items-center justify-between">
                                       <div className="flex items-center">
-                                        {getFilePreview(day.pdf_url)}
+                                        <a 
+                                          href={day.pdf_url} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="text-blue-600 hover:underline text-sm flex items-center"
+                                        >
+                                          <FileText className="w-4 h-4 mr-1" /> 
+                                          Voir le PDF
+                                        </a>
                                       </div>
                                       <Button
                                         size="sm"
                                         variant="ghost"
-                                        onClick={() => handleRemoveFile(day.id)}
+                                        onClick={() => handleRemovePdf(day.id)}
                                         className="text-destructive hover:text-destructive"
                                       >
                                         <X className="h-4 w-4" />
                                       </Button>
                                     </div>
                                   ) : (
-                                    <div className="flex flex-col space-y-2">
-                                      <div className="flex items-center gap-2 mb-2">
-                                        <Input
-                                          type="file"
-                                          accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
-                                          id={`file-upload-${day.id}`}
-                                          className="text-sm"
-                                          onChange={(e) => {
-                                            if (e.target.files && e.target.files[0]) {
-                                              handleFileUpload(day.id, e.target.files[0]);
-                                            }
-                                          }}
-                                          disabled={fileUploading[day.id]}
-                                        />
-                                        {fileUploading[day.id] && (
-                                          <div className="animate-spin h-4 w-4 border border-festival-primary border-t-transparent rounded-full"></div>
-                                        )}
-                                      </div>
-                                      
-                                      <div className="flex items-center">
-                                        <div className="w-full border-t border-gray-300 my-2"></div>
-                                        <span className="px-2 bg-slate-50 text-xs text-gray-500">OU</span>
-                                        <div className="w-full border-t border-gray-300 my-2"></div>
-                                      </div>
-                                      
-                                      <Button 
-                                        size="sm" 
-                                        variant="outline" 
-                                        onClick={() => openUrlDialog(day.id)}
-                                        className="flex items-center"
-                                      >
-                                        <Link className="mr-2 h-4 w-4" /> Ajouter un lien URL
-                                      </Button>
+                                    <div className="flex items-center gap-2">
+                                      <Input
+                                        type="file"
+                                        accept=".pdf"
+                                        id={`pdf-upload-${day.id}`}
+                                        className="text-sm"
+                                        onChange={(e) => {
+                                          if (e.target.files && e.target.files[0]) {
+                                            handlePdfUpload(day.id, e.target.files[0]);
+                                          }
+                                        }}
+                                        disabled={pdfUploading[day.id]}
+                                      />
+                                      {pdfUploading[day.id] && (
+                                        <div className="animate-spin h-4 w-4 border border-festival-primary border-t-transparent rounded-full"></div>
+                                      )}
                                     </div>
                                   )}
                                 </div>
@@ -987,6 +839,19 @@ const ScheduleManager = () => {
                             </Droppable>
                           </DragDropContext>
                         )}
+                        <div className="pt-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                              eventForm.reset();
+                              setAddingEventToDay(day.id);
+                            }}
+                          >
+                            <Plus className="mr-2 h-4 w-4" /> Ajouter un événement
+                          </Button>
+                        </div>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
@@ -996,28 +861,14 @@ const ScheduleManager = () => {
           )}
         </TabsContent>
       </Tabs>
-      
-      {/* Dialog for adding/editing a day */}
-      <Dialog open={addingDay || editingDay !== null} onOpenChange={(open) => {
-        if (!open) {
-          setAddingDay(false);
-          setEditingDay(null);
-          dayForm.reset();
-        }
-      }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingDay ? "Modifier le jour" : "Ajouter un jour"}</DialogTitle>
-            <DialogDescription>
-              {editingDay ? "Modifiez les informations du jour" : "Ajoutez un nouveau jour au programme"}
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...dayForm}>
-            <form onSubmit={dayForm.handleSubmit(editingDay ? 
-              (values) => handleUpdateDay(editingDay, values) : 
-              handleCreateDay
-            )}>
-              <div className="space-y-4">
+
+      {/* Day Form Dialog */}
+      {addingDay && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Ajouter un jour</h3>
+            <Form {...dayForm}>
+              <form onSubmit={dayForm.handleSubmit(handleCreateDay)} className="space-y-4">
                 <FormField
                   control={dayForm.control}
                   name="day_name"
@@ -1031,7 +882,6 @@ const ScheduleManager = () => {
                     </FormItem>
                   )}
                 />
-                
                 <FormField
                   control={dayForm.control}
                   name="date"
@@ -1042,21 +892,21 @@ const ScheduleManager = () => {
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
-                              variant="outline"
-                              className={`w-full pl-3 text-left font-normal ${
-                                !field.value && "text-muted-foreground"
-                              }`}
+                              variant={"outline"}
+                              className="w-full pl-3 text-left font-normal"
                             >
                               {field.value ? (
-                                format(field.value, "PPP", { locale: fr })
+                                format(field.value, "dd MMMM yyyy", { locale: fr })
                               ) : (
-                                <span>Sélectionner une date</span>
+                                <span className="text-muted-foreground">
+                                  Choisir une date
+                                </span>
                               )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              <CalendarIcon className="ml-auto h-4 w-4" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
+                        <PopoverContent className="w-auto p-0">
                           <Calendar
                             mode="single"
                             selected={field.value}
@@ -1069,47 +919,108 @@ const ScheduleManager = () => {
                     </FormItem>
                   )}
                 />
-              </div>
-              
-              <DialogFooter className="mt-6">
-                <Button variant="outline" type="button" onClick={() => {
-                  setAddingDay(false);
-                  setEditingDay(null);
-                  dayForm.reset();
-                }}>
-                  Annuler
-                </Button>
-                <Button type="submit">
-                  {editingDay ? "Mettre à jour" : "Ajouter"} <Save className="w-4 h-4 ml-2" />
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Dialog for adding/editing an event */}
-      <Dialog open={addingEventToDay !== null || editingEvent !== null} onOpenChange={(open) => {
-        if (!open) {
-          setAddingEventToDay(null);
-          setEditingEvent(null);
-          eventForm.reset();
-        }
-      }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingEvent ? "Modifier l'événement" : "Ajouter un événement"}</DialogTitle>
-            <DialogDescription>
-              {editingEvent ? "Modifiez les informations de l'événement" : "Ajoutez un nouvel événement au programme"}
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...eventForm}>
-            <form onSubmit={eventForm.handleSubmit(
-              editingEvent 
-                ? (values) => handleUpdateEvent(editingEvent.dayId, editingEvent.eventId, values) 
-                : (values) => handleCreateEvent(addingEventToDay!, values)
-            )}>
-              <div className="space-y-4">
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setAddingDay(false)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button type="submit">
+                    <Save className="mr-2 h-4 w-4" /> Enregistrer
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Day Dialog */}
+      {editingDay && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Modifier le jour</h3>
+            <Form {...dayForm}>
+              <form onSubmit={dayForm.handleSubmit((values) => handleUpdateDay(editingDay, values))} className="space-y-4">
+                <FormField
+                  control={dayForm.control}
+                  name="day_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom du jour</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ex: Jour 1" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={dayForm.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className="w-full pl-3 text-left font-normal"
+                            >
+                              {field.value ? (
+                                format(field.value, "dd MMMM yyyy", { locale: fr })
+                              ) : (
+                                <span className="text-muted-foreground">
+                                  Choisir une date
+                                </span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditingDay(null)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button type="submit">
+                    <Save className="mr-2 h-4 w-4" /> Enregistrer
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Event Dialog */}
+      {addingEventToDay && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">
+              Ajouter un événement - {days.find(d => d.id === addingEventToDay)?.day_name}
+            </h3>
+            <Form {...eventForm}>
+              <form onSubmit={eventForm.handleSubmit((values) => handleCreateEvent(addingEventToDay, values))} className="space-y-4">
                 <FormField
                   control={eventForm.control}
                   name="title"
@@ -1117,13 +1028,12 @@ const ScheduleManager = () => {
                     <FormItem>
                       <FormLabel>Titre</FormLabel>
                       <FormControl>
-                        <Input placeholder="ex: Conférence" {...field} />
+                        <Input placeholder="Titre de l'événement" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={eventForm.control}
@@ -1132,13 +1042,12 @@ const ScheduleManager = () => {
                       <FormItem>
                         <FormLabel>Heure de début</FormLabel>
                         <FormControl>
-                          <Input type="time" {...field} />
+                          <Input placeholder="ex: 10:00" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
                   <FormField
                     control={eventForm.control}
                     name="end_time"
@@ -1146,20 +1055,19 @@ const ScheduleManager = () => {
                       <FormItem>
                         <FormLabel>Heure de fin</FormLabel>
                         <FormControl>
-                          <Input type="time" {...field} />
+                          <Input placeholder="ex: 11:30" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-                
                 <FormField
                   control={eventForm.control}
                   name="location"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Lieu (optionnel)</FormLabel>
+                      <FormLabel>Lieu</FormLabel>
                       <FormControl>
                         <Input placeholder="ex: Salle A" {...field} />
                       </FormControl>
@@ -1167,7 +1075,6 @@ const ScheduleManager = () => {
                     </FormItem>
                   )}
                 />
-                
                 <FormField
                   control={eventForm.control}
                   name="category"
@@ -1185,95 +1092,181 @@ const ScheduleManager = () => {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="panel">Panel</SelectItem>
-                          <SelectItem value="atelier">Atelier</SelectItem>
-                          <SelectItem value="conference">Conférence</SelectItem>
+                          <SelectItem value="workshop">Atelier</SelectItem>
+                          <SelectItem value="competition">Compétition</SelectItem>
+                          <SelectItem value="screening">Projection</SelectItem>
+                          <SelectItem value="performance">Performance</SelectItem>
                           <SelectItem value="concert">Concert</SelectItem>
-                          <SelectItem value="autre">Autre</SelectItem>
+                          <SelectItem value="talk">Conférence</SelectItem>
+                          <SelectItem value="exhibition">Exposition</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
                 <FormField
                   control={eventForm.control}
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description (optionnel)</FormLabel>
+                      <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Description de l'événement"
-                          className="resize-none"
+                        <Textarea
+                          placeholder="Description détaillée de l'événement"
                           {...field}
+                          rows={4}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
-              
-              <DialogFooter className="mt-6">
-                <Button variant="outline" type="button" onClick={() => {
-                  setAddingEventToDay(null);
-                  setEditingEvent(null);
-                  eventForm.reset();
-                }}>
-                  Annuler
-                </Button>
-                <Button type="submit">
-                  {editingEvent ? "Mettre à jour" : "Ajouter"} <Save className="w-4 h-4 ml-2" />
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Dialog for adding URL */}
-      <Dialog open={isUrlDialogOpen} onOpenChange={setIsUrlDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ajouter une URL</DialogTitle>
-            <DialogDescription>
-              Entrez l'URL du document PDF ou de l'image
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...urlForm}>
-            <form onSubmit={urlForm.handleSubmit(handleUrlSubmit)}>
-              <div className="space-y-4">
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setAddingEventToDay(null)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button type="submit">
+                    <Save className="mr-2 h-4 w-4" /> Enregistrer
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Event Dialog */}
+      {editingEvent && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">
+              Modifier l'événement - {days.find(d => d.id === editingEvent.dayId)?.day_name}
+            </h3>
+            <Form {...eventForm}>
+              <form onSubmit={eventForm.handleSubmit((values) => handleUpdateEvent(editingEvent.dayId, editingEvent.eventId, values))} className="space-y-4">
                 <FormField
-                  control={urlForm.control}
-                  name="url"
+                  control={eventForm.control}
+                  name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>URL</FormLabel>
+                      <FormLabel>Titre</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://exemple.com/document.pdf" {...field} />
+                        <Input placeholder="Titre de l'événement" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
-              
-              <DialogFooter className="mt-6">
-                <Button variant="outline" type="button" onClick={() => {
-                  setIsUrlDialogOpen(false);
-                  urlForm.reset();
-                }}>
-                  Annuler
-                </Button>
-                <Button type="submit">
-                  Ajouter <Link className="w-4 h-4 ml-2" />
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={eventForm.control}
+                    name="start_time"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Heure de début</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ex: 10:00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={eventForm.control}
+                    name="end_time"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Heure de fin</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ex: 11:30" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={eventForm.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lieu</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ex: Salle A" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={eventForm.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Catégorie</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner une catégorie" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="panel">Panel</SelectItem>
+                          <SelectItem value="workshop">Atelier</SelectItem>
+                          <SelectItem value="competition">Compétition</SelectItem>
+                          <SelectItem value="screening">Projection</SelectItem>
+                          <SelectItem value="performance">Performance</SelectItem>
+                          <SelectItem value="concert">Concert</SelectItem>
+                          <SelectItem value="talk">Conférence</SelectItem>
+                          <SelectItem value="exhibition">Exposition</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={eventForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Description détaillée de l'événement"
+                          {...field}
+                          rows={4}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditingEvent(null)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button type="submit">
+                    <Save className="mr-2 h-4 w-4" /> Enregistrer
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
