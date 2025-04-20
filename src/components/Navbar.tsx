@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, LogIn, Home, Ticket, Store } from "lucide-react";
@@ -175,15 +174,16 @@ const Navbar = () => {
     };
   }, []);
 
-  return <nav className="fixed top-0 left-0 right-0 z-50 
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-50 
       bg-festival-primary/80 backdrop-blur-md border-b border-white/10 shadow-soft">
       <div className="festival-container py-4 flex justify-between items-center bg-[#080829]/[0.87]">
         <Link to="/" className="flex items-center">
           <img src={logoUrl} alt="SHOTAKU Logo" className="h-10 object-contain brightness-150 contrast-125" onError={e => {
-          const target = e.target as HTMLImageElement;
-          target.src = "/logo.png";
-          console.log('Falling back to default logo');
-        }} />
+            const target = e.target as HTMLImageElement;
+            target.src = "/logo.png";
+            console.log('Falling back to default logo');
+          }} />
         </Link>
         
         <button className="md:hidden p-2 rounded-md text-white hover:bg-festival-accent/30" onClick={toggleMenu} aria-label="Toggle menu">
@@ -225,46 +225,37 @@ const Navbar = () => {
           </Link>
         </div>
 
-        <div className={cn("absolute top-full left-0 right-0 bg-festival-primary/90 backdrop-blur-md shadow-md transition-all duration-300 md:hidden", isMenuOpen ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0 overflow-hidden")}>
+        <div className={cn(
+          "absolute top-full left-0 right-0 bg-festival-primary/90 backdrop-blur-md shadow-md transition-all duration-300 md:hidden",
+          isMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
+        )}>
           <div className="flex flex-col p-4 space-y-4 bg-[#050F2C]/95">
+            {/* Static menu for mobile */}
             <Link to="/" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
-              <Home size={18} />
-              <span>Home</span>
+              Accueil
             </Link>
-            {navLinks.map(link => 
-              link.submenu ? (
-                <div key={link.id} className="space-y-2">
-                  <div className="text-white/80 font-medium pl-2">{link.title}</div>
-                  <div className="pl-4 space-y-2">
-                    {link.submenu.map(subItem => (
-                      <Link
-                        key={subItem.id}
-                        to={subItem.url}
-                        className="block text-white/70 hover:text-white"
-                        onClick={toggleMenu}
-                      >
-                        {subItem.title}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <Link key={link.id} to={link.url} className="nav-link text-white hover:text-white" onClick={toggleMenu}>
-                  {link.title}
-                </Link>
-              )
-            )}
-            <div className="flex justify-around pt-4 border-t border-white/10">
-              <Link to="/tickets" className="px-3 py-2 rounded-full bg-festival-accent/20 text-white 
-                  hover:bg-festival-accent/30 transition-colors duration-300 flex flex-col items-center gap-1" onClick={toggleMenu}>
-                <Ticket size={18} />
-                <span className="text-xs">Buy Ticket</span>
-              </Link>
-              <Link to="/stands" className="px-3 py-2 rounded-full bg-festival-accent/20 text-white 
-                  hover:bg-festival-accent/30 transition-colors duration-300 flex flex-col items-center gap-1" onClick={toggleMenu}>
-                <Store size={18} />
-                <span className="text-xs">Get a Stand</span>
-              </Link>
+            <Link to="/about" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+              À propos
+            </Link>
+            <Link to="/events" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+              Événements
+            </Link>
+            <Link to="/schedule" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+              Programme
+            </Link>
+            <Link to="/gallery" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+              Galerie
+            </Link>
+            <Link to="/volunteer" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+              Bénévole
+            </Link>
+            <Link to="/contact" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+              Contact
+            </Link>
+            <Link to="/tickets" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+              Reserve
+            </Link>
+            <div className="flex justify-end pt-4 border-t border-white/10">
               <Link to="/admin" className="px-3 py-2 rounded-full bg-festival-accent/20 text-white 
                   hover:bg-festival-accent/30 transition-colors duration-300 flex flex-col items-center gap-1" onClick={toggleMenu}>
                 <LogIn size={18} />
@@ -274,7 +265,8 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-    </nav>;
+    </nav>
+  );
 };
 
 export default Navbar;
