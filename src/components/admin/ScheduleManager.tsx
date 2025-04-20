@@ -431,7 +431,7 @@ const ScheduleManager = () => {
       const { data: bucketData, error: bucketError } = await supabase.storage
         .getBucket('festival_assets');
         
-      if (bucketError && bucketError.code === '404') {
+      if (bucketError && bucketError.message.includes('404')) {
         const { error: createBucketError } = await supabase.storage
           .createBucket('festival_assets', { public: true });
           
@@ -460,7 +460,7 @@ const ScheduleManager = () => {
       
       const { error: updateError } = await supabase
         .from('schedule_days')
-        .update({ pdf_url: urlData.publicUrl })
+        .update({ pdf_url: urlData.publicUrl } as any)
         .eq('id', dayId);
       
       if (updateError) {
@@ -493,7 +493,7 @@ const ScheduleManager = () => {
     try {
       const { error } = await supabase
         .from('schedule_days')
-        .update({ pdf_url: null })
+        .update({ pdf_url: null } as any)
         .eq('id', dayId);
       
       if (error) {

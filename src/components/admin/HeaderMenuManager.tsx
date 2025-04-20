@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Pencil, Trash2, PlusCircle, ArrowUpCircle, ArrowDownCircle, Check, X, ExternalLink } from "lucide-react";
+import { Pencil, Trash2, PlusCircle, ArrowUpCircle, ArrowDownCircle, Check, X, ExternalLink, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -325,19 +325,12 @@ const HeaderMenuManager = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Succès",
-        description: "Menu initial créé",
-      });
+      toast.success("Menu initial créé");
 
       fetchLinks();
     } catch (error) {
       console.error('Error creating initial menu:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de créer le menu initial",
-        variant: "destructive",
-      });
+      toast.error("Impossible de créer le menu initial");
     } finally {
       setLoading(false);
     }
@@ -360,11 +353,11 @@ const HeaderMenuManager = () => {
           <p className="text-muted-foreground mb-4">Aucun lien n'a été ajouté au menu</p>
           <div className="flex flex-col gap-4 items-center">
             <Button onClick={handleCreateInitialMenu} className="bg-festival-accent hover:bg-festival-accent/90">
-              <Plus className="mr-2 h-4 w-4" /> Initialiser le menu avec les pages existantes
+              <PlusCircle className="mr-2 h-4 w-4" /> Initialiser le menu avec les pages existantes
             </Button>
             <span className="text-sm text-muted-foreground">ou</span>
             <Button onClick={() => handleOpenDialog()} variant="outline">
-              <Plus className="mr-2 h-4 w-4" /> Ajouter un lien manuellement
+              <PlusCircle className="mr-2 h-4 w-4" /> Ajouter un lien manuellement
             </Button>
           </div>
         </CardContent>
