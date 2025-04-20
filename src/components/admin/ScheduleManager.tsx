@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -980,3 +981,301 @@ const ScheduleManager = () => {
                                       )}
                                     </Draggable>
                                   ))}
+                                  {provided.placeholder}
+                                </div>
+                              )}
+                            </Droppable>
+                          </DragDropContext>
+                        )}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              ))}
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
+      
+      {/* Dialog for adding/editing a day */}
+      <Dialog open={addingDay || editingDay !== null} onOpenChange={(open) => {
+        if (!open) {
+          setAddingDay(false);
+          setEditingDay(null);
+          dayForm.reset();
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingDay ? "Modifier le jour" : "Ajouter un jour"}</DialogTitle>
+            <DialogDescription>
+              {editingDay ? "Modifiez les informations du jour" : "Ajoutez un nouveau jour au programme"}
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...dayForm}>
+            <form onSubmit={dayForm.handleSubmit(editingDay ? 
+              (values) => handleUpdateDay(editingDay, values) : 
+              handleCreateDay
+            )}>
+              <div className="space-y-4">
+                <FormField
+                  control={dayForm.control}
+                  name="day_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom du jour</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ex: Jour 1" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={dayForm.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={`w-full pl-3 text-left font-normal ${
+                                !field.value && "text-muted-foreground"
+                              }`}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP", { locale: fr })
+                              ) : (
+                                <span>Sélectionner une date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <DialogFooter className="mt-6">
+                <Button variant="outline" type="button" onClick={() => {
+                  setAddingDay(false);
+                  setEditingDay(null);
+                  dayForm.reset();
+                }}>
+                  Annuler
+                </Button>
+                <Button type="submit">
+                  {editingDay ? "Mettre à jour" : "Ajouter"} <Save className="w-4 h-4 ml-2" />
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialog for adding/editing an event */}
+      <Dialog open={addingEventToDay !== null || editingEvent !== null} onOpenChange={(open) => {
+        if (!open) {
+          setAddingEventToDay(null);
+          setEditingEvent(null);
+          eventForm.reset();
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingEvent ? "Modifier l'événement" : "Ajouter un événement"}</DialogTitle>
+            <DialogDescription>
+              {editingEvent ? "Modifiez les informations de l'événement" : "Ajoutez un nouvel événement au programme"}
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...eventForm}>
+            <form onSubmit={eventForm.handleSubmit(
+              editingEvent 
+                ? (values) => handleUpdateEvent(editingEvent.dayId, editingEvent.eventId, values) 
+                : (values) => handleCreateEvent(addingEventToDay!, values)
+            )}>
+              <div className="space-y-4">
+                <FormField
+                  control={eventForm.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Titre</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ex: Conférence" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={eventForm.control}
+                    name="start_time"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Heure de début</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={eventForm.control}
+                    name="end_time"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Heure de fin</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={eventForm.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lieu (optionnel)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ex: Salle A" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={eventForm.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Catégorie</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner une catégorie" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="panel">Panel</SelectItem>
+                          <SelectItem value="atelier">Atelier</SelectItem>
+                          <SelectItem value="conference">Conférence</SelectItem>
+                          <SelectItem value="concert">Concert</SelectItem>
+                          <SelectItem value="autre">Autre</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={eventForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description (optionnel)</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Description de l'événement"
+                          className="resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <DialogFooter className="mt-6">
+                <Button variant="outline" type="button" onClick={() => {
+                  setAddingEventToDay(null);
+                  setEditingEvent(null);
+                  eventForm.reset();
+                }}>
+                  Annuler
+                </Button>
+                <Button type="submit">
+                  {editingEvent ? "Mettre à jour" : "Ajouter"} <Save className="w-4 h-4 ml-2" />
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialog for adding URL */}
+      <Dialog open={isUrlDialogOpen} onOpenChange={setIsUrlDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajouter une URL</DialogTitle>
+            <DialogDescription>
+              Entrez l'URL du document PDF ou de l'image
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...urlForm}>
+            <form onSubmit={urlForm.handleSubmit(handleUrlSubmit)}>
+              <div className="space-y-4">
+                <FormField
+                  control={urlForm.control}
+                  name="url"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://exemple.com/document.pdf" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <DialogFooter className="mt-6">
+                <Button variant="outline" type="button" onClick={() => {
+                  setIsUrlDialogOpen(false);
+                  urlForm.reset();
+                }}>
+                  Annuler
+                </Button>
+                <Button type="submit">
+                  Ajouter <Link className="w-4 h-4 ml-2" />
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default ScheduleManager;
