@@ -33,7 +33,7 @@ export type Event = Database['public']['Tables']['events']['Row'] & {
   registrationLink?: string;
 };
 
-// Type for schedule days with events array
+// Type for schedule days with events array and pdf_url
 export type ScheduleDay = Database['public']['Tables']['schedule_days']['Row'] & {
   events?: ScheduleEvent[];
   pdf_url?: string | null;

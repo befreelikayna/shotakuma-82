@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Plus, Trash, Save, CalendarIcon, UploadCloud, FileText, X } from "lucide-react";
+import { Plus, Trash, Save, CalendarIcon, UploadCloud, FileText, X, Clock } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
@@ -50,13 +49,11 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-// Schema for day validation
 const daySchema = z.object({
   day_name: z.string().min(1, { message: "Le nom du jour est requis" }),
   date: z.date({ required_error: "La date est requise" }),
 });
 
-// Schema for event validation
 const eventSchema = z.object({
   title: z.string().min(1, { message: "Le titre est requis" }),
   description: z.string().optional(),
@@ -107,7 +104,6 @@ const ScheduleManager = () => {
 
       if (daysError) throw daysError;
 
-      // For each day, get events
       const daysWithEvents = await Promise.all(
         daysData.map(async (day) => {
           const { data: eventsData, error: eventsError } = await supabase
@@ -144,7 +140,6 @@ const ScheduleManager = () => {
 
   const handleCreateDay = async (values: z.infer<typeof daySchema>) => {
     try {
-      // Find max order number
       const maxOrder = days.length > 0
         ? Math.max(...days.map(day => day.order_number))
         : -1;
@@ -165,7 +160,6 @@ const ScheduleManager = () => {
       setAddingDay(false);
       dayForm.reset();
       
-      // Refresh days
       fetchDays();
     } catch (error) {
       console.error("Error creating day:", error);
@@ -197,7 +191,6 @@ const ScheduleManager = () => {
       setEditingDay(null);
       dayForm.reset();
       
-      // Refresh days
       fetchDays();
     } catch (error) {
       console.error("Error updating day:", error);
@@ -215,7 +208,6 @@ const ScheduleManager = () => {
     }
 
     try {
-      // Delete all events first
       const { error: eventsError } = await supabase
         .from("schedule_events")
         .delete()
@@ -223,7 +215,6 @@ const ScheduleManager = () => {
 
       if (eventsError) throw eventsError;
 
-      // Then delete the day
       const { error: dayError } = await supabase
         .from("schedule_days")
         .delete()
@@ -236,7 +227,6 @@ const ScheduleManager = () => {
         description: "Jour supprimé du programme",
       });
       
-      // Refresh days
       fetchDays();
     } catch (error) {
       console.error("Error deleting day:", error);
@@ -255,10 +245,8 @@ const ScheduleManager = () => {
     const [removed] = reorderedDays.splice(result.source.index, 1);
     reorderedDays.splice(result.destination.index, 0, removed);
     
-    // Update UI immediately
     setDays(reorderedDays);
     
-    // Update order_number in database
     try {
       const updates = reorderedDays.map((day, index) => ({
         id: day.id,
@@ -278,14 +266,12 @@ const ScheduleManager = () => {
         description: "Impossible de mettre à jour l'ordre des jours",
         variant: "destructive",
       });
-      // Refresh to get original order
       fetchDays();
     }
   };
 
   const handleCreateEvent = async (dayId: string, values: z.infer<typeof eventSchema>) => {
     try {
-      // Find max order number for this day's events
       const dayEvents = days.find(d => d.id === dayId)?.events || [];
       const maxOrder = dayEvents.length > 0
         ? Math.max(...dayEvents.map((event: any) => event.order_number))
@@ -312,7 +298,6 @@ const ScheduleManager = () => {
       setAddingEventToDay(null);
       eventForm.reset();
       
-      // Refresh days
       fetchDays();
     } catch (error) {
       console.error("Error creating event:", error);
@@ -348,7 +333,6 @@ const ScheduleManager = () => {
       setEditingEvent(null);
       eventForm.reset();
       
-      // Refresh days
       fetchDays();
     } catch (error) {
       console.error("Error updating event:", error);
@@ -378,7 +362,6 @@ const ScheduleManager = () => {
         description: "Événement supprimé du programme",
       });
       
-      // Refresh days
       fetchDays();
     } catch (error) {
       console.error("Error deleting event:", error);
@@ -400,12 +383,10 @@ const ScheduleManager = () => {
     const [removed] = reorderedEvents.splice(result.source.index, 1);
     reorderedEvents.splice(result.destination.index, 0, removed);
     
-    // Update UI immediately
     setDays(days.map(d => 
       d.id === dayId ? { ...d, events: reorderedEvents } : d
     ));
     
-    // Update order_number in database
     try {
       const updates = reorderedEvents.map((event: any, index: number) => ({
         id: event.id,
@@ -425,12 +406,10 @@ const ScheduleManager = () => {
         description: "Impossible de mettre à jour l'ordre des événements",
         variant: "destructive",
       });
-      // Refresh to get original order
       fetchDays();
     }
   };
 
-  // Handle PDF upload for a day
   const handlePdfUpload = async (dayId: string, file: File) => {
     if (!file || file.type !== 'application/pdf') {
       toast({
@@ -449,11 +428,21 @@ const ScheduleManager = () => {
         throw new Error("Jour non trouvé");
       }
 
-      // Create file name based on day name
+      const { data: bucketData, error: bucketError } = await supabase.storage
+        .getBucket('festival_assets');
+        
+      if (bucketError && bucketError.code === '404') {
+        const { error: createBucketError } = await supabase.storage
+          .createBucket('festival_assets', { public: true });
+          
+        if (createBucketError) {
+          throw new Error(`Impossible de créer le bucket: ${createBucketError.message}`);
+        }
+      }
+
       const sanitizedDayName = day.day_name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
       const filePath = `schedule_pdfs/${dayId}/${sanitizedDayName}-${Date.now()}.pdf`;
       
-      // Upload file to storage
       const { data, error } = await supabase.storage
         .from('festival_assets')
         .upload(filePath, file, {
@@ -465,12 +454,10 @@ const ScheduleManager = () => {
         throw error;
       }
       
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('festival_assets')
         .getPublicUrl(data?.path || filePath);
       
-      // Update day with PDF URL
       const { error: updateError } = await supabase
         .from('schedule_days')
         .update({ pdf_url: urlData.publicUrl })
@@ -485,13 +472,12 @@ const ScheduleManager = () => {
         description: `PDF pour ${day.day_name} téléchargé avec succès`,
       });
       
-      // Refresh days
       fetchDays();
     } catch (error) {
       console.error("Error uploading PDF:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de télécharger le PDF",
+        description: "Impossible de télécharger le PDF. Vérifiez que le bucket de stockage existe.",
         variant: "destructive",
       });
     } finally {
@@ -519,7 +505,6 @@ const ScheduleManager = () => {
         description: "PDF supprimé avec succès",
       });
       
-      // Refresh days
       fetchDays();
     } catch (error) {
       console.error("Error removing PDF:", error);
@@ -531,7 +516,6 @@ const ScheduleManager = () => {
     }
   };
 
-  // When editing a day, load its data into the form
   useEffect(() => {
     if (editingDay) {
       const day = days.find(d => d.id === editingDay);
@@ -546,7 +530,6 @@ const ScheduleManager = () => {
     }
   }, [editingDay, days, dayForm]);
 
-  // When editing an event, load its data into the form
   useEffect(() => {
     if (editingEvent) {
       const day = days.find(d => d.id === editingEvent.dayId);
@@ -652,7 +635,6 @@ const ScheduleManager = () => {
                             </CardHeader>
                             <CardContent>
                               <div className="space-y-4">
-                                {/* PDF Upload Section */}
                                 <div className="border rounded-lg p-4 bg-slate-50">
                                   <h4 className="text-sm font-medium mb-2 flex items-center">
                                     <FileText className="w-4 h-4 mr-2" />
@@ -862,7 +844,6 @@ const ScheduleManager = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Day Form Dialog */}
       {addingDay && (
         <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -937,7 +918,6 @@ const ScheduleManager = () => {
         </div>
       )}
 
-      {/* Edit Day Dialog */}
       {editingDay && (
         <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -1012,7 +992,6 @@ const ScheduleManager = () => {
         </div>
       )}
 
-      {/* Add Event Dialog */}
       {addingEventToDay && (
         <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -1140,7 +1119,6 @@ const ScheduleManager = () => {
         </div>
       )}
 
-      {/* Edit Event Dialog */}
       {editingEvent && (
         <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
