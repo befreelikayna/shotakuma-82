@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, LogIn, Home, Ticket, Store } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -19,6 +20,20 @@ interface HeaderLink {
   is_active: boolean;
   submenu?: SubMenuItem[];
 }
+
+// The default menu structure (same order/structure as mobile menu)
+const DEFAULT_MENU_LINKS: HeaderLink[] = [
+  { id: "home", title: "Accueil", url: "/", order_number: 0, is_active: true },
+  { id: "about", title: "À propos", url: "/about", order_number: 1, is_active: true },
+  { id: "events", title: "Événements", url: "/events", order_number: 2, is_active: true },
+  { id: "schedule", title: "Programme", url: "/schedule", order_number: 3, is_active: true },
+  { id: "gallery", title: "Galerie", url: "/gallery", order_number: 4, is_active: true },
+  { id: "volunteer", title: "Bénévole", url: "/volunteer", order_number: 5, is_active: true },
+  { id: "contact", title: "Contact", url: "/contact", order_number: 6, is_active: true },
+  { id: "tickets", title: "Reserve", url: "/tickets", order_number: 7, is_active: true },
+  { id: "stands", title: "Stands", url: "/stands", order_number: 8, is_active: true },
+  { id: "access", title: "Accès", url: "/access", order_number: 9, is_active: true },
+];
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -48,9 +63,13 @@ const Navbar = () => {
             };
           });
           setNavLinks(parsedLinks);
+        } else {
+          // fallback to default links
+          setNavLinks(DEFAULT_MENU_LINKS);
         }
       } catch (error) {
         console.error('Error in navigation links fetch:', error);
+        setNavLinks(DEFAULT_MENU_LINKS);
       }
     };
 
@@ -153,7 +172,7 @@ const Navbar = () => {
         const {
           data
         } = await supabase.from('header_menu_links').select('*').eq('is_active', true).order('order_number');
-        if (data) {
+        if (data && data.length > 0) {
           const parsedLinks = data.map(link => {
             const submenuData = link.submenu ? 
               (typeof link.submenu === 'string' ? JSON.parse(link.submenu) : link.submenu) as SubMenuItem[] 
@@ -165,6 +184,8 @@ const Navbar = () => {
             };
           });
           setNavLinks(parsedLinks);
+        } else {
+          setNavLinks(DEFAULT_MENU_LINKS);
         }
       };
       fetchNavLinks();
@@ -190,9 +211,10 @@ const Navbar = () => {
           {isMenuOpen ? <X size={24} className="text-white" /> : <Menu size={24} className="text-white" />}
         </button>
 
+        {/* Desktop menu */}
         <div className="hidden md:flex items-center space-x-6">
           {navLinks.map(link => 
-            link.submenu ? (
+            link.submenu && link.submenu.length ? (
               <div key={link.id} className="relative group">
                 <button className="nav-link text-white/80 hover:text-white flex items-center gap-1">
                   {link.title}
@@ -225,12 +247,12 @@ const Navbar = () => {
           </Link>
         </div>
 
+        {/* Mobile menu */}
         <div className={cn(
           "absolute top-full left-0 right-0 bg-festival-primary/90 backdrop-blur-md shadow-md transition-all duration-300 md:hidden",
           isMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
         )}>
           <div className="flex flex-col p-4 space-y-4 bg-[#050F2C]/95">
-            {/* Static menu for mobile */}
             <Link to="/" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
               Accueil
             </Link>
@@ -255,6 +277,12 @@ const Navbar = () => {
             <Link to="/tickets" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
               Reserve
             </Link>
+            <Link to="/stands" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+              Stands
+            </Link>
+            <Link to="/access" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+              Accès
+            </Link>
             <div className="flex justify-end pt-4 border-t border-white/10">
               <Link to="/admin" className="px-3 py-2 rounded-full bg-festival-accent/20 text-white 
                   hover:bg-festival-accent/30 transition-colors duration-300 flex flex-col items-center gap-1" onClick={toggleMenu}>
@@ -270,3 +298,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
