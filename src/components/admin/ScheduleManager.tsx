@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { toast } from 'sonner';
 import { Pencil, Trash2, PlusCircle, ArrowUpCircle, ArrowDownCircle, Check, X, File, Upload } from "lucide-react";
@@ -28,6 +29,7 @@ type ScheduleDay = {
   date: string;
   day_name: string;
   order_number: number;
+  pdf_url?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -44,16 +46,6 @@ type ScheduleEvent = {
   order_number: number;
   created_at: string;
   updated_at: string;
-};
-
-type ScheduleDayWithPdf = {
-  id: string;
-  date: string;
-  day_name: string;
-  pdf_url?: string | null;
-  order_number?: number;
-  created_at?: string;
-  updated_at?: string;
 };
 
 const ScheduleManager = () => {
@@ -446,7 +438,7 @@ const ScheduleManager = () => {
       
       const { error: updateError } = await supabase
         .from('schedule_days')
-        .update({ pdf_url: urlData.publicUrl } as ScheduleDayWithPdf)
+        .update({ pdf_url: urlData.publicUrl } as Partial<ScheduleDay>)
         .eq('id', dayId);
       
       if (updateError) {
@@ -467,7 +459,7 @@ const ScheduleManager = () => {
     try {
       const { error } = await supabase
         .from('schedule_days')
-        .update({ pdf_url: null } as ScheduleDayWithPdf)
+        .update({ pdf_url: null } as Partial<ScheduleDay>)
         .eq('id', dayId);
       
       if (error) {
