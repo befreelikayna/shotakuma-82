@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,6 +29,7 @@ import Checkout from "./pages/Checkout";
 import Stands from "./pages/Stands";
 import Access from "./pages/Access";
 import { supabase } from "./integrations/supabase/client";
+import Koreaboo from "./pages/Koreaboo";
 
 const queryClient = new QueryClient();
 
@@ -116,6 +116,9 @@ const App = () => {
                   <Route path="/checkout/:ticketId" element={<Checkout />} />
                   <Route path="/stands" element={<Stands />} />
                   <Route path="/access" element={<Access />} />
+
+                  {/* Koreaboo page */}
+                  <Route path="/koreaboo" element={<Koreaboo />} />
                   
                   {/* Dynamic routes generated from database */}
                   {!isLoading && dynamicRoutes.map(page => (
