@@ -13,6 +13,7 @@ import WhatsAppButton from "./components/WhatsAppButton";
 import ThemeProvider from "./components/ThemeProvider";
 import AnimatedMascots from "./components/admin/AnimatedMascots";
 import MobileBottomNav from "./components/MobileBottomNav";
+import DesktopSideNav from "./components/DesktopSideNav";
 import { useIsMobile } from "./hooks/use-mobile";
 import Index from "./pages/Index";
 import About from "./pages/About";
@@ -99,6 +100,7 @@ const App = () => {
               scale={0.7} 
               speed={0.5} 
             />
+            <DesktopSideNav />
             <CountdownProvider>
               <AnimatePresence mode="wait">
                 <Routes>

@@ -246,6 +246,19 @@
   transition: opacity 300ms;
 }
 
+/* Desktop side navigation adjustments */
+@media (min-width: 768px) {
+  .with-desktop-nav {
+    padding-left: 80px;
+    transition: padding-left 0.3s ease;
+  }
+  
+  .with-desktop-nav-expanded {
+    padding-left: 200px;
+    transition: padding-left 0.3s ease;
+  }
+}
+
 /* Mobile-first responsive table */
 .responsive-table {
   @apply w-full border-collapse;
