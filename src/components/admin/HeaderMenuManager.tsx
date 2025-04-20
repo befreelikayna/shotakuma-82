@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Pencil, Trash2, PlusCircle, ArrowUpCircle, ArrowDownCircle, Check, X, ExternalLink } from "lucide-react";
@@ -297,6 +296,81 @@ const HeaderMenuManager = () => {
       setLoading(false);
     }
   };
+
+  const handleCreateInitialMenu = async () => {
+    try {
+      setLoading(true);
+      
+      const initialLinks = [
+        { title: 'Accueil', url: '/', order_number: 0 },
+        { title: 'À propos', url: '/about', order_number: 1 },
+        { title: 'Programme', url: '/schedule', order_number: 2 },
+        { title: 'Galerie', url: '/gallery', order_number: 3 },
+        { title: 'Événements', url: '/events', order_number: 4 },
+        { title: 'Bénévoles', url: '/volunteer', order_number: 5 },
+        { title: 'Contact', url: '/contact', order_number: 6 },
+        { title: 'Billets', url: '/tickets', order_number: 7 },
+        { title: 'Stands', url: '/stands', order_number: 8 },
+        { title: 'Accès', url: '/access', order_number: 9 },
+      ];
+
+      // Insert all links
+      const { data, error } = await supabase
+        .from('header_menu_links')
+        .insert(initialLinks.map(link => ({
+          ...link,
+          is_active: true,
+        })))
+        .select();
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Menu initial créé",
+      });
+
+      fetchLinks();
+    } catch (error) {
+      console.error('Error creating initial menu:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer le menu initial",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (links.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap justify-between items-center gap-4">
+            <div>
+              <CardTitle className="text-xl font-bold">Menu Navigation</CardTitle>
+              <CardDescription>
+                Gérez les liens qui apparaissent dans la barre de navigation
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-6 text-center">
+          <p className="text-muted-foreground mb-4">Aucun lien n'a été ajouté au menu</p>
+          <div className="flex flex-col gap-4 items-center">
+            <Button onClick={handleCreateInitialMenu} className="bg-festival-accent hover:bg-festival-accent/90">
+              <Plus className="mr-2 h-4 w-4" /> Initialiser le menu avec les pages existantes
+            </Button>
+            <span className="text-sm text-muted-foreground">ou</span>
+            <Button onClick={() => handleOpenDialog()} variant="outline">
+              <Plus className="mr-2 h-4 w-4" /> Ajouter un lien manuellement
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
