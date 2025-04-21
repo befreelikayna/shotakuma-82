@@ -2,16 +2,27 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Check, ArrowRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Ticket, supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const tabLinks = [
+  { label: "Reserve", path: "/tickets" },
+  { label: "Koreaboo", path: "/koreaboo" },
+  { label: "Solo MCC", path: "/solo-mcc" },
+  { label: "Stands", path: "/stands" },
+  { label: "Accès", path: "/access" },
+  { label: "Bénévole", path: "/volunteer" },
+];
 
 const Tickets = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -43,12 +54,39 @@ const Tickets = () => {
     navigate(`/checkout/${ticket.id}`);
   };
 
+  // Figure out active tab based on path
+  const currentTab = tabLinks.find(tab => tab.path === location.pathname)?.path || "/tickets";
+
+  // Tab menu rendered as links using Tabs/TabTrigger for styling
+  const TabMenu = () => (
+    <div className="w-full flex justify-center mt-4 mb-10">
+      <Tabs value={currentTab} className="w-full max-w-2xl">
+        <TabsList className="w-full flex bg-festival-primary/10 rounded-xl p-1 justify-between">
+          {tabLinks.map(tab => (
+            <TabsTrigger
+              key={tab.path}
+              value={tab.path}
+              className={`flex-1 px-2 md:px-3 py-2 text-base md:text-md font-semibold rounded-lg 
+                transition-colors
+                ${currentTab === tab.path ? "bg-white text-festival-primary shadow" : "text-neutral-500 hover:bg-festival-accent/10"}
+                `}
+              asChild
+            >
+              <a href={tab.path}>{tab.label}</a>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <Navbar />
       
       <div className="pt-20 md:pt-32 pb-20">
         <div className="festival-container">
+          <TabMenu />
           <motion.div
             className="text-center mb-12"
             initial={{ opacity: 0, y: 20 }}
@@ -154,3 +192,4 @@ const getTicketFeatures = (ticketName: string): string[] => {
 };
 
 export default Tickets;
+
