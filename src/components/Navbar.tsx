@@ -1,8 +1,11 @@
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, LogIn } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 interface SubMenuItem {
   id: string;
@@ -34,6 +37,14 @@ const DEFAULT_MENU_LINKS: HeaderLink[] = [
   { id: "tickets", title: "Reserve", url: "/tickets", order_number: 9, is_active: true },
   { id: "stands", title: "Stands", url: "/stands", order_number: 10, is_active: true },
   { id: "access", title: "Accès", url: "/access", order_number: 11, is_active: true },
+];
+
+const RESERVE_DROPDOWN_LINKS = [
+  { id: "koreaboo", label: "Koreaboo", url: "/koreaboo" },
+  { id: "solo-mcc", label: "Solo MCC", url: "/solo-mcc" },
+  { id: "stands", label: "Stands", url: "/stands" },
+  { id: "access", label: "Accès", url: "/access" },
+  { id: "volunteer", label: "Bénévole", url: "/volunteer" },
 ];
 
 const Navbar = () => {
@@ -195,6 +206,45 @@ const Navbar = () => {
     };
   }, []);
 
+  // Helper to build menu but replacing the old "Reserve" link with a dropdown
+  const buildDesktopMenuLinks = () => {
+    return navLinks
+      .filter(
+        link =>
+          link.is_active &&
+          // Remove built-in "tickets"/"Reserve", because we want it as dropdown now
+          link.id !== "tickets"
+      )
+      .map(link => 
+        link.submenu && link.submenu.length ? (
+          <div key={link.id} className="relative group">
+            <button className="nav-link text-white/80 hover:text-white flex items-center gap-1">
+              {link.title}
+              <svg width="10" height="6" viewBox="0 0 10 6" className="ml-1 transition-transform duration-200 group-hover:rotate-180">
+                <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
+              </svg>
+            </button>
+            <div className="absolute top-full left-0 mt-1 py-2 bg-festival-primary/95 backdrop-blur-md rounded-lg shadow-xl 
+                         opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px] z-40">
+              {link.submenu.map(subItem => (
+                <Link
+                  key={subItem.id}
+                  to={subItem.url}
+                  className="block px-4 py-2 text-white/80 hover:text-white hover:bg-festival-accent/20"
+                >
+                  {subItem.title}
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <Link key={link.id} to={link.url} className="nav-link text-white/80 hover:text-white">
+            {link.title}
+          </Link>
+        )
+      );
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 
       bg-festival-primary/80 backdrop-blur-md border-b border-white/10 shadow-soft">
@@ -213,34 +263,33 @@ const Navbar = () => {
 
         {/* Desktop menu */}
         <div className="hidden md:flex items-center space-x-6">
-          {navLinks.map(link => 
-            link.submenu && link.submenu.length ? (
-              <div key={link.id} className="relative group">
-                <button className="nav-link text-white/80 hover:text-white flex items-center gap-1">
-                  {link.title}
-                  <svg width="10" height="6" viewBox="0 0 10 6" className="ml-1 transition-transform duration-200 group-hover:rotate-180">
-                    <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
-                  </svg>
-                </button>
-                <div className="absolute top-full left-0 mt-1 py-2 bg-festival-primary/95 backdrop-blur-md rounded-lg shadow-xl 
-                             opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px]">
-                  {link.submenu.map(subItem => (
-                    <Link
-                      key={subItem.id}
-                      to={subItem.url}
-                      className="block px-4 py-2 text-white/80 hover:text-white hover:bg-festival-accent/20"
-                    >
-                      {subItem.title}
-                    </Link>
-                  ))}
-                </div>
+          {buildDesktopMenuLinks()}
+          {/* ---- Custom Reserve Dropdown ---- */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="nav-link flex items-center text-white/80 hover:text-white gap-1 font-semibold focus:outline-none rounded-lg transition-colors px-3 py-2">
+                Reserve
+                <ChevronDown className="w-4 h-4 ml-1" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent 
+              sideOffset={8}
+              align="center"
+              className="z-50 min-w-[180px] bg-festival-primary/95 backdrop-blur-md p-2 rounded-xl shadow-xl mt-2 border-0"
+            >
+              <div className="flex flex-col gap-1">
+                {RESERVE_DROPDOWN_LINKS.map(item => (
+                  <Link
+                    key={item.id}
+                    to={item.url}
+                    className="block px-4 py-2 rounded-lg text-white/90 font-medium hover:bg-white/10 hover:text-white transition"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
               </div>
-            ) : (
-              <Link key={link.id} to={link.url} className="nav-link text-white/80 hover:text-white">
-                {link.title}
-              </Link>
-            )
-          )}
+            </PopoverContent>
+          </Popover>
           <Link to="/admin" className="px-3 py-1 rounded-full bg-festival-accent/20 text-white 
               hover:bg-festival-accent/30 transition-colors duration-300 ml-2 flex items-center">
             <LogIn size={18} />
@@ -271,22 +320,42 @@ const Navbar = () => {
             <Link to="/volunteer" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
               Bénévole
             </Link>
-            <Link to="/koreaboo" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+            <div className="relative">
+              <details>
+                <summary className="nav-link text-white/80 hover:text-white flex items-center gap-1 cursor-pointer select-none list-none">
+                  Reserve
+                  <ChevronDown className="w-4 h-4 ml-1 inline" />
+                </summary>
+                <div className="pl-3 mt-2 flex flex-col bg-festival-primary/80 rounded-lg shadow border border-white/10">
+                  {RESERVE_DROPDOWN_LINKS.map(item => (
+                    <Link
+                      key={item.id}
+                      to={item.url}
+                      className="block px-4 py-2 text-white/90 font-medium rounded hover:bg-festival-accent/10"
+                      onClick={toggleMenu}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </details>
+            </div>
+            <Link to="/koreaboo" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu} style={{ display: "none" }}>
               Koreaboo
             </Link>
-            <Link to="/solo-mcc" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+            <Link to="/solo-mcc" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu} style={{ display: "none" }}>
               Solo MCC
             </Link>
             <Link to="/contact" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
               Contact
             </Link>
-            <Link to="/tickets" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+            <Link to="/tickets" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu} style={{ display: "none" }}>
               Reserve
             </Link>
-            <Link to="/stands" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+            <Link to="/stands" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu} style={{ display: "none" }}>
               Stands
             </Link>
-            <Link to="/access" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+            <Link to="/access" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu} style={{ display: "none" }}>
               Accès
             </Link>
             <div className="flex justify-end pt-4 border-t border-white/10">
@@ -304,3 +373,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
