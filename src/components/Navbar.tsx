@@ -282,7 +282,7 @@ const Navbar = () => {
                   <Link
                     key={item.id}
                     to={item.url}
-                    className="block px-4 py-2 rounded-lg text-white/90 font-medium hover:bg-white/10 hover:text-white transition"
+                    className="block px-4 py-2 rounded-lg text-white/90 font-medium hover:bg-festival-accent/20 hover:text-white transition"
                   >
                     {item.label}
                   </Link>
@@ -331,7 +331,7 @@ const Navbar = () => {
                     <Link
                       key={item.id}
                       to={item.url}
-                      className="block px-4 py-2 text-white/90 font-medium rounded hover:bg-festival-accent/10"
+                      className="block px-4 py-2 text-white/90 font-medium rounded hover:bg-festival-accent/20"
                       onClick={toggleMenu}
                     >
                       {item.label}
@@ -340,23 +340,8 @@ const Navbar = () => {
                 </div>
               </details>
             </div>
-            <Link to="/koreaboo" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu} style={{ display: "none" }}>
-              Koreaboo
-            </Link>
-            <Link to="/solo-mcc" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu} style={{ display: "none" }}>
-              Solo MCC
-            </Link>
             <Link to="/contact" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
               Contact
-            </Link>
-            <Link to="/tickets" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu} style={{ display: "none" }}>
-              Reserve
-            </Link>
-            <Link to="/stands" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu} style={{ display: "none" }}>
-              Stands
-            </Link>
-            <Link to="/access" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu} style={{ display: "none" }}>
-              Accès
             </Link>
             <div className="flex justify-end pt-4 border-t border-white/10">
               <Link to="/admin" className="px-3 py-2 rounded-full bg-festival-accent/20 text-white 
