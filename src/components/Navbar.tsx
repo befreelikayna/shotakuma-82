@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, LogIn } from "lucide-react";
@@ -29,11 +28,12 @@ const DEFAULT_MENU_LINKS: HeaderLink[] = [
   { id: "schedule", title: "Programme", url: "/schedule", order_number: 3, is_active: true },
   { id: "gallery", title: "Galerie", url: "/gallery", order_number: 4, is_active: true },
   { id: "volunteer", title: "Bénévole", url: "/volunteer", order_number: 5, is_active: true },
-  { id: "koreaboo", title: "Koreaboo", url: "/koreaboo", order_number: 6, is_active: true }, // <--- Add here!
-  { id: "contact", title: "Contact", url: "/contact", order_number: 7, is_active: true },
-  { id: "tickets", title: "Reserve", url: "/tickets", order_number: 8, is_active: true },
-  { id: "stands", title: "Stands", url: "/stands", order_number: 9, is_active: true },
-  { id: "access", title: "Accès", url: "/access", order_number: 10, is_active: true },
+  { id: "koreaboo", title: "Koreaboo", url: "/koreaboo", order_number: 6, is_active: true },
+  { id: "solo-mcc", title: "Solo MCC", url: "/solo-mcc", order_number: 7, is_active: true },
+  { id: "contact", title: "Contact", url: "/contact", order_number: 8, is_active: true },
+  { id: "tickets", title: "Reserve", url: "/tickets", order_number: 9, is_active: true },
+  { id: "stands", title: "Stands", url: "/stands", order_number: 10, is_active: true },
+  { id: "access", title: "Accès", url: "/access", order_number: 11, is_active: true },
 ];
 
 const Navbar = () => {
@@ -65,7 +65,6 @@ const Navbar = () => {
           });
           setNavLinks(parsedLinks);
         } else {
-          // fallback to default links
           setNavLinks(DEFAULT_MENU_LINKS);
         }
       } catch (error) {
@@ -272,6 +271,12 @@ const Navbar = () => {
             <Link to="/volunteer" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
               Bénévole
             </Link>
+            <Link to="/koreaboo" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+              Koreaboo
+            </Link>
+            <Link to="/solo-mcc" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
+              Solo MCC
+            </Link>
             <Link to="/contact" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
               Contact
             </Link>
@@ -299,4 +304,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-

@@ -30,6 +30,7 @@ import Stands from "./pages/Stands";
 import Access from "./pages/Access";
 import { supabase } from "./integrations/supabase/client";
 import Koreaboo from "./pages/Koreaboo";
+import SoloMCC from "./pages/SoloMCC";
 
 const queryClient = new QueryClient();
 
@@ -116,10 +117,8 @@ const App = () => {
                   <Route path="/checkout/:ticketId" element={<Checkout />} />
                   <Route path="/stands" element={<Stands />} />
                   <Route path="/access" element={<Access />} />
-
-                  {/* Koreaboo page */}
                   <Route path="/koreaboo" element={<Koreaboo />} />
-                  
+                  <Route path="/solo-mcc" element={<SoloMCC />} />
                   {/* Dynamic routes generated from database */}
                   {!isLoading && dynamicRoutes.map(page => (
                     <Route 
@@ -128,8 +127,6 @@ const App = () => {
                       element={<DynamicPage pageSlug={page.slug} />} 
                     />
                   ))}
-                  
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </AnimatePresence>
