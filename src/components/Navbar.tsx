@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, LogIn } from "lucide-react";
@@ -264,25 +263,33 @@ const Navbar = () => {
         {/* Desktop menu */}
         <div className="hidden md:flex items-center space-x-6">
           {buildDesktopMenuLinks()}
-          {/* ---- Custom Reserve Dropdown ---- */}
+          {/* ---- Main Reserve Dropdown ---- */}
           <Popover>
             <PopoverTrigger asChild>
-              <button className="nav-link flex items-center text-white/80 hover:text-white gap-1 font-semibold focus:outline-none rounded-lg transition-colors px-3 py-2">
+              <button className="nav-link flex items-center font-semibold gap-1 px-3 py-2 rounded-lg transition-colors 
+                text-white/80 hover:text-white focus:outline-none" style={{ background: "transparent" }}>
                 Reserve
                 <ChevronDown className="w-4 h-4 ml-1" />
               </button>
             </PopoverTrigger>
-            <PopoverContent 
+            <PopoverContent
               sideOffset={8}
               align="center"
-              className="z-50 min-w-[180px] bg-festival-primary/95 backdrop-blur-md p-2 rounded-xl shadow-xl mt-2 border-0"
+              className="z-50 min-w-[200px] bg-[#080829]/[0.97] backdrop-blur-md p-2 rounded-xl shadow-xl mt-2 border border-white/10"
+              // Background and border matches header exactly
             >
               <div className="flex flex-col gap-1">
                 {RESERVE_DROPDOWN_LINKS.map(item => (
                   <Link
                     key={item.id}
                     to={item.url}
-                    className="block px-4 py-2 rounded-lg text-white/90 font-medium hover:bg-festival-accent/20 hover:text-white transition"
+                    className="block w-full text-left px-4 py-2 text-white/90 font-medium rounded-lg transition 
+                      hover:bg-festival-accent/30 hover:text-white focus:outline-none"
+                    style={{
+                      fontFamily: "inherit",
+                      fontSize: "1rem",
+                      lineHeight: 1.4,
+                    }}
                   >
                     {item.label}
                   </Link>
@@ -320,18 +327,19 @@ const Navbar = () => {
             <Link to="/volunteer" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
               Bénévole
             </Link>
+            {/* Reserve dropdown in mobile menu, matches desktop styling */}
             <div className="relative">
               <details>
                 <summary className="nav-link text-white/80 hover:text-white flex items-center gap-1 cursor-pointer select-none list-none">
                   Reserve
                   <ChevronDown className="w-4 h-4 ml-1 inline" />
                 </summary>
-                <div className="pl-3 mt-2 flex flex-col bg-festival-primary/80 rounded-lg shadow border border-white/10">
+                <div className="pl-3 mt-2 flex flex-col bg-[#080829]/[0.97] rounded-lg shadow border border-white/10">
                   {RESERVE_DROPDOWN_LINKS.map(item => (
                     <Link
                       key={item.id}
                       to={item.url}
-                      className="block px-4 py-2 text-white/90 font-medium rounded hover:bg-festival-accent/20"
+                      className="block px-4 py-2 text-white/90 font-medium rounded hover:bg-festival-accent/30 hover:text-white transition"
                       onClick={toggleMenu}
                     >
                       {item.label}
@@ -358,4 +366,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-
