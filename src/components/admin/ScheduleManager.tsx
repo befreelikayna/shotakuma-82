@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Table,
@@ -22,7 +21,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { toast } from 'sonner';
-import { Pencil, Trash2, PlusCircle, ArrowUpCircle, ArrowDownCircle, Check, X, File, Upload, FileText } from "lucide-react";
+import { Pencil, Trash2, PlusCircle, ArrowUpCircle, ArrowDownCircle, Check, X, Image, Link2, File, Upload, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type ScheduleDay = {
@@ -68,6 +67,8 @@ const ScheduleManager = () => {
   const [eventLocation, setEventLocation] = useState('');
   const [eventCategory, setEventCategory] = useState('');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState('');
+  const [imagePreview, setImagePreview] = useState('');
 
   const fetchScheduleDays = async () => {
     setLoading(true);
@@ -116,11 +117,15 @@ const ScheduleManager = () => {
       setDayDate(day.date);
       setDayName(day.day_name);
       setIsCreatingDay(false);
+      setImageUrl(day.image_url || '');
+      setImagePreview(day.image_url || '');
     } else {
       setSelectedDay(null);
       setDayDate('');
       setDayName('');
       setIsCreatingDay(true);
+      setImageUrl('');
+      setImagePreview('');
     }
     setDayDialog(true);
   };
@@ -158,6 +163,18 @@ const ScheduleManager = () => {
     setSelectedEvent(null);
   };
 
+  const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setImageUrl(url);
+    
+    // Validate and set image preview
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+      setImagePreview(url);
+    } else {
+      setImagePreview('');
+    }
+  };
+
   const handleSaveDay = async () => {
     if (!dayDate.trim() || !dayName.trim()) {
       toast.error('Date and Day Name are required');
@@ -177,6 +194,7 @@ const ScheduleManager = () => {
             date: dayDate,
             day_name: dayName,
             order_number: newOrderNumber,
+            image_url: imageUrl || null, // Use the new image_url column
           });
 
         if (error) throw error;
@@ -184,7 +202,11 @@ const ScheduleManager = () => {
       } else if (selectedDay) {
         const { error } = await supabase
           .from('schedule_days')
-          .update({ date: dayDate, day_name: dayName })
+          .update({ 
+            date: dayDate, 
+            day_name: dayName,
+            image_url: imageUrl || null // Use the new image_url column
+          })
           .eq('id', selectedDay.id);
 
         if (error) throw error;
@@ -454,6 +476,23 @@ const ScheduleManager = () => {
     }
   };
 
+  const removeDayImage = async (dayId: string) => {
+    try {
+      const { error } = await supabase
+        .from('schedule_days')
+        .update({ image_url: null })
+        .eq('id', dayId);
+      
+      if (error) throw error;
+      
+      toast.success('Image supprimée avec succès');
+      fetchScheduleDays();
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Une erreur est survenue lors de la suppression de l\'image');
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -490,6 +529,7 @@ const ScheduleManager = () => {
                 <TableHead>Date</TableHead>
                 <TableHead>Nom du jour</TableHead>
                 <TableHead>Ordre</TableHead>
+                <TableHead>Image</TableHead>
                 <TableHead>PDF</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -499,6 +539,51 @@ const ScheduleManager = () => {
                 <TableRow key={day.id}>
                   <TableCell className="font-medium">{day.date}</TableCell>
                   <TableCell>{day.day_name}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleReorderDay(day.id, 'up')}
+                        disabled={loading}
+                        title="Move Up"
+                      >
+                        <ArrowUpCircle className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleReorderDay(day.id, 'down')}
+                        disabled={loading}
+                        title="Move Down"
+                      >
+                        <ArrowDownCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      {day.image_url ? (
+                        <>
+                          <img 
+                            src={day.image_url} 
+                            alt={`Image for ${day.day_name}`} 
+                            className="w-16 h-16 object-cover rounded-md"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeDayImage(day.id)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <div className="text-sm text-gray-500">No image</div>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       {day.pdf_url ? (
@@ -609,6 +694,31 @@ const ScheduleManager = () => {
                   placeholder="Jour 1, Samedi, etc."
                 />
               </div>
+            </div>
+
+            {/* New Image URL Section */}
+            <div className="space-y-2">
+              <Label htmlFor="image_url">Image URL</Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  id="image_url"
+                  value={imageUrl}
+                  onChange={handleImageUrlChange}
+                  placeholder="Paste image URL here"
+                  className="flex-grow"
+                />
+                <Link2 className="text-gray-500" />
+              </div>
+              
+              {imagePreview && (
+                <div className="mt-2">
+                  <img 
+                    src={imagePreview} 
+                    alt="Image Preview" 
+                    className="max-w-full h-40 object-cover rounded-md"
+                  />
+                </div>
+              )}
             </div>
 
             <DialogFooter>

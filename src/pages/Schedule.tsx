@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Clock, MapPin, Calendar, RefreshCw, FileText, Download } from "lucide-react";
+import { Clock, MapPin, Calendar, RefreshCw, FileText, Download, Image as ImageIcon } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { supabase, ScheduleDay, ScheduleEvent } from "@/integrations/supabase/client";
@@ -205,6 +205,16 @@ const Schedule = () => {
                       <FileText className="w-4 h-4" />
                       Voir le programme complet en PDF
                     </Button>
+                  </div>
+                )}
+
+                {activeScheduleDay?.image_url && (
+                  <div className="mb-8 flex justify-center">
+                    <img 
+                      src={activeScheduleDay.image_url} 
+                      alt={`Image for ${activeScheduleDay.day_name}`} 
+                      className="max-w-full h-64 object-cover rounded-xl shadow-soft"
+                    />
                   </div>
                 )}
 
