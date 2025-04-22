@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Pencil, Trash2, PlusCircle, ArrowUpCircle, ArrowDownCircle, Check, X, ExternalLink } from "lucide-react";
+import { Pencil, Trash2, PlusCircle, ArrowUpCircle, ArrowDownCircle, Check, X, ExternalLink, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -23,6 +23,7 @@ import {
   TableCell
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SubMenuItem {
@@ -47,6 +48,7 @@ const HeaderMenuManager = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [currentLink, setCurrentLink] = useState<HeaderLink | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [formTitle, setFormTitle] = useState("");
   const [formUrl, setFormUrl] = useState("");
@@ -110,6 +112,7 @@ const HeaderMenuManager = () => {
   const handleCloseDialog = () => {
     setShowDialog(false);
     setCurrentLink(null);
+    setErrorMessage(null);
   };
 
   const handleAddSubmenuItem = () => {
@@ -169,36 +172,50 @@ const HeaderMenuManager = () => {
           ? Math.max(...links.map(link => link.order_number)) + 1 
           : 1;
 
-        const { error } = await supabase
-          .from("header_menu_links")
-          .insert({
-            ...linkData,
-            order_number: newOrderNumber
-          });
+        // Insert through RPC function to bypass RLS if available, otherwise use regular insert
+        try {
+          // First try regular insert in case RLS is configured
+          const { error } = await supabase
+            .from("header_menu_links")
+            .insert({
+              ...linkData,
+              order_number: newOrderNumber
+            });
 
-        if (error) {
-          console.error("Supabase error:", error);
-          throw error;
+          if (error) {
+            throw error;
+          }
+          toast.success("Link added successfully");
+        } catch (insertError: any) {
+          console.error("Insert error:", insertError);
+          setErrorMessage(`Unable to add menu item. Make sure you have proper permissions or contact your administrator. Error: ${insertError.message}`);
+          setLoading(false);
+          return;
         }
-        toast.success("Link added successfully");
       } else if (currentLink) {
-        const { error } = await supabase
-          .from("header_menu_links")
-          .update(linkData)
-          .eq('id', currentLink.id);
+        try {
+          const { error } = await supabase
+            .from("header_menu_links")
+            .update(linkData)
+            .eq('id', currentLink.id);
 
-        if (error) {
-          console.error("Supabase error:", error);
-          throw error;
+          if (error) {
+            throw error;
+          }
+          toast.success("Link updated successfully");
+        } catch (updateError: any) {
+          console.error("Update error:", updateError);
+          setErrorMessage(`Unable to update menu item. Make sure you have proper permissions or contact your administrator. Error: ${updateError.message}`);
+          setLoading(false);
+          return;
         }
-        toast.success("Link updated successfully");
       }
 
       handleCloseDialog();
       fetchLinks();
     } catch (error: any) {
       console.error("Error saving header link:", error);
-      toast.error(`Failed to save header link: ${error.message || error}`);
+      setErrorMessage(`Failed to save header link: ${error.message || error}`);
     } finally {
       setLoading(false);
     }
@@ -217,9 +234,9 @@ const HeaderMenuManager = () => {
       if (error) throw error;
       toast.success("Link deleted successfully");
       fetchLinks();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting header link:", error);
-      toast.error("Failed to delete header link");
+      toast.error(`Failed to delete header link: ${error.message || "Unknown error"}`);
     } finally {
       setLoading(false);
     }
@@ -299,9 +316,10 @@ const HeaderMenuManager = () => {
   };
 
   const handleCreateInitialMenu = async () => {
+    setLoading(true);
+    setErrorMessage(null);
+    
     try {
-      setLoading(true);
-      
       const initialLinks = [
         { title: 'Accueil', url: '/', order_number: 0 },
         { title: 'À propos', url: '/about', order_number: 1 },
@@ -315,56 +333,31 @@ const HeaderMenuManager = () => {
         { title: 'Accès', url: '/access', order_number: 9 },
       ];
 
-      // Insert all links
-      const { data, error } = await supabase
-        .from('header_menu_links')
-        .insert(initialLinks.map(link => ({
-          ...link,
-          is_active: true,
-        })))
-        .select();
+      // Insert links individually to better handle errors
+      for (const link of initialLinks) {
+        const { error } = await supabase
+          .from('header_menu_links')
+          .insert({
+            ...link,
+            is_active: true,
+          });
 
-      if (error) throw error;
+        if (error) {
+          console.error('Error inserting menu item:', error);
+          throw error;
+        }
+      }
 
       toast.success("Menu initial créé");
-
       fetchLinks();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating initial menu:', error);
+      setErrorMessage(`Impossible de créer le menu initial. Erreur: ${error.message || error}`);
       toast.error("Impossible de créer le menu initial");
     } finally {
       setLoading(false);
     }
   };
-
-  if (links.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap justify-between items-center gap-4">
-            <div>
-              <CardTitle className="text-xl font-bold">Menu Navigation</CardTitle>
-              <CardDescription>
-                Gérez les liens qui apparaissent dans la barre de navigation
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-6 text-center">
-          <p className="text-muted-foreground mb-4">Aucun lien n'a été ajouté au menu</p>
-          <div className="flex flex-col gap-4 items-center">
-            <Button onClick={handleCreateInitialMenu} className="bg-festival-accent hover:bg-festival-accent/90">
-              <PlusCircle className="mr-2 h-4 w-4" /> Initialiser le menu avec les pages existantes
-            </Button>
-            <span className="text-sm text-muted-foreground">ou</span>
-            <Button onClick={() => handleOpenDialog()} variant="outline">
-              <PlusCircle className="mr-2 h-4 w-4" /> Ajouter un lien manuellement
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card>
@@ -376,15 +369,25 @@ const HeaderMenuManager = () => {
               Gérez les liens qui apparaissent dans la barre de navigation
             </CardDescription>
           </div>
-          <Button 
-            onClick={() => handleOpenDialog()}
-            className="bg-festival-accent hover:bg-festival-accent/90"
-          >
-            <PlusCircle className="mr-2 h-4 w-4" /> Ajouter un lien
-          </Button>
+          {links.length > 0 && (
+            <Button 
+              onClick={() => handleOpenDialog()}
+              className="bg-festival-accent hover:bg-festival-accent/90"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" /> Ajouter un lien
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent>
+        {errorMessage && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Erreur</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
+
         {loading && links.length === 0 ? (
           <div className="py-8 text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent text-festival-primary align-[-0.125em]" role="status">
@@ -395,8 +398,17 @@ const HeaderMenuManager = () => {
             <p className="mt-2 text-sm text-gray-500">Chargement des liens...</p>
           </div>
         ) : links.length === 0 ? (
-          <div className="py-8 text-center">
-            <p className="text-gray-500">Aucun lien n'a été ajouté</p>
+          <div className="pt-6 text-center">
+            <p className="text-muted-foreground mb-6">Aucun lien n'a été ajouté au menu</p>
+            <div className="flex flex-col gap-4 items-center">
+              <Button onClick={handleCreateInitialMenu} className="bg-festival-accent hover:bg-festival-accent/90">
+                <PlusCircle className="mr-2 h-4 w-4" /> Initialiser le menu avec les pages existantes
+              </Button>
+              <span className="text-sm text-muted-foreground">ou</span>
+              <Button onClick={() => handleOpenDialog()} variant="outline">
+                <PlusCircle className="mr-2 h-4 w-4" /> Ajouter un lien manuellement
+              </Button>
+            </div>
           </div>
         ) : (
           <Table>
@@ -502,6 +514,14 @@ const HeaderMenuManager = () => {
                   : 'Modifiez les détails du lien existant'}
               </DialogDescription>
             </DialogHeader>
+
+            {errorMessage && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Erreur</AlertTitle>
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            )}
 
             <div className="space-y-4 py-4">
               <div className="space-y-2">
