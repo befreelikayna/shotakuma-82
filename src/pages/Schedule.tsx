@@ -118,8 +118,8 @@ const Schedule = () => {
     });
   };
 
-  const openPdfViewer = (pdfUrl: string) => {
-    setCurrentPdfUrl(pdfUrl);
+  const openPdfViewer = (imageUrl: string) => {
+    setCurrentPdfUrl(imageUrl);
     setOpenPdfDialog(true);
   };
 
@@ -179,15 +179,15 @@ const Schedule = () => {
                       >
                         {day.day_name}
                         <span className="ml-2 text-xs opacity-75">{formatDate(day.date)}</span>
-                        {day.pdf_url && (
+                        {day.image_url && (
                           <a 
-                            href={day.pdf_url}
+                            href={day.image_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
                             className="ml-2 inline-flex items-center text-festival-accent hover:text-festival-accent/80"
                           >
-                            <FileText className="h-4 w-4" />
+                            <ImageIcon className="h-4 w-4" />
                           </a>
                         )}
                       </button>
@@ -195,15 +195,15 @@ const Schedule = () => {
                   </div>
                 </div>
 
-                {activeScheduleDay?.pdf_url && (
+                {activeScheduleDay?.image_url && (
                   <div className="mb-8 flex justify-center">
                     <Button
-                      onClick={() => openPdfViewer(activeScheduleDay.pdf_url as string)}
+                      onClick={() => openPdfViewer(activeScheduleDay.image_url as string)}
                       variant="outline"
                       className="flex items-center gap-2"
                     >
-                      <FileText className="w-4 h-4" />
-                      Voir le programme complet en PDF
+                      <ImageIcon className="w-4 h-4" />
+                      Voir le programme complet en image
                     </Button>
                   </div>
                 )}
@@ -292,18 +292,18 @@ const Schedule = () => {
             )}
 
             <div className="mt-12 text-center">
-              {schedule.length > 0 && schedule.some(day => day.pdf_url) ? (
+              {schedule.length > 0 && schedule.some(day => day.image_url) ? (
                 <div className="flex flex-wrap justify-center gap-4 mt-8">
                   {schedule.map((day) => (
-                    day.pdf_url && (
+                    day.image_url && (
                       <a
                         key={day.id}
-                        href={day.pdf_url}
+                        href={day.image_url}
                         download
                         className="inline-flex items-center px-4 py-2 rounded-md bg-white border border-slate-200 text-festival-secondary hover:bg-slate-50 hover:text-festival-primary transition-all"
                       >
                         <Download className="w-4 h-4 mr-2" />
-                        Programme {day.day_name} (PDF)
+                        Programme {day.day_name} (Image)
                       </a>
                     )
                   ))}
@@ -314,7 +314,7 @@ const Schedule = () => {
                   className="inline-flex items-center px-6 py-3 rounded-full bg-festival-primary text-white font-medium 
                   shadow-soft transition-all duration-300 hover:shadow-md hover:bg-opacity-90"
                 >
-                  Télécharger le programme complet (PDF)
+                  Télécharger le programme complet (Image)
                 </a>
               )}
             </div>

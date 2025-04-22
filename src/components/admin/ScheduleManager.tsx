@@ -29,7 +29,7 @@ type ScheduleDay = {
   date: string;
   day_name: string;
   order_number: number;
-  pdf_url: string | null;
+  image_url: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -66,7 +66,6 @@ const ScheduleManager = () => {
   const [eventEndTime, setEventEndTime] = useState('');
   const [eventLocation, setEventLocation] = useState('');
   const [eventCategory, setEventCategory] = useState('');
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState('');
   const [imagePreview, setImagePreview] = useState('');
 
@@ -194,7 +193,7 @@ const ScheduleManager = () => {
             date: dayDate,
             day_name: dayName,
             order_number: newOrderNumber,
-            image_url: imageUrl || null, // Use the new image_url column
+            image_url: imageUrl || null,
           });
 
         if (error) throw error;
@@ -205,7 +204,7 @@ const ScheduleManager = () => {
           .update({ 
             date: dayDate, 
             day_name: dayName,
-            image_url: imageUrl || null // Use the new image_url column
+            image_url: imageUrl || null
           })
           .eq('id', selectedDay.id);
 
@@ -423,59 +422,6 @@ const ScheduleManager = () => {
     }
   };
 
-  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>, dayId: string) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      try {
-        const fileExtension = file.name.split('.').pop();
-        const fileName = `schedule_day_${dayId}.${fileExtension}`;
-
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('festival_assets')
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: true,
-          });
-
-        if (uploadError) throw uploadError;
-
-        const { data: urlData } = supabase.storage
-          .from('festival_assets')
-          .getPublicUrl(uploadData.path);
-        
-        const { error: updateError } = await supabase
-          .from('schedule_days')
-          .update({ pdf_url: urlData.publicUrl })
-          .eq('id', dayId);
-        
-        if (updateError) throw updateError;
-
-        toast.success('PDF téléchargé avec succès');
-        fetchScheduleDays();
-      } catch (error) {
-        console.error('Error:', error);
-        toast.error('Une erreur est survenue lors du téléchargement');
-      }
-    }
-  };
-
-  const removePdfFile = async (dayId: string) => {
-    try {
-      const { error } = await supabase
-        .from('schedule_days')
-        .update({ pdf_url: null })
-        .eq('id', dayId);
-      
-      if (error) throw error;
-      
-      toast.success('PDF supprimé avec succès');
-      fetchScheduleDays();
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Une erreur est survenue lors de la suppression');
-    }
-  };
-
   const removeDayImage = async (dayId: string) => {
     try {
       const { error } = await supabase
@@ -530,7 +476,6 @@ const ScheduleManager = () => {
                 <TableHead>Nom du jour</TableHead>
                 <TableHead>Ordre</TableHead>
                 <TableHead>Image</TableHead>
-                <TableHead>PDF</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -581,42 +526,6 @@ const ScheduleManager = () => {
                         </>
                       ) : (
                         <div className="text-sm text-gray-500">No image</div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      {day.pdf_url ? (
-                        <>
-                          <a href={day.pdf_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 flex items-center gap-1">
-                            <FileText className="h-4 w-4" />
-                            Programme PDF
-                          </a>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removePdfFile(day.id)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </>
-                      ) : (
-                        <div className="flex items-center space-x-2">
-                          <Label htmlFor={`pdf-upload-${day.id}`} className="cursor-pointer">
-                            <div className="flex items-center space-x-1 text-sm text-gray-500 hover:text-gray-700">
-                              <Upload className="h-4 w-4" />
-                              <span>Ajouter PDF</span>
-                            </div>
-                          </Label>
-                          <Input
-                            type="file"
-                            id={`pdf-upload-${day.id}`}
-                            accept=".pdf"
-                            className="hidden"
-                            onChange={(e) => handlePdfUpload(e, day.id)}
-                          />
-                        </div>
                       )}
                     </div>
                   </TableCell>
@@ -696,7 +605,6 @@ const ScheduleManager = () => {
               </div>
             </div>
 
-            {/* New Image URL Section */}
             <div className="space-y-2">
               <Label htmlFor="image_url">Image URL</Label>
               <div className="flex items-center space-x-2">
