@@ -16,6 +16,7 @@ import ScheduleManager from "./components/admin/ScheduleManager";
 import NewsletterSubscriptions from "./components/admin/NewsletterSubscriptions";
 import ContactManager from "./components/admin/ContactManager";
 import AnimatedMascots from "./components/admin/AnimatedMascots";
+import HeaderMenuManager from "./components/admin/HeaderMenuManager";
 import { supabase } from "./integrations/supabase/client";
 
 import {
@@ -55,10 +56,8 @@ export default function Admin() {
 
   return (
     <div className="container mx-auto p-4 min-h-screen relative overflow-hidden">
-      {/* Add the animated mascots behind the content */}
       <AnimatedMascots scale={0.7} speed={0.6} />
       
-      {/* Admin content with relative z-index to appear above mascots */}
       <div className="relative z-10">
         <h1 className="text-3xl font-bold mb-6">SHOTAKU Admin Panel</h1>
         <Tabs defaultValue="content" className="w-full">
@@ -72,6 +71,7 @@ export default function Admin() {
             <TabsTrigger value="partners">Partners</TabsTrigger>
             <TabsTrigger value="schedule">Schedule</TabsTrigger>
             <TabsTrigger value="tickets">Tickets</TabsTrigger>
+            <TabsTrigger value="header-menu">Header Menu</TabsTrigger>
             <TabsTrigger value="social">Social Links</TabsTrigger>
             <TabsTrigger value="assets">Assets</TabsTrigger>
             <TabsTrigger value="theme">Theme</TabsTrigger>
@@ -106,6 +106,9 @@ export default function Admin() {
             </TabsContent>
             <TabsContent value="tickets" className="space-y-4">
               <TicketManager />
+            </TabsContent>
+            <TabsContent value="header-menu" className="space-y-4">
+              <HeaderMenuManager />
             </TabsContent>
             <TabsContent value="social" className="space-y-4">
               <SocialLinksEditor />
