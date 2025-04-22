@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Check, ArrowRight } from "lucide-react";
@@ -50,8 +49,8 @@ const Tickets = () => {
     fetchTickets();
   }, []);
 
-  const handleSelectTicket = (ticket: Ticket) => {
-    navigate(`/checkout/${ticket.id}`);
+  const handleSelectTicket = () => {
+    window.open("https://bit.ly/ShotakuTicket", "_blank", "noopener,noreferrer");
   };
 
   // Figure out active tab based on path
@@ -137,7 +136,7 @@ const Tickets = () => {
                       </ul>
                       
                       <button
-                        onClick={() => handleSelectTicket(ticket)}
+                        onClick={handleSelectTicket}
                         className={`w-full flex justify-center items-center py-3 rounded-full transition-all duration-300 ${
                           ticket.name === "Pass 3 Jours" 
                             ? "bg-red-500 text-white hover:bg-opacity-90" 
@@ -192,4 +191,3 @@ const getTicketFeatures = (ticketName: string): string[] => {
 };
 
 export default Tickets;
-

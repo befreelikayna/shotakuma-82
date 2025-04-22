@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
@@ -51,7 +50,7 @@ const TicketPackage = ({
           </ul>
           
           <a
-            href="https://www.ticket.ma/ticket/festivals/3618/shotaku-festival-mai-2025-rabat"
+            href="https://bit.ly/ShotakuTicket"
             target="_blank"
             rel="noopener noreferrer"
             className={`w-full flex justify-center items-center py-3 rounded-full transition-all duration-300 ${
