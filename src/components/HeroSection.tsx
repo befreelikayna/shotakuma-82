@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import CountdownTrigger from "./CountdownTrigger";
+
 interface SliderImage {
   id: string;
   image_url: string;
@@ -11,12 +12,14 @@ interface SliderImage {
   order_number: number;
   active: boolean;
 }
+
 interface TimeLeft {
   days: number;
   hours: number;
   minutes: number;
   seconds: number;
 }
+
 const HeroSection = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [sliderImages, setSliderImages] = useState<SliderImage[]>([]);
@@ -27,7 +30,9 @@ const HeroSection = () => {
     minutes: 0,
     seconds: 0
   });
+
   const targetDate = new Date("2025-05-08T00:00:00");
+
   const fetchSliderImages = async () => {
     try {
       setIsLoading(true);
@@ -56,6 +61,7 @@ const HeroSection = () => {
       setIsLoading(false);
     }
   };
+
   useEffect(() => {
     fetchSliderImages();
     const channel = supabase.channel('public:slider_images').on('postgres_changes', {
@@ -70,6 +76,7 @@ const HeroSection = () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
   useEffect(() => {
     if (sliderImages.length === 0) return;
     const interval = setInterval(() => {
@@ -77,6 +84,7 @@ const HeroSection = () => {
     }, 5000);
     return () => clearInterval(interval);
   }, [sliderImages]);
+
   useEffect(() => {
     const calculateTimeLeft = () => {
       const now = new Date().getTime();
@@ -103,9 +111,11 @@ const HeroSection = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
   const formatTime = (value: number) => {
     return value.toString().padStart(2, "0");
   };
+
   const containerVariants = {
     hidden: {
       opacity: 0
@@ -118,6 +128,7 @@ const HeroSection = () => {
       }
     }
   };
+
   const itemVariants = {
     hidden: {
       opacity: 0,
@@ -132,13 +143,16 @@ const HeroSection = () => {
       }
     }
   };
+
   const handleScrollDown = () => {
     window.scrollTo({
       top: window.innerHeight,
       behavior: "smooth"
     });
   };
+
   const defaultBackground = "bg-gradient-to-br from-slate-900 to-gray-800";
+
   const handleRefresh = () => {
     fetchSliderImages();
     toast({
@@ -146,6 +160,7 @@ const HeroSection = () => {
       description: "Images du slider actualisées"
     });
   };
+
   return <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 md:pt-20">
       <div className={`absolute inset-0 z-0 ${isLoading ? defaultBackground : ''}`}>
         {sliderImages.length > 0 ? sliderImages.map((image, index) => <div key={image.id} className={`absolute inset-0 transition-opacity duration-1000 ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'}`}>
@@ -212,14 +227,14 @@ const HeroSection = () => {
           </motion.div>
 
           <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-10 w-full sm:w-auto" variants={itemVariants}>
-            <a href="/stands" className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-festival-accent text-white font-medium 
+            <a href="https://bit.ly/ShotakuTicket" className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-festival-accent text-white font-medium 
               shadow-accent transition-all duration-300 hover:shadow-lg hover:bg-opacity-90 hover:translate-y-[-2px] text-center">
-              Reserve Your Stand
+              Get Your Ticket
             </a>
-            <a href="/access" className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-white text-festival-primary font-medium 
+            <a href="/stands" className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-white text-festival-primary font-medium 
               shadow-soft border border-slate-100 transition-all duration-300 
               hover:shadow-lg hover:bg-slate-50 hover:translate-y-[-2px] text-center">
-              Get Your Access Badge
+              Reserve Your Stand
             </a>
             <CountdownTrigger variant="secondary" label="Voir Countdown" className="w-full sm:w-auto" />
           </motion.div>
@@ -235,4 +250,5 @@ const HeroSection = () => {
         </div>}
     </section>;
 };
+
 export default HeroSection;
