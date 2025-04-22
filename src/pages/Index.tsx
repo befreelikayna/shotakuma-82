@@ -12,7 +12,7 @@ import { useGalleryItems } from "@/hooks/use-gallery-items";
 import { usePageContent } from "@/hooks/use-page-content";
 import PageContentSection from "@/components/PageContentSection";
 import PartnerLogosSlider from "@/components/PartnerLogosSlider";
-import { customSupabase, supabase, Ticket, safeDataAccess } from "@/integrations/supabase/client";
+import { supabase, Ticket, safeDataAccess } from "@/integrations/supabase/client";
 
 const AnimeCharactersImage = "/lovable-uploads/88018e32-71b5-4eba-9372-973a5c4d8bc1.png";
 
@@ -60,7 +60,7 @@ const Index = () => {
   const fetchTickets = async () => {
     try {
       setTicketsLoading(true);
-      const { data, error } = await customSupabase
+      const { data, error } = await supabase
         .from('tickets')
         .select('*')
         .order('price');
@@ -139,7 +139,7 @@ const Index = () => {
     }
     
     try {
-      const { error } = await customSupabase
+      const { error } = await supabase
         .from('newsletter_subscribers')
         .insert({ email });
         
