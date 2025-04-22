@@ -22,7 +22,6 @@ interface HeaderLink {
   submenu?: SubMenuItem[];
 }
 
-// The default menu structure (same order/structure as mobile menu)
 const DEFAULT_MENU_LINKS: HeaderLink[] = [
   { id: "home", title: "Accueil", url: "/", order_number: 0, is_active: true },
   { id: "about", title: "À propos", url: "/about", order_number: 1, is_active: true },
@@ -35,8 +34,8 @@ const DEFAULT_MENU_LINKS: HeaderLink[] = [
 const RESERVE_DROPDOWN_LINKS = [
   { id: "koreaboo", label: "Koreaboo", url: "/koreaboo" },
   { id: "solo-mcc", label: "Solo MCC", url: "/solo-mcc" },
-  { id: "stands", label: "Stands", url: "/stands" },
-  { id: "access", label: "Accès", url: "/access" },
+  { id: "stands", label: "Reserve Your Stand", url: "/stands" },
+  { id: "access", label: "Get Your Access Badge", url: "/access" },
   { id: "volunteer", label: "Bénévole", url: "/volunteer" },
 ];
 
@@ -199,7 +198,6 @@ const Navbar = () => {
     };
   }, []);
 
-  // Helper to build menu but replacing the old "Reserve" link with a dropdown
   const buildDesktopMenuLinks = () => {
     return navLinks
       .filter(
@@ -237,6 +235,16 @@ const Navbar = () => {
       );
   };
 
+  const desktopAdminLink = (
+    <Link 
+      to="/admin" 
+      className="px-3 py-1 rounded-full bg-festival-accent/20 text-white 
+      hover:bg-festival-accent/30 transition-colors duration-300 ml-2 flex items-center"
+    >
+      <LogIn size={18} />
+    </Link>
+  );
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 
       bg-festival-primary/80 backdrop-blur-md border-b border-white/10 shadow-soft">
@@ -253,15 +261,13 @@ const Navbar = () => {
           {isMenuOpen ? <X size={24} className="text-white" /> : <Menu size={24} className="text-white" />}
         </button>
 
-        {/* Desktop menu */}
         <div className="hidden md:flex items-center space-x-6">
           {buildDesktopMenuLinks()}
-          {/* ---- Main Reserve Dropdown ---- */}
           <Popover>
             <PopoverTrigger asChild>
               <button className="nav-link flex items-center font-semibold gap-1 px-3 py-2 rounded-lg transition-colors 
                 text-white/80 hover:text-white focus:outline-none" style={{ background: "transparent" }}>
-                Reserve
+                Get Your Ticket
                 <ChevronDown className="w-4 h-4 ml-1" />
               </button>
             </PopoverTrigger>
@@ -269,7 +275,6 @@ const Navbar = () => {
               sideOffset={8}
               align="center"
               className="z-50 min-w-[200px] bg-[#080829]/[0.97] backdrop-blur-md p-2 rounded-xl shadow-xl mt-2 border border-white/10"
-              // Background and border matches header exactly
             >
               <div className="flex flex-col gap-1">
                 {RESERVE_DROPDOWN_LINKS.map(item => (
@@ -290,13 +295,9 @@ const Navbar = () => {
               </div>
             </PopoverContent>
           </Popover>
-          <Link to="/admin" className="px-3 py-1 rounded-full bg-festival-accent/20 text-white 
-              hover:bg-festival-accent/30 transition-colors duration-300 ml-2 flex items-center">
-            <LogIn size={18} />
-          </Link>
+          {desktopAdminLink}
         </div>
 
-        {/* Mobile menu */}
         <div className={cn(
           "absolute top-full left-0 right-0 bg-festival-primary/90 backdrop-blur-md shadow-md transition-all duration-300 md:hidden",
           isMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
@@ -320,11 +321,10 @@ const Navbar = () => {
             <Link to="/volunteer" className="nav-link text-white hover:text-white flex items-center gap-2" onClick={toggleMenu}>
               Bénévole
             </Link>
-            {/* Reserve dropdown in mobile menu, matches desktop styling */}
             <div className="relative">
               <details>
                 <summary className="nav-link text-white/80 hover:text-white flex items-center gap-1 cursor-pointer select-none list-none">
-                  Reserve
+                  Get Your Ticket
                   <ChevronDown className="w-4 h-4 ml-1 inline" />
                 </summary>
                 <div className="pl-3 mt-2 flex flex-col bg-[#080829]/[0.97] rounded-lg shadow border border-white/10">
