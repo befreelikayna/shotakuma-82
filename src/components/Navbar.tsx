@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, LogIn } from "lucide-react";
@@ -30,13 +29,7 @@ const DEFAULT_MENU_LINKS: HeaderLink[] = [
   { id: "events", title: "Événements", url: "/events", order_number: 2, is_active: true },
   { id: "schedule", title: "Programme", url: "/schedule", order_number: 3, is_active: true },
   { id: "gallery", title: "Galerie", url: "/gallery", order_number: 4, is_active: true },
-  { id: "volunteer", title: "Bénévole", url: "/volunteer", order_number: 5, is_active: true },
-  { id: "koreaboo", title: "Koreaboo", url: "/koreaboo", order_number: 6, is_active: true },
-  { id: "solo-mcc", title: "Solo MCC", url: "/solo-mcc", order_number: 7, is_active: true },
-  { id: "contact", title: "Contact", url: "/contact", order_number: 8, is_active: true },
-  { id: "tickets", title: "Reserve", url: "/tickets", order_number: 9, is_active: true },
-  { id: "stands", title: "Stands", url: "/stands", order_number: 10, is_active: true },
-  { id: "access", title: "Accès", url: "/access", order_number: 11, is_active: true },
+  { id: "contact", title: "Contact", url: "/contact", order_number: 5, is_active: true },
 ];
 
 const RESERVE_DROPDOWN_LINKS = [
@@ -212,8 +205,7 @@ const Navbar = () => {
       .filter(
         link =>
           link.is_active &&
-          // Remove built-in "tickets"/"Reserve", because we want it as dropdown now
-          link.id !== "tickets"
+          !["koreaboo", "solo-mcc", "stands", "access", "volunteer"].includes(link.id)
       )
       .map(link => 
         link.submenu && link.submenu.length ? (
