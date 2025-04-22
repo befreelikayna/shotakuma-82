@@ -2,7 +2,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 interface TicketPackageProps {
   name: string;
@@ -10,7 +9,7 @@ interface TicketPackageProps {
   description: string;
   features: string[];
   isPopular?: boolean;
-  ticketId?: string; // Add ticketId prop
+  ticketId?: string;
 }
 
 const TicketPackage = ({
@@ -19,7 +18,7 @@ const TicketPackage = ({
   description,
   features,
   isPopular = false,
-  ticketId = '', // Default to empty string
+  ticketId = '',
 }: TicketPackageProps) => {
   return (
     <motion.div
@@ -51,8 +50,10 @@ const TicketPackage = ({
             ))}
           </ul>
           
-          <Link
-            to={`/checkout/${ticketId}`}
+          <a
+            href="https://www.ticket.ma/ticket/festivals/3618/shotaku-festival-mai-2025-rabat"
+            target="_blank"
+            rel="noopener noreferrer"
             className={`w-full flex justify-center items-center py-3 rounded-full transition-all duration-300 ${
               isPopular 
                 ? "bg-festival-accent text-white hover:bg-opacity-90" 
@@ -60,7 +61,7 @@ const TicketPackage = ({
             }`}
           >
             Acheter
-          </Link>
+          </a>
         </div>
       </div>
     </motion.div>
