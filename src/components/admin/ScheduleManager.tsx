@@ -21,7 +21,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { toast } from 'sonner';
-import { Pencil, Trash2, PlusCircle, ArrowUpCircle, ArrowDownCircle, Check, X, File, Upload } from "lucide-react";
+import { Pencil, Trash2, PlusCircle, ArrowUpCircle, ArrowDownCircle, Check, X, File, Upload, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type ScheduleDay = {
@@ -400,58 +400,39 @@ const ScheduleManager = () => {
     }
   };
 
-  const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>, dayId: string) => {
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>, dayId: string) => {
     const file = e.target.files?.[0];
     if (file) {
-      setPdfFile(file);
-      createBucketAndUpload(file, dayId);
-    }
-  };
+      try {
+        const fileExtension = file.name.split('.').pop();
+        const fileName = `schedule_day_${dayId}.${fileExtension}`;
 
-  const createBucketAndUpload = async (file: File, dayId: string) => {
-    try {
-      const { data: bucketData, error: bucketError } = await supabase.storage
-        .getBucket('festival_assets');
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('festival_assets')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: true,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('festival_assets')
+          .getPublicUrl(uploadData.path);
         
-      if (bucketError && bucketError.message.includes('404')) {
-        const { error: createBucketError } = await supabase.storage
-          .createBucket('festival_assets', { public: true });
-          
-        if (createBucketError) throw createBucketError;
+        const { error: updateError } = await supabase
+          .from('schedule_days')
+          .update({ pdf_url: urlData.publicUrl })
+          .eq('id', dayId);
+        
+        if (updateError) throw updateError;
+
+        toast.success('PDF téléchargé avec succès');
+        fetchScheduleDays();
+      } catch (error) {
+        console.error('Error:', error);
+        toast.error('Une erreur est survenue lors du téléchargement');
       }
-
-      const fileExtension = file.name.split('.').pop();
-      const fileName = `schedule_day_${dayId}.${fileExtension}`;
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('festival_assets')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: true,
-        });
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from('festival_assets')
-        .getPublicUrl(uploadData.path);
-      
-      const { error: updateError } = await supabase
-        .from('schedule_days')
-        .update({ pdf_url: urlData.publicUrl } as Partial<ScheduleDay>)
-        .eq('id', dayId);
-      
-      if (updateError) {
-        console.error('Error updating schedule day:', updateError);
-        toast.error('Impossible de mettre à jour le PDF');
-        return;
-      }
-
-      toast.success('PDF téléchargé avec succès');
-      fetchScheduleDays();
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Une erreur est survenue');
     }
   };
 
@@ -459,20 +440,16 @@ const ScheduleManager = () => {
     try {
       const { error } = await supabase
         .from('schedule_days')
-        .update({ pdf_url: null } as Partial<ScheduleDay>)
+        .update({ pdf_url: null })
         .eq('id', dayId);
       
-      if (error) {
-        console.error('Error removing PDF:', error);
-        toast.error('Impossible de supprimer le PDF');
-        return;
-      }
+      if (error) throw error;
       
       toast.success('PDF supprimé avec succès');
       fetchScheduleDays();
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Une erreur est survenue');
+      toast.error('Une erreur est survenue lors de la suppression');
     }
   };
 
@@ -522,42 +499,18 @@ const ScheduleManager = () => {
                   <TableCell className="font-medium">{day.date}</TableCell>
                   <TableCell>{day.day_name}</TableCell>
                   <TableCell>
-                    <div className="flex space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleReorderDay(day.id, 'up')}
-                        disabled={loading}
-                        title="Move Up"
-                      >
-                        <ArrowUpCircle className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleReorderDay(day.id, 'down')}
-                        disabled={loading}
-                        title="Move Down"
-                      >
-                        <ArrowDownCircle className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell>
                     <div className="flex items-center space-x-2">
                       {day.pdf_url ? (
                         <>
                           <a href={day.pdf_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 flex items-center gap-1">
-                            <File className="h-4 w-4" />
-                            Voir le PDF
+                            <FileText className="h-4 w-4" />
+                            Programme PDF
                           </a>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => removePdfFile(day.id)}
-                            disabled={loading}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-100"
-                            title="Remove PDF"
+                            className="text-red-500 hover:text-red-700"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -567,15 +520,15 @@ const ScheduleManager = () => {
                           <Label htmlFor={`pdf-upload-${day.id}`} className="cursor-pointer">
                             <div className="flex items-center space-x-1 text-sm text-gray-500 hover:text-gray-700">
                               <Upload className="h-4 w-4" />
-                              <span>Télécharger PDF</span>
+                              <span>Ajouter PDF</span>
                             </div>
                           </Label>
                           <Input
                             type="file"
                             id={`pdf-upload-${day.id}`}
+                            accept=".pdf"
                             className="hidden"
                             onChange={(e) => handlePdfUpload(e, day.id)}
-                            disabled={loading}
                           />
                         </div>
                       )}

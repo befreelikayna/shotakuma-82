@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Clock, MapPin, Calendar, RefreshCw, FileText, Download } from "lucide-react";
@@ -7,13 +6,6 @@ import Footer from "@/components/Footer";
 import { supabase, ScheduleDay, ScheduleEvent } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 const Schedule = () => {
   const [activeDay, setActiveDay] = useState<string>("");
@@ -26,7 +18,6 @@ const Schedule = () => {
     try {
       setIsLoading(true);
       
-      // First fetch days
       const { data: daysData, error: daysError } = await supabase
         .from('schedule_days')
         .select('*')
@@ -41,12 +32,10 @@ const Schedule = () => {
         return;
       }
       
-      // Set active day to first day if not already set
       if (!activeDay) {
         setActiveDay(daysData[0].id);
       }
       
-      // Fetch events for each day
       const scheduleDays = await Promise.all(
         daysData.map(async (day) => {
           const { data: eventsData, error: eventsError } = await supabase
@@ -63,7 +52,6 @@ const Schedule = () => {
             } as ScheduleDay;
           }
           
-          // Process events to ensure they match ScheduleEvent type
           const processedEvents = (eventsData || []).map(event => ({
             ...event
           } as ScheduleEvent));
@@ -191,12 +179,22 @@ const Schedule = () => {
                       >
                         {day.day_name}
                         <span className="ml-2 text-xs opacity-75">{formatDate(day.date)}</span>
+                        {day.pdf_url && (
+                          <a 
+                            href={day.pdf_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="ml-2 inline-flex items-center text-festival-accent hover:text-festival-accent/80"
+                          >
+                            <FileText className="h-4 w-4" />
+                          </a>
+                        )}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* PDF View button for active day */}
                 {activeScheduleDay?.pdf_url && (
                   <div className="mb-8 flex justify-center">
                     <Button
@@ -313,35 +311,6 @@ const Schedule = () => {
           </motion.div>
         </div>
       </section>
-
-      {/* PDF Viewer Dialog */}
-      <Dialog open={openPdfDialog} onOpenChange={setOpenPdfDialog}>
-        <DialogContent className="max-w-4xl w-[90vw] h-[80vh] p-0">
-          <DialogHeader className="p-4 border-b">
-            <DialogTitle>Programme PDF</DialogTitle>
-            <DialogDescription>
-              <div className="flex justify-end">
-                <a 
-                  href={currentPdfUrl || '#'} 
-                  download
-                  className="text-sm text-blue-600 hover:underline flex items-center gap-1"
-                >
-                  <Download className="w-4 h-4" /> Télécharger
-                </a>
-              </div>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="h-full">
-            {currentPdfUrl && (
-              <iframe 
-                src={`${currentPdfUrl}#toolbar=0&navpanes=0`} 
-                className="w-full h-full border-0"
-                title="Programme PDF"
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <Footer />
     </div>
