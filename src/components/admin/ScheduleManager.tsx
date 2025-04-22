@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Table,
@@ -29,7 +30,7 @@ type ScheduleDay = {
   date: string;
   day_name: string;
   order_number: number;
-  pdf_url?: string | null;
+  pdf_url: string | null;
   created_at: string;
   updated_at: string;
 };
