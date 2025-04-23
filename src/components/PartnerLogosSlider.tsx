@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,7 +76,7 @@ const PartnerLogosSlider = () => {
   if (loading) {
     return (
       <div className="flex justify-center py-10">
-        <div className="animate-spin h-10 w-10 border-2 border-festival-primary border-t-transparent rounded-full"></div>
+        <div className="animate-spin h-10 w-10 border-2 border-white border-t-transparent rounded-full"></div>
       </div>
     );
   }
@@ -85,7 +86,7 @@ const PartnerLogosSlider = () => {
   }
 
   return (
-    <section className="py-20 bg-white" id="partners">
+    <section className="py-20 bg-transparent" id="partners">
       <div className="festival-container">
         <motion.div
           className="text-center mb-12"
@@ -94,8 +95,8 @@ const PartnerLogosSlider = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="section-heading inline-block">Nos Partenaires</h2>
-          <p className="text-festival-secondary max-w-2xl mx-auto mt-4">
+          <h2 className="section-heading inline-block text-white">Nos Partenaires</h2>
+          <p className="text-gray-300 max-w-2xl mx-auto mt-4">
             Découvrez les partenaires qui nous font confiance et contribuent au succès de notre festival.
           </p>
         </motion.div>
@@ -105,7 +106,7 @@ const PartnerLogosSlider = () => {
             {[...partners, ...partners].map((partner, index) => (
               <motion.div
                 key={`${partner.id}-${index}`}
-                className="flex-none w-48 h-24 relative"
+                className="flex-none w-48 h-24 relative bg-black/40 backdrop-blur-sm p-4 rounded-xl border border-white/10"
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}

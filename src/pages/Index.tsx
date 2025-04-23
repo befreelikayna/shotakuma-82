@@ -162,7 +162,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-transparent">
       <Navbar />
       <HeroSection />
 
@@ -177,18 +177,18 @@ const Index = () => {
             viewport={{ once: true, margin: "-100px" }}
             variants={sectionVariants}
           >
-            <h2 className="section-heading inline-block">Billets</h2>
-            <p className="text-festival-secondary max-w-2xl mx-auto mt-4">
+            <h2 className="section-heading inline-block text-white">Billets</h2>
+            <p className="text-gray-300 max-w-2xl mx-auto mt-4">
               Choisissez le type de billet qui vous convient et préparez-vous à vivre une expérience inoubliable au festival SHOTAKU.
             </p>
           </motion.div>
 
           {ticketsLoading ? (
             <div className="flex justify-center py-10">
-              <div className="animate-spin h-10 w-10 border-2 border-festival-primary border-t-transparent rounded-full"></div>
+              <div className="animate-spin h-10 w-10 border-2 border-white border-t-transparent rounded-full"></div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 container mx-auto px-4">
               {tickets
                 .filter(ticket => ticket.available)
                 .map((ticket) => (
@@ -199,7 +199,7 @@ const Index = () => {
                     description={ticket.description || ""}
                     features={ticket.features || []}
                     isPopular={ticket.name === "Pass 3 Jours"}
-                    ticketId={ticket.id} // Pass the ticket ID for the checkout link
+                    ticketId={ticket.id}
                   />
                 ))}
             </div>
@@ -225,40 +225,40 @@ const Index = () => {
             }}
           >
             <motion.div
-              className="bg-white rounded-2xl p-8 shadow-soft border border-slate-100"
+              className="bg-black/40 backdrop-blur-sm rounded-2xl p-8 border border-white/10"
               variants={sectionVariants}
             >
-              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-50 mb-6">
-                <CalendarDays className="h-6 w-6 text-blue-600" />
+              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-900/50 mb-6">
+                <CalendarDays className="h-6 w-6 text-blue-300" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-festival-primary">3 Jours d'Événements</h3>
-              <p className="text-festival-secondary">
+              <h3 className="text-xl font-semibold mb-3 text-white">3 Jours d'Événements</h3>
+              <p className="text-gray-300">
                 Profitez de trois jours complets remplis d'activités, de spectacles et d'expériences uniques autour de la culture japonaise.
               </p>
             </motion.div>
 
             <motion.div
-              className="bg-white rounded-2xl p-8 shadow-soft border border-slate-100"
+              className="bg-black/40 backdrop-blur-sm rounded-2xl p-8 border border-white/10"
               variants={sectionVariants}
             >
-              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-purple-50 mb-6">
-                <Users className="h-6 w-6 text-purple-600" />
+              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-purple-900/50 mb-6">
+                <Users className="h-6 w-6 text-purple-300" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-festival-primary">Communauté Passionnée</h3>
-              <p className="text-festival-secondary">
+              <h3 className="text-xl font-semibold mb-3 text-white">Communauté Passionnée</h3>
+              <p className="text-gray-300">
                 Rejoignez des milliers de fans d'anime et de manga pour célébrer ensemble notre passion commune pour la culture japonaise.
               </p>
             </motion.div>
 
             <motion.div
-              className="bg-white rounded-2xl p-8 shadow-soft border border-slate-100"
+              className="bg-black/40 backdrop-blur-sm rounded-2xl p-8 border border-white/10"
               variants={sectionVariants}
             >
-              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-pink-50 mb-6">
-                <MapPin className="h-6 w-6 text-pink-600" />
+              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-pink-900/50 mb-6">
+                <MapPin className="h-6 w-6 text-pink-300" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-festival-primary">Lieu Exceptionnel</h3>
-              <p className="text-festival-secondary">
+              <h3 className="text-xl font-semibold mb-3 text-white">Lieu Exceptionnel</h3>
+              <p className="text-gray-300">
                 Un espace unique au cœur de Casablanca transformé en véritable paradis pour les amateurs de culture japonaise et geek.
               </p>
             </motion.div>
@@ -269,7 +269,7 @@ const Index = () => {
       <PartnerLogosSlider />
 
       {!galleryLoading && galleryItems.length > 0 && (
-        <section className="py-20 bg-slate-50" id="gallery-preview">
+        <section className="py-20 bg-transparent" id="gallery-preview">
           <div className="festival-container">
             <motion.div
               className="text-center mb-12"
@@ -325,7 +325,7 @@ const Index = () => {
         </section>
       )}
 
-      <section className="py-20 bg-festival-primary text-white relative overflow-hidden">
+      <section className="py-20 bg-black/40 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <img 
             src={AnimeCharactersImage} 
