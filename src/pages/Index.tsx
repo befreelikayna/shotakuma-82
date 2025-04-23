@@ -162,13 +162,13 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent">
+    <div className="min-h-screen w-full bg-transparent">
       <Navbar />
       <HeroSection />
 
       {pageContent && <PageContentSection pageContent={pageContent} isLoading={contentLoading} />}
 
-      <section className="py-20" id="tickets">
+      <section className="py-20 w-full" id="tickets">
         <div className="festival-container">
           <motion.div
             className="text-center mb-12"

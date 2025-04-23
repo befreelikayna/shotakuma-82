@@ -126,7 +126,7 @@
 
 @layer components {
   .festival-container {
-    @apply w-full max-w-7xl mx-auto px-4 sm:px-6;
+    @apply w-full max-w-[100rem] mx-auto px-4 sm:px-6 lg:px-8;
   }
   
   .section-heading {
@@ -187,9 +187,9 @@
   }
   
   .hero-section {
-    width: 100vw;
-    margin-left: calc(-50vw + 50%);
-    margin-right: calc(-50vw + 50%);
+    @apply w-full;
+    margin-left: 0;
+    margin-right: 0;
     position: relative;
   }
 }
