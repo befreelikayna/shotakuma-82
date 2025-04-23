@@ -1,19 +1,11 @@
-
 import { Link } from "react-router-dom";
 import { Instagram, Facebook, Twitter, Youtube, Mail, MapPin, MessageSquare, Phone, MessageCircle } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  return <footer className="bg-festival-primary text-white pt-16 pb-8 relative overflow-hidden">
-      {/* Add anime characters image as background */}
-      <div className="absolute right-0 bottom-0 h-64 opacity-20 pointer-events-none">
-        <img 
-          src="/lovable-uploads/18f80508-341d-4194-ade1-2463127a3ff2.png" 
-          alt="Anime Characters" 
-          className="h-full object-contain"
-        />
-      </div>
-      <div className="festival-container relative z-10">
+  return (
+    <footer className="bg-festival-primary text-white pt-16 pb-8">
+      <div className="festival-container">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           <div className="col-span-1 md:col-span-1">
             <Link to="/" className="inline-block mb-4">
@@ -141,6 +133,8 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>;
+    </footer>
+  );
 };
+
 export default Footer;

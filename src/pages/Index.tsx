@@ -325,14 +325,7 @@ const Index = () => {
         </section>
       )}
 
-      <section className="py-20 bg-black/40 text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <img 
-            src={AnimeCharactersImage} 
-            alt="Anime Characters" 
-            className="w-full h-full object-cover object-center"
-          />
-        </div>
+      <section className="py-20 bg-festival-primary text-white">
         <div className="festival-container relative z-10">
           <motion.div
             className="max-w-3xl mx-auto text-center"
