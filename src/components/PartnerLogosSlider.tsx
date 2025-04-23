@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +15,6 @@ const PartnerLogosSlider = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Format URL safely
   const formatUrl = (url: string | null): string => {
     if (!url) return '';
     
@@ -31,7 +29,6 @@ const PartnerLogosSlider = () => {
     }
   };
 
-  // Fetch partners from Supabase
   useEffect(() => {
     const fetchPartners = async () => {
       try {
@@ -60,13 +57,12 @@ const PartnerLogosSlider = () => {
 
     fetchPartners();
 
-    // Set up realtime subscription
     const channel = supabase
       .channel('public:partners')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'partners' }, 
-        (payload) => {
-          console.log('Partners table changed:', payload);
+        () => {
+          console.log('Partners changed, refreshing...');
           fetchPartners();
         })
       .subscribe();

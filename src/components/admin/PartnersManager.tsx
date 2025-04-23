@@ -63,17 +63,23 @@ const PartnersManager = () => {
         console.error('Error fetching partners:', error);
         toast({
           title: "Erreur",
-          description: "Impossible de charger les partenaires",
+          description: `Impossible de charger les partenaires: ${error.message}`,
           variant: "destructive",
         });
         return;
       }
       
       if (data) {
-        setPartners(data as Partner[]);
+        console.log("Fetched partners:", data);
+        setPartners(data);
       }
     } catch (error) {
       console.error('Error fetching partners:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors du chargement des partenaires",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
