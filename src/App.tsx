@@ -96,12 +96,8 @@ const App = () => {
           <ThemeProvider>
             <CustomCursor />
             <ParticleEffect />
-            {/* Add the mascots to the entire application with a lower opacity */}
-            <AnimatedMascots 
-              className="opacity-30 hidden md:block" 
-              scale={0.7} 
-              speed={0.5} 
-            />
+            {/* Completely hiding the AnimatedMascots component */}
+            {/* <AnimatedMascots className="opacity-30 hidden md:block" scale={0.7} speed={0.5} /> */}
             <DesktopSideNav />
             <CountdownProvider>
               <AnimatePresence mode="wait">
