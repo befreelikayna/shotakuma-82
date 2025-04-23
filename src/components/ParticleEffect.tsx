@@ -17,18 +17,16 @@ const ParticleEffect = () => {
   const isMobile = useIsMobile();
   
   useEffect(() => {
-    // Only add particle effects if not on mobile
     if (!isMobile) {
       const handleClick = (e: MouseEvent) => {
-        // Create 5-10 particles at click position
         const numParticles = Math.floor(Math.random() * 6) + 5;
         const newParticles: Particle[] = [];
         
         for (let i = 0; i < numParticles; i++) {
           newParticles.push({
             id: Date.now() + i,
-            x: e.clientX,
-            y: e.clientY,
+            x: Math.min(e.clientX, window.innerWidth - 20), // Prevent overflow
+            y: Math.min(e.clientY, window.innerHeight - 20), // Prevent overflow
             size: Math.random() * 20 + 10,
             rotation: Math.random() * 360,
             opacity: Math.random() * 0.5 + 0.5
@@ -37,7 +35,6 @@ const ParticleEffect = () => {
         
         setParticles(prev => [...prev, ...newParticles]);
         
-        // Remove particles after animation
         setTimeout(() => {
           setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
         }, 1000);
@@ -48,9 +45,8 @@ const ParticleEffect = () => {
     }
   }, [isMobile]);
 
-  // Always render the component, but conditionally render its content
   return (
-    <div className="fixed inset-0 pointer-events-none z-[9998]">
+    <div className="fixed inset-0 pointer-events-none z-[9998] overflow-hidden">
       {!isMobile && (
         <AnimatePresence>
           {particles.map(particle => (
@@ -68,7 +64,7 @@ const ParticleEffect = () => {
               animate={{
                 scale: 0,
                 x: (Math.random() - 0.5) * 100,
-                y: (Math.random() - 0.5) * 100 - 50, // Particles tend to float upward
+                y: (Math.random() - 0.5) * 100 - 50,
                 rotate: particle.rotation + (Math.random() * 360),
                 opacity: 0
               }}

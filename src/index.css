@@ -106,15 +106,17 @@
     background-position: center;
     background-repeat: no-repeat;
     background-attachment: fixed;
-    background-color: #050F2C; /* Fallback color matching the dark theme */
+    background-color: #050F2C;
     padding-bottom: env(safe-area-inset-bottom, 0);
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
   }
   
-  /* Desktop-only custom cursor styles */
   @media (min-width: 768px) {
     a, button, input[type=submit], input[type=button], .cursor-pointer {
       cursor: none !important;
@@ -128,7 +130,7 @@
 
 @layer components {
   .festival-container {
-    @apply container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl;
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6;
   }
   
   .section-heading {
@@ -159,7 +161,6 @@
     @apply bg-white/40 backdrop-blur-md border border-white/20 shadow-soft;
   }
   
-  /* Mobile responsive utilities */
   .responsive-grid {
     @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6;
   }
@@ -176,7 +177,6 @@
     @apply text-base sm:text-lg md:text-xl;
   }
   
-  /* Shotaku cursor animation */
   .shotaku-cursor {
     filter: drop-shadow(0 0 6px rgba(255, 100, 100, 0.5));
     transition: transform 0.1s ease-out;
@@ -186,12 +186,10 @@
     transform: scale(1.1) rotate(-5deg);
   }
   
-  /* Mobile Navigation */
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 1rem);
   }
   
-  /* Hero section overrides */
   .hero-section {
     width: 100vw;
     margin-left: calc(-50vw + 50%);
@@ -200,7 +198,6 @@
   }
 }
 
-/* Custom animations */
 .stagger-fade-up > * {
   animation: fade-up-stagger 0.75s ease-out forwards;
   opacity: 0;
@@ -224,7 +221,6 @@
   }
 }
 
-/* Shotaku mascot cursor animation */
 @keyframes float {
   0% { transform: translateY(0px) rotate(0deg); }
   25% { transform: translateY(-5px) rotate(-3deg); }
@@ -233,7 +229,6 @@
   100% { transform: translateY(0px) rotate(0deg); }
 }
 
-/* Page transitions */
 .page-enter {
   opacity: 0;
   transform: translateY(10px);
@@ -254,7 +249,6 @@
   transition: opacity 300ms;
 }
 
-/* Desktop side navigation adjustments */
 @media (min-width: 768px) {
   .with-desktop-nav {
     padding-left: 80px;
@@ -267,7 +261,6 @@
   }
 }
 
-/* Mobile-first responsive table */
 .responsive-table {
   @apply w-full border-collapse;
 }
@@ -288,7 +281,6 @@
   @apply content-[attr(data-label)] float-left font-semibold text-gray-600 md:hidden;
 }
 
-/* Mobile-first form controls */
 .form-control-responsive {
   @apply w-full flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4;
 }
@@ -301,7 +293,6 @@
   @apply w-full md:w-3/4;
 }
 
-/* Theme override utilities */
 .text-festival-primary {
   color: var(--festival-primary);
 }
