@@ -161,31 +161,69 @@ const HeroSection = () => {
     });
   };
 
-  return <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 md:pt-20">
-      <div className={`absolute inset-0 z-0 ${isLoading ? defaultBackground : ''}`}>
-        {sliderImages.length > 0 ? sliderImages.map((image, index) => <div key={image.id} className={`absolute inset-0 transition-opacity duration-1000 ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'}`}>
-              {image.link ? <a href={image.link} className="block absolute inset-0 cursor-pointer" target="_blank" rel="noopener noreferrer">
-                  <div className="absolute inset-0 bg-cover bg-center" style={{
-            backgroundImage: `url(${image.image_url})`
-          }}>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/40"></div>
+  return (
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 md:pt-20 w-screen mx-0 px-0">
+      <div className="absolute inset-0 z-0">
+        {sliderImages.length > 0 ? (
+          sliderImages.map((image, index) => (
+            <div
+              key={image.id}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              {image.link ? (
+                <a
+                  href={image.link}
+                  className="block absolute inset-0 cursor-pointer"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <div
+                    className="absolute inset-0 bg-cover bg-center w-full h-full"
+                    style={{
+                      backgroundImage: `url(${image.image_url})`,
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/40" />
                   </div>
-                </a> : <div className="absolute inset-0 bg-cover bg-center" style={{
-          backgroundImage: `url(${image.image_url})`
-        }}>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/40"></div>
-                </div>}
-            </div>) : <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-gray-800">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/40"></div>
-          </div>}
+                </a>
+              ) : (
+                <div
+                  className="absolute inset-0 bg-cover bg-center w-full h-full"
+                  style={{
+                    backgroundImage: `url(${image.image_url})`,
+                  }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/40" />
+                </div>
+              )}
+            </div>
+          ))
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-gray-800 w-full h-full">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/40" />
+          </div>
+        )}
       </div>
 
-      <div className="festival-container relative z-10 mt-8 md:mt-16 px-4 sm:px-6">
-        {process.env.NODE_ENV !== 'production' && <button onClick={handleRefresh} className="absolute top-0 right-0 p-2 bg-black/30 rounded-full hover:bg-black/40 transition-colors" title="Refresh slider images">
+      <div className="relative z-10 w-full px-4 sm:px-6 flex flex-col items-center">
+        {process.env.NODE_ENV !== 'production' && (
+          <button
+            onClick={handleRefresh}
+            className="absolute top-0 right-4 p-2 bg-black/30 rounded-full hover:bg-black/40 transition-colors"
+            title="Refresh slider images"
+          >
             <RefreshCw className="h-4 w-4 text-white" />
-          </button>}
-        
-        <motion.div className="flex flex-col items-center text-center" variants={containerVariants} initial="hidden" animate="visible">
+          </button>
+        )}
+
+        <motion.div
+          className="flex flex-col items-center text-center max-w-7xl mx-auto w-full"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           <motion.div className="inline-block mb-4 px-3 sm:px-4 py-1 sm:py-1.5 bg-white/50 backdrop-blur-sm rounded-full shadow-soft" variants={itemVariants}>
             <span className="text-white font-medium text-xs sm:text-sm">ÉVENT LE 8.9.10.11 MAY 2025 • CASABLANCA, MAROC</span>
           </motion.div>
@@ -245,10 +283,22 @@ const HeroSection = () => {
         </motion.div>
       </div>
 
-      {sliderImages.length > 0 && <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex space-x-2">
-          {sliderImages.map((_, index) => <button key={index} className={`w-2 h-2 rounded-full transition-all ${index === currentImageIndex ? 'bg-white scale-125' : 'bg-white/50'}`} onClick={() => setCurrentImageIndex(index)} aria-label={`Go to slide ${index + 1}`} />)}
-        </div>}
-    </section>;
+      {sliderImages.length > 0 && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex space-x-2">
+          {sliderImages.map((_, index) => (
+            <button
+              key={index}
+              className={`w-2 h-2 rounded-full transition-all ${
+                index === currentImageIndex ? 'bg-white scale-125' : 'bg-white/50'
+              }`}
+              onClick={() => setCurrentImageIndex(index)}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
 };
 
 export default HeroSection;
