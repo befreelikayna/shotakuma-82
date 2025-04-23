@@ -28,6 +28,7 @@ import Tickets from "./pages/Tickets";
 import Checkout from "./pages/Checkout";
 import Stands from "./pages/Stands";
 import Access from "./pages/Access";
+import Partners from "./pages/Partners";
 import { supabase } from "./integrations/supabase/client";
 import Koreaboo from "./pages/Koreaboo";
 import SoloMCC from "./pages/SoloMCC";
@@ -117,6 +118,7 @@ const App = () => {
                   <Route path="/checkout/:ticketId" element={<Checkout />} />
                   <Route path="/stands" element={<Stands />} />
                   <Route path="/access" element={<Access />} />
+                  <Route path="/partners" element={<Partners />} />
                   <Route path="/koreaboo" element={<Koreaboo />} />
                   <Route path="/solo-mcc" element={<SoloMCC />} />
                   {/* Dynamic routes generated from database */}

@@ -37,6 +37,7 @@ const RESERVE_DROPDOWN_LINKS = [
   { id: "stands", label: "Reserve Your Stand", url: "/stands" },
   { id: "access", label: "Get Your Access Badge", url: "/access" },
   { id: "volunteer", label: "Bénévole", url: "/volunteer" },
+  { id: "partners", label: "Partenaires", url: "/partners" },
 ];
 
 const Navbar = () => {
