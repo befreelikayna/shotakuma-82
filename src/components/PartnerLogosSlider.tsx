@@ -48,6 +48,7 @@ const PartnerLogosSlider = () => {
         }
         
         if (data) {
+          console.log("Fetched partners:", data);
           setPartners(data);
         }
       } catch (error) {
@@ -64,7 +65,8 @@ const PartnerLogosSlider = () => {
       .channel('public:partners')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'partners' }, 
-        () => {
+        (payload) => {
+          console.log('Partners table changed:', payload);
           fetchPartners();
         })
       .subscribe();

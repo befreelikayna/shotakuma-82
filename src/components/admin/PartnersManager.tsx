@@ -22,8 +22,18 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { RefreshCw, PencilIcon, Trash2Icon, ExternalLink } from "lucide-react";
-import { customSupabase, Partner, safeDataAccess, uploadFileToSupabase } from "@/integrations/supabase/client";
+import { supabase, uploadFileToSupabase } from "@/integrations/supabase/client";
 import PartnersBulkUpload from "./PartnersBulkUpload";
+
+interface Partner {
+  id: string;
+  name: string;
+  logo_url: string;
+  website_url: string | null;
+  category: string | null;
+  order_number: number;
+  active: boolean;
+}
 
 const PartnersManager = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -32,7 +42,6 @@ const PartnersManager = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingPartnerId, setEditingPartnerId] = useState<string | null>(null);
   
-  // Partner form state
   const [name, setName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
@@ -41,12 +50,11 @@ const PartnersManager = () => {
   const [category, setCategory] = useState<string>("sponsor");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   
-  // Fetch partners from Supabase
   const fetchPartners = async () => {
     try {
       setIsLoading(true);
       
-      const { data, error } = await customSupabase
+      const { data, error } = await supabase
         .from('partners')
         .select('*')
         .order('order_number');
@@ -74,7 +82,7 @@ const PartnersManager = () => {
   useEffect(() => {
     fetchPartners();
     
-    const channel = customSupabase
+    const channel = supabase
       .channel('admin:partners')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'partners' }, 
@@ -85,7 +93,7 @@ const PartnersManager = () => {
       .subscribe();
     
     return () => {
-      customSupabase.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
   }, []);
   
@@ -131,7 +139,6 @@ const PartnersManager = () => {
   
   const handleSave = async () => {
     try {
-      // Validate form
       if (!name.trim()) {
         toast({
           title: "Erreur",
@@ -141,7 +148,6 @@ const PartnersManager = () => {
         return;
       }
 
-      // URL validation regex for a more flexible URL pattern
       const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
       
       if (websiteUrl && !urlRegex.test(websiteUrl)) {
@@ -153,7 +159,6 @@ const PartnersManager = () => {
         return;
       }
       
-      // If a new logo file is selected, upload it
       let finalLogoUrl = logoUrl;
       if (logoFile) {
         const uploadedUrl = await uploadFileToSupabase(logoFile, "partners", `logos/${logoFile.name}`);
@@ -175,13 +180,11 @@ const PartnersManager = () => {
         return;
       }
       
-      // Add https:// to website URL if not present
       let formattedWebsiteUrl = websiteUrl;
       if (websiteUrl && !websiteUrl.startsWith('http://') && !websiteUrl.startsWith('https://')) {
         formattedWebsiteUrl = 'https://' + websiteUrl;
       }
       
-      // Ensure required fields are present for the insert operation
       const partnerData = {
         name,
         logo_url: finalLogoUrl,
@@ -192,8 +195,7 @@ const PartnersManager = () => {
       };
       
       if (isEditing && editingPartnerId) {
-        // Update existing partner
-        const { error } = await customSupabase
+        const { error } = await supabase
           .from('partners')
           .update(partnerData)
           .eq('id', editingPartnerId);
@@ -202,7 +204,7 @@ const PartnersManager = () => {
           console.error('Error updating partner:', error);
           toast({
             title: "Erreur",
-            description: "Impossible de mettre à jour le partenaire",
+            description: `Impossible de mettre à jour le partenaire: ${error.message}`,
             variant: "destructive",
           });
           return;
@@ -213,28 +215,29 @@ const PartnersManager = () => {
           description: "Partenaire mis à jour avec succès",
         });
       } else {
-        // Create new partner
-        const { error } = await customSupabase
+        console.log("Creating new partner:", partnerData);
+        const { data, error } = await supabase
           .from('partners')
-          .insert(partnerData);
+          .insert(partnerData)
+          .select();
           
         if (error) {
           console.error('Error creating partner:', error);
           toast({
             title: "Erreur",
-            description: "Impossible de créer le partenaire",
+            description: `Impossible de créer le partenaire: ${error.message}`,
             variant: "destructive",
           });
           return;
         }
         
+        console.log("Partner created successfully:", data);
         toast({
           title: "Succès",
           description: "Partenaire créé avec succès",
         });
       }
       
-      // Close sheet and refresh partners
       handleCloseSheet();
       fetchPartners();
     } catch (error) {
@@ -250,7 +253,7 @@ const PartnersManager = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer ce partenaire ?")) {
       try {
-        const { error } = await customSupabase
+        const { error } = await supabase
           .from('partners')
           .delete()
           .eq('id', id);
@@ -270,7 +273,6 @@ const PartnersManager = () => {
           description: "Partenaire supprimé avec succès",
         });
         
-        // Refresh partners
         fetchPartners();
       } catch (error) {
         console.error('Error deleting partner:', error);
@@ -295,9 +297,7 @@ const PartnersManager = () => {
     if (!url) return '';
     
     try {
-      // Check if URL has a protocol
       if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        // Add https:// to URLs without protocol
         return 'https://' + url;
       }
       return url;
@@ -311,16 +311,14 @@ const PartnersManager = () => {
     if (!url) return '';
     
     try {
-      // Format URL first to ensure it has a protocol
       const formattedUrl = formatUrl(url);
       if (!formattedUrl) return '';
       
-      // Create URL object to get hostname
       const urlObj = new URL(formattedUrl);
       return urlObj.hostname;
     } catch (e) {
       console.error('Error extracting hostname:', e);
-      return url || ''; // Return original URL as fallback
+      return url || '';
     }
   };
   
