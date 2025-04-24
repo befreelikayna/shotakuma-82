@@ -3,6 +3,7 @@ import { ChevronDown, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import CountdownTrigger from "./CountdownTrigger";
 
 interface SliderImage {
   id: string;
@@ -161,7 +162,7 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative min-h-screen w-full flex items-center justify-center overflow-hidden pt-16 md:pt-20">
+    <section className="relative min-h-screen w-full flex items-center justify-center overflow-hidden pt-16 md:pt-20 w-screen mx-0 px-0">
       <div className="absolute inset-0 z-0">
         {sliderImages.length > 0 ? (
           sliderImages.map((image, index) => (
@@ -206,7 +207,7 @@ const HeroSection = () => {
         )}
       </div>
 
-      <div className="relative z-10 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 flex flex-col items-center">
         {process.env.NODE_ENV !== 'production' && (
           <button
             onClick={handleRefresh}
@@ -273,6 +274,7 @@ const HeroSection = () => {
               hover:shadow-lg hover:bg-slate-50 hover:translate-y-[-2px] text-center">
               Reserve Your Stand
             </a>
+            <CountdownTrigger variant="secondary" label="Voir Countdown" className="w-full sm:w-auto" />
           </motion.div>
 
           <motion.button onClick={handleScrollDown} aria-label="Scroll Down" variants={itemVariants} className="absolute bottom-8 sm:bottom-12 left-1/2 transform -translate-x-1/2 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white shadow-soft animate-float transition-all duration-300 hover:shadow-md hover:bg-slate-50 py-0 px-0 mx-[240px] my-[120px]">
