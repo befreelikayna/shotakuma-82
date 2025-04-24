@@ -251,7 +251,7 @@ const Navbar = () => {
     </Link>;
   return <nav className="fixed top-0 left-0 right-0 z-50 
       bg-festival-primary/80 backdrop-blur-md border-b border-white/10 shadow-soft">
-      <div className="festival-container flex justify-between items-center bg-[#080829]/[0.87] my-0 py-[18px] mx-[4px] px-[94px]">
+      <div className="festival-container flex justify-between items-center bg-[#080829]/[0.87] px-[88px] py-[8px] my-px mx-[79px]">
         <Link to="/" className="flex items-center">
           <img src={logoUrl} alt="SHOTAKU Logo" className="h-10 object-contain brightness-150 contrast-125" onError={e => {
           const target = e.target as HTMLImageElement;

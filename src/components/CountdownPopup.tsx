@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
@@ -117,6 +118,17 @@ const CountdownPopup: React.FC<CountdownProps> = ({
                   border: "1px solid rgba(0, 255, 185, 0.3)",
                 }}
               >
+                {/* Add a semi-transparent overlay if background image is used */}
+                {backgroundImageUrl && (
+                  <div 
+                    className="absolute inset-0" 
+                    style={{ 
+                      backgroundColor: `${bgColor}CC`, // Add transparency 
+                      backdropFilter: "blur(2px)" 
+                    }} 
+                  />
+                )}
+                
                 <button
                   onClick={onClose}
                   className="absolute top-2 right-2 text-gray-300 hover:text-white bg-gray-800/50 rounded-full p-1 z-10"
