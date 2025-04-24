@@ -169,7 +169,7 @@ const Index = () => {
       {pageContent && <PageContentSection pageContent={pageContent} isLoading={contentLoading} />}
 
       <section className="py-20 w-full" id="tickets">
-        <div className="festival-container">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             className="text-center mb-12"
             initial="hidden"
