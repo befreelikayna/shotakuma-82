@@ -162,7 +162,7 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative min-h-screen w-full flex items-center justify-center overflow-hidden pt-16 md:pt-20">
+    <section className="relative min-h-screen w-full flex items-center justify-center overflow-hidden pt-16 md:pt-20 w-screen mx-0 px-0">
       <div className="absolute inset-0 z-0">
         {sliderImages.length > 0 ? (
           sliderImages.map((image, index) => (
@@ -207,7 +207,7 @@ const HeroSection = () => {
         )}
       </div>
 
-      <div className="festival-container relative z-10 flex flex-col items-center">
+      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 flex flex-col items-center">
         {process.env.NODE_ENV !== 'production' && (
           <button
             onClick={handleRefresh}

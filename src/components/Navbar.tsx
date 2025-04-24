@@ -5,14 +5,12 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-
 interface SubMenuItem {
   id: string;
   title: string;
   url: string;
   order_number: number;
 }
-
 interface HeaderLink {
   id: string;
   title: string;
@@ -21,7 +19,6 @@ interface HeaderLink {
   is_active: boolean;
   submenu?: SubMenuItem[];
 }
-
 const DEFAULT_MENU_LINKS: HeaderLink[] = [{
   id: "home",
   title: "Accueil",
@@ -59,7 +56,6 @@ const DEFAULT_MENU_LINKS: HeaderLink[] = [{
   order_number: 5,
   is_active: true
 }];
-
 const RESERVE_DROPDOWN_LINKS = [{
   id: "koreaboo",
   label: "Koreaboo",
@@ -85,12 +81,10 @@ const RESERVE_DROPDOWN_LINKS = [{
   label: "Partenaires",
   url: "/partners"
 }];
-
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [logoUrl, setLogoUrl] = useState("/logo.png");
   const [navLinks, setNavLinks] = useState<HeaderLink[]>([]);
-
   useEffect(() => {
     const fetchNavLinks = async () => {
       try {
@@ -119,7 +113,6 @@ const Navbar = () => {
         setNavLinks(DEFAULT_MENU_LINKS);
       }
     };
-
     const fetchLogo = async () => {
       try {
         const {
@@ -151,7 +144,6 @@ const Navbar = () => {
         console.error('Error in logo fetch:', error);
       }
     };
-
     const fetchFavicon = async () => {
       try {
         const {
@@ -199,16 +191,13 @@ const Navbar = () => {
         console.error('Error in favicon fetch:', error);
       }
     };
-
     fetchNavLinks();
     fetchLogo();
     fetchFavicon();
   }, []);
-
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
-
   useEffect(() => {
     const menuChannel = supabase.channel('header_menu_changes').on('postgres_changes', {
       event: '*',
@@ -238,7 +227,6 @@ const Navbar = () => {
       supabase.removeChannel(menuChannel);
     };
   }, []);
-
   const buildDesktopMenuLinks = () => {
     return navLinks.filter(link => link.is_active && !["koreaboo", "solo-mcc", "stands", "access", "volunteer"].includes(link.id)).map(link => link.submenu && link.submenu.length ? <div key={link.id} className="relative group">
             <button className="nav-link text-white/80 hover:text-white flex items-center gap-1">
@@ -257,23 +245,21 @@ const Navbar = () => {
             {link.title}
           </Link>);
   };
-
   const desktopAdminLink = <Link to="/admin" className="px-3 py-1 rounded-full bg-festival-accent/20 text-white 
       hover:bg-festival-accent/30 transition-colors duration-300 ml-2 flex items-center">
       <LogIn size={18} />
     </Link>;
-
-  return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-festival-primary/80 backdrop-blur-md border-b border-white/10 shadow-soft">
-      <div className="festival-container flex justify-between items-center py-[8px]">
+  return <nav className="fixed top-0 left-0 right-0 z-50 
+      bg-festival-primary/80 backdrop-blur-md border-b border-white/10 shadow-soft">
+      <div className="festival-container flex justify-between items-center bg-[#080829]/[0.87] px-[88px] py-[8px] my-px mx-[79px]">
         <Link to="/" className="flex items-center">
           <img src={logoUrl} alt="SHOTAKU Logo" className="h-10 object-contain brightness-150 contrast-125" onError={e => {
-            const target = e.target as HTMLImageElement;
-            target.src = "/logo.png";
-            console.log('Falling back to default logo');
-          }} />
+          const target = e.target as HTMLImageElement;
+          target.src = "/logo.png";
+          console.log('Falling back to default logo');
+        }} />
         </Link>
-
+        
         <button className="md:hidden p-2 rounded-md text-white hover:bg-festival-accent/30" onClick={toggleMenu} aria-label="Toggle menu">
           {isMenuOpen ? <X size={24} className="text-white" /> : <Menu size={24} className="text-white" />}
         </button>
@@ -352,8 +338,6 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-    </nav>
-  );
+    </nav>;
 };
-
 export default Navbar;
